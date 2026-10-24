@@ -1,0 +1,16 @@
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+.pytest_cache/
+tests/
+scripts/profile_model.py
+.git/
+.gitignore
+.env
+*.md
+
