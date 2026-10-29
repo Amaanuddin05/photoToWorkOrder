@@ -1,0 +1,46 @@
+services:
+  tei-embed:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
+    command: --model-id BAAI/bge-base-en-v1.5 --port 80 --api-key ${TEI_API_KEY:-test}
+    ports:
+      - "8081:80"
+    volumes:
+      - tei-embed-data:/data
+    mem_limit: 2g
+
+  tei-rerank:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.9
+    command: --model-id BAAI/bge-reranker-base --port 80 --api-key ${TEI_API_KEY:-test}
+    ports:
+      - "8082:80"
+    volumes:
+      - tei-rerank-data:/data
+    mem_limit: 2g
+
+  siglip:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8000"
+    environment:
+      - SIGLIP_MODEL_ID=${SIGLIP_MODEL_ID:-google/siglip2-base-patch16-224}
+      - SIGLIP_API_KEY=${SIGLIP_API_KEY:-}
+      - SIGLIP_TORCH_THREADS=${SIGLIP_TORCH_THREADS:-2}
+      - SIGLIP_MAX_CONCURRENCY=${SIGLIP_MAX_CONCURRENCY:-2}
+      - TEI_EMBED_URL=http://tei-embed:80
+      - TEI_RERANK_URL=http://tei-rerank:80
+      - TEI_API_KEY=${TEI_API_KEY:-test}
+      - HF_HOME=/models
+    volumes:
+      - siglip-models:/models
+    depends_on:
+      - tei-embed
+      - tei-rerank
+    mem_limit: 4g
+
+volumes:
+  tei-embed-data:
+  tei-rerank-data:
+  siglip-models:
+
