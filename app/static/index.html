@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Photo-to-Work-Order — Operator Console</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Additional styles for API key modal and shadow mode badges */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-card {
+      background: var(--card-bg, #fff);
+      border: 1px solid var(--border-color, #d0d7de);
+      border-radius: 8px;
+      padding: 24px;
+      max-width: 440px;
+      width: 90%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .auth-btn {
+      padding: 5px 10px;
+      font-size: 0.78rem;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: 8px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+    .auth-btn:hover {
+      background: var(--bg-subtle);
+    }
+    .card-meta-row {
+      display: flex;
+      gap: 8px;
+      font-size: 0.72rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="app-title-group">
+        <h1>photoToWorkOrder</h1>
+        <p class="app-subtitle">Operator Triage &amp; Work Order Review</p>
+      </div>
+      <div class="status-badge" id="system-status">
+        <span class="status-dot"></span>
+        <span id="status-text">Connected</span>
+      </div>
+    </header>
+
+    <!-- SCREEN 1: New Post Form -->
+    <section id="screen-new-post" class="card">
+      <div class="form-section-title">
+        <span>New Work Order Post</span>
+      </div>
+
+      <form id="post-form" novalidate>
+        <!-- Photo Input (Drag & Drop + Mobile Camera) -->
+        <div class="form-group">
+          <label class="form-label" for="file-input">Photo</label>
+          <div class="drop-zone" id="drop-zone" tabindex="0" role="button" aria-label="Upload photo. Click or drag and drop.">
+            <div class="drop-icon">&#128247;</div>
+            <p class="drop-text-main">Click to take photo or browse, or drag &amp; drop</p>
+            <p class="drop-text-sub">JPEG, PNG, WebP up to 10 MB</p>
+            <input type="file" id="file-input" accept="image/*" class="visually-hidden">
+          </div>
+
+          <!-- Preview with remove button -->
+          <div class="preview-container" id="preview-container">
+            <img id="preview-img" class="preview-img" alt="Uploaded post preview">
+            <button type="button" class="remove-btn" id="remove-photo-btn" aria-label="Remove photo">Remove &times;</button>
+          </div>
+
+          <!-- Photo Validation Error Banner -->
+          <div class="alert-error" id="photo-error" role="alert"></div>
+        </div>
+
+        <!-- Description Input -->
+        <div class="form-group">
+          <label class="form-label" for="desc-input">Description <span class="field-badge">optional</span></label>
+          <textarea id="desc-input" placeholder="Enter problem description or notes..."></textarea>
+          <!-- Notice if no description -->
+          <div class="notice-box" id="no-desc-notice">
+            <span>&#9432; No description: this will be a draft at most.</span>
+          </div>
+        </div>
+
+        <!-- Location Field -->
+        <div class="form-group">
+          <label class="form-label" for="location-input">Location <span class="field-badge">optional</span></label>
+          <input type="text" id="location-input" placeholder="e.g. Building A, Room 101 (optional)">
+        </div>
+
+        <!-- Submit Button with Spinner -->
+        <div class="form-group" style="margin-bottom: 0;">
+          <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
+            <span class="spinner" id="submit-spinner" style="display: none;" aria-hidden="true"></span>
+            <span id="submit-btn-text">Analyze Post</span>
+          </button>
+        </div>
+
+        <div class="alert-error" id="form-error" role="alert"></div>
+      </form>
+    </section>
+
+    <!-- SCREEN 2: Result View (Replaces Form after submit) -->
+    <section id="screen-result" class="card" style="display: none;">
+      <div class="result-header">
+        <div class="badge-group">
+          <span class="action-badge" id="action-badge">Draft</span>
+          <span class="shadow-note" id="shadow-note" style="display: none;">would auto-create (off)</span>
+          <span class="agree-badge" id="agree-badge" style="display: none;"></span>
+        </div>
+        <button type="button" class="btn btn-secondary" id="restart-top-btn" style="padding: 6px 12px; font-size: 0.8rem;">
+          &larr; New Post
+        </button>
+      </div>
+
+      <!-- Plain Language Reason -->
+      <div class="reason-box" id="reason-text"></div>
+
+      <!-- Main Result Grid -->
+      <div class="result-grid">
+        <!-- Left: Submitted Photo & Description -->
+        <div class="submitted-panel">
+          <div class="submitted-title">Submitted Input</div>
+          <div class="submitted-img-wrapper" id="submitted-img-wrapper" style="display: none;">
+            <img id="submitted-img" class="submitted-img" alt="Submitted work order photo">
+          </div>
+          <div class="submitted-no-photo" id="submitted-no-photo" style="display: none;">
+            No photo attached
+          </div>
+          <div class="submitted-title" style="margin-top: 14px;">Description</div>
+          <div class="submitted-desc-text" id="submitted-desc-text"></div>
+          <div class="submitted-title" id="submitted-loc-title" style="margin-top: 14px; display: none;">Location</div>
+          <div class="submitted-desc-text" id="submitted-loc-text" style="display: none;"></div>
+        </div>
+
+        <!-- Right: Candidate Selection -->
+        <div class="selection-panel">
+          <div class="candidates-header">
+            <span class="candidates-title">Top 3 Suggested Services</span>
+            <span class="score-tooltip-wrap" title="A ranking score, not the probability of being correct.">
+              Match score <span class="tooltip-icon">&#9432;</span>
+            </span>
+          </div>
+
+          <!-- Top 3 Candidate Cards -->
+          <div class="cards-list" id="candidate-cards" role="radiogroup" aria-label="Suggested services">
+            <!-- Populated via app.js -->
+          </div>
+
+          <!-- Searchable "Another service" Dropdown -->
+          <div class="another-service-box">
+            <div class="another-service-label">Or choose another service from catalog:</div>
+            <div class="searchable-select-row">
+              <input type="text" id="service-search-filter" placeholder="Filter catalog services..." aria-label="Filter catalog services">
+              <select id="another-service-dropdown" aria-label="Select catalog service">
+                <option value="">-- Choose catalog service --</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Selection Confirmation Row -->
+          <div class="confirm-actions">
+            <button type="button" class="btn btn-primary" id="confirm-btn" disabled>
+              <span class="spinner" id="confirm-spinner" style="display: none;" aria-hidden="true"></span>
+              <span id="confirm-btn-text">Confirm Final Service</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="next-post-btn" style="display: none;">
+              Next post &rarr;
+            </button>
+          </div>
+
+          <div class="alert-error" id="result-error" role="alert"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: History (Below) -->
+    <section id="screen-history" class="card">
+      <div class="history-header">
+        <h2 class="history-title">Recent Decisions</h2>
+        <button type="button" class="btn btn-secondary" id="refresh-history-btn" style="padding: 6px 14px; font-size: 0.8rem;">
+          &#8635; Refresh
+        </button>
+      </div>
+
+      <div class="table-responsive">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>Time</th>
+              <th>Description</th>
+              <th>Suggested</th>
+              <th>Final Service</th>
+              <th>Match</th>
+              <th>Action</th>
+              <th>Latency</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="history-empty" style="display: none;">
+        No posts yet
+      </div>
+    </section>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast-notification" role="status" aria-live="polite">Saved</div>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
