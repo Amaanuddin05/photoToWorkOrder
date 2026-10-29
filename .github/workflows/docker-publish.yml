@@ -3,14 +3,10 @@ name: Build and Push SigLIP Image to GHCR
 on:
   push:
     branches: [ "main", "master" ]
-    paths:
-      - "siglip/**"
-      - ".github/workflows/docker-publish.yml"
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/siglip
 
 jobs:
   build-and-push:
@@ -22,6 +18,10 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+
+      - name: Lowercase image name
+        run: |
+          echo "IMAGE_NAME=$(echo '${{ github.repository_owner }}/siglip' | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -45,9 +45,8 @@ jobs:
       - name: Build and push Docker image (x86_64 CPU target)
         uses: docker/build-push-action@v5
         with:
-          # Context supports both monorepo root and isolated siglip repo checkouts
-          context: ${{ hashFiles('siglip/Dockerfile') != '' && 'siglip' || '.' }}
-          file: ${{ hashFiles('siglip/Dockerfile') != '' && 'siglip/Dockerfile' || 'Dockerfile' }}
+          context: .
+          file: Dockerfile
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
