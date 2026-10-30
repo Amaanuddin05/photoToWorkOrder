@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8083:8000"
+      - "8083:80"
     environment:
       - SIGLIP_MODEL_ID=${SIGLIP_MODEL_ID:-google/siglip2-base-patch16-224}
       - SIGLIP_API_KEY=${SIGLIP_API_KEY:-}

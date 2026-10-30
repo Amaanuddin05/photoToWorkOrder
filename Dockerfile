@@ -4,12 +4,16 @@ FROM python:3.11-slim
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     HF_HOME=/models \
-    PORT=8000
+    PORT=80
 
 WORKDIR /app
 
-# 1. Install CPU-only PyTorch directly from official CPU wheel repository
-RUN pip install --no-cache-dir --upgrade pip && \
+# 1. Install libcap2-bin for binding port 80 as non-root user, plus CPU-only PyTorch
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libcap2-bin && \
+    setcap 'cap_net_bind_service=+ep' /usr/local/bin/python3.11 && \
+    rm -rf /var/lib/apt/lists/* && \
+    pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # 2. Copy dependencies and install requirements
@@ -26,11 +30,11 @@ COPY app/ /app/app/
 
 USER appuser
 
-EXPOSE 8000 3000
+EXPOSE 80
 
 # Healthcheck using Python's standard library urllib (no curl in python:3.11-slim)
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-    CMD python -c "import urllib.request, os; port=os.environ.get('PORT', '8000'); urllib.request.urlopen(f'http://localhost:{port}/health')"
+    CMD python -c "import urllib.request, os; port=os.environ.get('PORT', '80'); urllib.request.urlopen(f'http://localhost:{port}/health')"
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
+CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-80} --workers 1"]
 
