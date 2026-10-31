@@ -88,6 +88,10 @@ class Settings(BaseSettings):
     EVAL_RUNS_DIR: str = "app/eval/runs"
     EVAL_MAX_HISTORY_RUNS: int = 20
 
+    # ── Demo Services & Zero-Shot Testing ─────────────────────────────────────
+    DEMO_REGISTRY_PATH: str = "app/data/demo_services.json"
+    DEMO_HARD_DELETE: bool = False
+
     # ── Logging ───────────────────────────────────────────────────────────────
     LOG_LEVEL: str = "INFO"
     LOG_FORMAT: str = "json"     # "json" or "console"
@@ -139,6 +143,8 @@ class Settings(BaseSettings):
             "ENABLE_DEBUG_ENDPOINTS": self.ENABLE_DEBUG_ENDPOINTS,
             "ENABLE_UI": self.ENABLE_UI,
             "ENABLE_EVAL": self.ENABLE_EVAL,
+            "DEMO_REGISTRY_PATH": self.DEMO_REGISTRY_PATH,
+            "DEMO_HARD_DELETE": self.DEMO_HARD_DELETE,
             "config_version": self.config_version,
         }
 

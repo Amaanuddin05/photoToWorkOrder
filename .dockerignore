@@ -13,4 +13,7 @@ scripts/profile_model.py
 .gitignore
 .env
 *.md
+app/data/
+demo_services.json
+
 

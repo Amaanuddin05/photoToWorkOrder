@@ -8,4 +8,7 @@ groundTruth.csv
 scratch_test.py
 /tmp
 /app/eval/runs
+/app/data
+demo_services.json
 /photos
+

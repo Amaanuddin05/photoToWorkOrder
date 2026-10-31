@@ -548,3 +548,240 @@ async def get_recent_decisions(
         })
     return results
 
+
+async def get_service_by_title_ci(
+    pool: AsyncConnectionPool, title: str
+) -> dict[str, Any] | None:
+    """Case-insensitive trimmed title lookup."""
+    async with pool.connection() as conn:
+        cur = await conn.execute(
+            """
+            SELECT id, title, description, keywords, "isActive", "embeddingModel"
+            FROM "WoService"
+            WHERE lower(trim(title)) = lower(trim(%s));
+            """,
+            (title,),
+        )
+        row = await cur.fetchone()
+    if not row:
+        return None
+    return {
+        "id": row[0],
+        "title": row[1],
+        "description": row[2],
+        "keywords": row[3],
+        "is_active": row[4],
+        "embedding_model": row[5],
+    }
+
+
+async def get_service_by_id(
+    pool: AsyncConnectionPool, service_id: int
+) -> dict[str, Any] | None:
+    """Lookup service by ID."""
+    async with pool.connection() as conn:
+        cur = await conn.execute(
+            """
+            SELECT id, title, description, keywords, "isActive", "embeddingModel"
+            FROM "WoService"
+            WHERE id = %s;
+            """,
+            (service_id,),
+        )
+        row = await cur.fetchone()
+    if not row:
+        return None
+    return {
+        "id": row[0],
+        "title": row[1],
+        "description": row[2],
+        "keywords": row[3],
+        "is_active": row[4],
+        "embedding_model": row[5],
+    }
+
+
+async def create_or_update_service_tx(
+    pool: AsyncConnectionPool,
+    *,
+    title: str,
+    description: str,
+    keywords: str | None,
+    is_active: bool,
+    title_emb: list[float],
+    desc_emb: list[float],
+    embedding_model: str,
+    existing_id: int | None = None,
+    image_model: str | None = None,
+    visual_line: str | None = None,
+    text_used: str | None = None,
+    image_emb: list[float] | None = None,
+    truncated: bool = False,
+) -> dict[str, Any]:
+    """
+    Creates or updates WoService and ServiceImageProfile in ONE single database transaction.
+    Either both rows exist or neither (rolls back on any error).
+    """
+    title_vec = "[" + ",".join(str(v) for v in title_emb) + "]"
+    desc_vec = "[" + ",".join(str(v) for v in desc_emb) + "]"
+
+    async with pool.connection() as conn:
+        async with conn.transaction():
+            if existing_id is not None:
+                cur = await conn.execute(
+                    """
+                    UPDATE "WoService"
+                    SET title = %s, description = %s, keywords = %s,
+                        "isActive" = %s, "embeddingModel" = %s,
+                        "titleEmb" = %s::vector, "descEmb" = %s::vector,
+                        "updatedAt" = now()
+                    WHERE id = %s
+                    RETURNING id, title, "updatedAt";
+                    """,
+                    (title, description, keywords, is_active,
+                     embedding_model, title_vec, desc_vec, existing_id),
+                )
+            else:
+                cur = await conn.execute(
+                    """
+                    INSERT INTO "WoService"
+                        (title, description, keywords, "isActive",
+                         "embeddingModel", "titleEmb", "descEmb", "updatedAt")
+                    VALUES (%s, %s, %s, %s, %s, %s::vector, %s::vector, now())
+                    RETURNING id, title, "updatedAt";
+                    """,
+                    (title, description, keywords, is_active,
+                     embedding_model, title_vec, desc_vec),
+                )
+            row = await cur.fetchone()
+            if not row:
+                raise RuntimeError("Failed to insert or update WoService")
+            service_id = row[0]
+            updated_at = row[2].isoformat() if row[2] else None
+
+            if image_emb is not None and image_model:
+                emb_vec = "[" + ",".join(str(v) for v in image_emb) + "]"
+                await conn.execute(
+                    """
+                    INSERT INTO "ServiceImageProfile"
+                        ("serviceId", "imageModel", "visualLine", "textUsed",
+                         "truncated", "textEmb", "updatedAt")
+                    VALUES (%s, %s, %s, %s, %s, %s::vector, now())
+                    ON CONFLICT ("serviceId", "imageModel") DO UPDATE SET
+                        "visualLine" = EXCLUDED."visualLine",
+                        "textUsed" = EXCLUDED."textUsed",
+                        "truncated" = EXCLUDED."truncated",
+                        "textEmb" = EXCLUDED."textEmb",
+                        "updatedAt" = now();
+                    """,
+                    (service_id, image_model, visual_line, text_used, truncated, emb_vec),
+                )
+            elif existing_id is not None and image_model:
+                await conn.execute(
+                    """
+                    DELETE FROM "ServiceImageProfile"
+                    WHERE "serviceId" = %s AND "imageModel" = %s;
+                    """,
+                    (service_id, image_model),
+                )
+
+    return {"id": service_id, "title": title, "updated_at": updated_at}
+
+
+async def hard_delete_service_tx(pool: AsyncConnectionPool, service_id: int) -> bool:
+    """
+    Hard-deletes ServiceImageProfile and WoService rows in ONE transaction.
+    """
+    async with pool.connection() as conn:
+        async with conn.transaction():
+            await conn.execute('DELETE FROM "ServiceImageProfile" WHERE "serviceId" = %s;', (service_id,))
+            cur = await conn.execute('DELETE FROM "WoService" WHERE id = %s RETURNING id;', (service_id,))
+            row = await cur.fetchone()
+            return bool(row)
+
+
+async def find_similar_services(
+    pool: AsyncConnectionPool,
+    title_emb: list[float],
+    desc_emb: list[float],
+    top_n: int = 3,
+    exclude_id: int | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Finds top-N most similar active services by cosine similarity against title and description.
+    """
+    title_vec = "[" + ",".join(str(v) for v in title_emb) + "]"
+    desc_vec = "[" + ",".join(str(v) for v in desc_emb) + "]"
+
+    async with pool.connection() as conn:
+        cur = await conn.execute(
+            """
+            SELECT id, title, description,
+                   GREATEST(
+                       1 - ("titleEmb" <=> %(t_q)s::vector),
+                       1 - ("descEmb"  <=> %(d_q)s::vector),
+                       0.7 * (1 - ("descEmb" <=> %(d_q)s::vector)) + 0.3 * (1 - ("titleEmb" <=> %(t_q)s::vector))
+                   ) AS sim_score,
+                   1 - ("titleEmb" <=> %(t_q)s::vector) AS title_sim,
+                   1 - ("descEmb"  <=> %(d_q)s::vector) AS desc_sim
+            FROM "WoService"
+            WHERE "isActive" AND "titleEmb" IS NOT NULL AND "descEmb" IS NOT NULL
+              AND (%(exclude_id)s::int IS NULL OR id != %(exclude_id)s)
+            ORDER BY sim_score DESC
+            LIMIT %(top_n)s;
+            """,
+            {"t_q": title_vec, "d_q": desc_vec, "top_n": top_n, "exclude_id": exclude_id},
+        )
+        rows = await cur.fetchall()
+
+    return [
+        {
+            "id": r[0],
+            "title": r[1],
+            "description": r[2],
+            "score": round(float(r[3]), 4),
+            "title_sim": round(float(r[4]), 4),
+            "desc_sim": round(float(r[5]), 4),
+        }
+        for r in rows
+    ]
+
+
+async def get_services_by_ids(
+    pool: AsyncConnectionPool,
+    service_ids: list[int],
+    image_model: str,
+) -> dict[int, dict[str, Any]]:
+    """
+    Fetches WoService details and image profile status for a batch of IDs.
+    """
+    if not service_ids:
+        return {}
+    async with pool.connection() as conn:
+        cur = await conn.execute(
+            """
+            SELECT s.id, s.title, s.description, s.keywords, s."isActive",
+                   p."visualLine", (p."serviceId" IS NOT NULL) AS has_profile
+            FROM "WoService" s
+            LEFT JOIN "ServiceImageProfile" p
+              ON p."serviceId" = s.id AND p."imageModel" = %s
+            WHERE s.id = ANY(%s);
+            """,
+            (image_model, service_ids),
+        )
+        rows = await cur.fetchall()
+
+    return {
+        r[0]: {
+            "id": r[0],
+            "title": r[1],
+            "description": r[2],
+            "keywords": r[3],
+            "is_active": r[4],
+            "visual_description": r[5],
+            "has_image_profile": bool(r[6]),
+        }
+        for r in rows
+    }
+
+
