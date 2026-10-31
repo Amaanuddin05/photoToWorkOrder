@@ -2,3 +2,10 @@
 __pycache__/
 *.pyc
 .pytest_cache/
+eval_dataset.zip
+groundTruth.csv
+*.zip
+scratch_test.py
+/tmp
+/app/eval/runs
+/photos

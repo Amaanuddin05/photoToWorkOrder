@@ -50,6 +50,12 @@ class Settings(BaseSettings):
     PIPELINE_IMAGE_TOP_N: int = 5
     PIPELINE_POOL_MAX: int = 10
     PIPELINE_RERANKER_TEMP: float = 1.0
+    ENABLE_RERANKER: bool = True
+    # Softmax temperature for bi-encoder mode (no cross-encoder reranker).
+    # Lower values amplify score gaps: 0.04–0.08 recommended.
+    PIPELINE_BIENCODER_TEMP: float = 0.06
+    # Agreement bonus added to candidate score when text AND image both rank it #1.
+    PIPELINE_BIENCODER_AGREE_BOOST: float = 0.05
 
     # ── Decision Thresholds ───────────────────────────────────────────────────
     DECISION_CONFIDENCE_THRESHOLD: float = 0.40
@@ -72,6 +78,15 @@ class Settings(BaseSettings):
     STORE_DESCRIPTION: bool = True
     ENABLE_DEBUG_ENDPOINTS: bool = False
     ENABLE_UI: bool = False
+
+    # ── Evaluation Suite ──────────────────────────────────────────────────────
+    ENABLE_EVAL: bool = False
+    EVAL_MAX_ZIP_BYTES: int = 100 * 1024 * 1024                 # 100 MB max zip upload
+    EVAL_MAX_TOTAL_UNCOMPRESSED_BYTES: int = 500 * 1024 * 1024  # 500 MB max uncompressed
+    EVAL_MAX_IMAGE_COUNT: int = 1000                            # Max files in eval zip
+    EVAL_MAX_IMAGE_BYTES: int = 10 * 1024 * 1024                # 10 MB per image
+    EVAL_RUNS_DIR: str = "app/eval/runs"
+    EVAL_MAX_HISTORY_RUNS: int = 20
 
     # ── Logging ───────────────────────────────────────────────────────────────
     LOG_LEVEL: str = "INFO"
@@ -102,6 +117,7 @@ class Settings(BaseSettings):
             self.PIPELINE_IMAGE_TOP_N,
             self.PIPELINE_POOL_MAX,
             self.PIPELINE_RERANKER_TEMP,
+            self.ENABLE_RERANKER,
             self.DECISION_CONFIDENCE_THRESHOLD,
             self.DECISION_GAP_THRESHOLD,
             self.DECISION_NO_ACTION_FLOOR,
@@ -122,6 +138,7 @@ class Settings(BaseSettings):
             "AUTO_CREATE_ENABLED": self.AUTO_CREATE_ENABLED,
             "ENABLE_DEBUG_ENDPOINTS": self.ENABLE_DEBUG_ENDPOINTS,
             "ENABLE_UI": self.ENABLE_UI,
+            "ENABLE_EVAL": self.ENABLE_EVAL,
             "config_version": self.config_version,
         }
 

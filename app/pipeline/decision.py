@@ -40,6 +40,8 @@ class CandidateOut:
     image_rank: float | None = None
     pool_rank: int | None = None
     rerank_score: float | None = None
+    rerank_rank: int | None = None
+    raw_score: float | None = None
 
 
 @dataclass
@@ -54,6 +56,15 @@ class ProcessedPost:
     top_candidates: list[CandidateOut] = field(default_factory=list)
     idempotent_replay: bool = False
     shadow: bool = False    # True when AUTO_CREATE_ENABLED=False and would_be=auto_create
+    all_candidates: list[CandidateOut] = field(default_factory=list)
+    text_top1: str | None = None
+    image_top1: str | None = None
+    timings: dict[str, float] = field(default_factory=dict)
+    raw_rerank_scores: list[dict[str, Any]] = field(default_factory=list)
+    full_text_ranks: dict[str, int] = field(default_factory=dict)
+    full_image_ranks: dict[str, int] = field(default_factory=dict)
+    all_service_text_scores: dict[str, float] = field(default_factory=dict)
+    all_service_image_scores: dict[str, float] = field(default_factory=dict)
 
 
 # ── Reranker wrapper (applies softmax to TEI raw logits) ─────────────────────
@@ -116,21 +127,28 @@ def make_decision(
     # Case 1: Description missing → draft, rank by image only
     if not trimmed_desc:
         candidates: list[CandidateOut] = []
+        all_candidates: list[CandidateOut] = []
         if image_top:
-            for item in image_top[:top_candidates_count]:
+            for idx, item in enumerate(image_top, start=1):
                 score = item.get("score")
-                candidates.append(CandidateOut(
+                c_out = CandidateOut(
                     service_id=item.get("service_id"),
                     title=item["service"],
                     confidence=score,
                     confidence_pct=f"{score * 100:.1f}%" if score is not None else None,
                     image_rank=float(item.get("rank", 0)),
-                ))
+                    pool_rank=idx,
+                    rerank_rank=idx,
+                )
+                all_candidates.append(c_out)
+                if len(candidates) < top_candidates_count:
+                    candidates.append(c_out)
         return ProcessedPost(
             decision_id=None,
             action="draft",
             would_be_action="draft",
             top_candidates=candidates,
+            all_candidates=all_candidates,
             confidence=None,
             gap=None,
             agree=agree,
@@ -140,9 +158,10 @@ def make_decision(
     # Build candidate list from reranked (or pool fallback)
     candidate_source = reranked if reranked else pool
     candidates = []
-    for item in candidate_source[:top_candidates_count]:
+    all_candidates = []
+    for idx, item in enumerate(candidate_source, start=1):
         conf = item.get("confidence")
-        candidates.append(CandidateOut(
+        c_out = CandidateOut(
             service_id=item.get("service_id"),
             title=item["service"],
             confidence=conf,
@@ -151,7 +170,12 @@ def make_decision(
             image_rank=item.get("image_rank"),
             pool_rank=item.get("pool_rank"),
             rerank_score=item.get("rerank_score"),
-        ))
+            rerank_rank=item.get("rerank_rank", idx),
+            raw_score=item.get("rerank_score"),
+        )
+        all_candidates.append(c_out)
+        if len(candidates) < top_candidates_count:
+            candidates.append(c_out)
 
     top_service = candidates[0].title if candidates else ""
 
@@ -163,6 +187,7 @@ def make_decision(
             action="draft",
             would_be_action="draft",
             top_candidates=candidates,
+            all_candidates=all_candidates,
             confidence=confidence,
             gap=gap,
             agree=agree,
@@ -176,6 +201,7 @@ def make_decision(
             action="draft",
             would_be_action="draft",
             top_candidates=candidates,
+            all_candidates=all_candidates,
             confidence=confidence,
             gap=gap,
             agree=agree,
@@ -189,6 +215,7 @@ def make_decision(
             action="no_action",
             would_be_action="no_action",
             top_candidates=candidates,
+            all_candidates=all_candidates,
             confidence=confidence,
             gap=gap,
             agree=agree,
@@ -222,6 +249,7 @@ def make_decision(
             action=action,
             would_be_action=would_be,
             top_candidates=candidates,
+            all_candidates=all_candidates,
             confidence=confidence,
             gap=gap,
             agree=agree,
@@ -235,6 +263,7 @@ def make_decision(
         action="draft",
         would_be_action="draft",
         top_candidates=candidates,
+        all_candidates=all_candidates,
         confidence=confidence,
         gap=gap,
         agree=agree,

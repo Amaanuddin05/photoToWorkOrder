@@ -28,22 +28,37 @@ RANKING_SQL = """
 """
 
 
+RANKING_ALL_SQL = """
+    SELECT id, title, description,
+           1 - ("titleEmb" <=> %(q)s::vector) AS title_sim,
+           1 - ("descEmb"  <=> %(q)s::vector) AS desc_sim,
+           %(w)s * (1 - ("descEmb"  <=> %(q)s::vector))
+             + (1 - %(w)s) * (1 - ("titleEmb" <=> %(q)s::vector)) AS score
+    FROM "WoService"
+    WHERE "isActive"
+    ORDER BY score DESC;
+"""
+
+
 async def text_search(
     pool: AsyncConnectionPool,
     query_vector: list[float],
     desc_weight: float,
     top_n: int,
-) -> list[dict[str, Any]]:
+    return_all: bool = False,
+) -> list[dict[str, Any]] | tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """Cosine similarity search against WoService title/desc embeddings."""
     vec_str = "[" + ",".join(str(v) for v in query_vector) + "]"
+    sql = RANKING_ALL_SQL if return_all else RANKING_SQL
+    params: dict[str, Any] = {"q": vec_str, "w": desc_weight}
+    if not return_all:
+        params["top_n"] = top_n
+
     async with pool.connection() as conn:
-        cur = await conn.execute(
-            RANKING_SQL,
-            {"q": vec_str, "w": desc_weight, "top_n": top_n},
-        )
+        cur = await conn.execute(sql, params)
         rows = await cur.fetchall()
 
-    return [
+    items = [
         {
             "service": r[1],
             "service_id": r[0],
@@ -55,6 +70,9 @@ async def text_search(
         }
         for idx, r in enumerate(rows, start=1)
     ]
+    if return_all:
+        return items[:top_n], items
+    return items
 
 
 async def get_all_service_profiles(

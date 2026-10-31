@@ -239,7 +239,7 @@ def create_app(
     siglip_service: Any = None,
     tei_client: Any = None,
 ) -> FastAPI:
-    from app.routers import health, metrics, posts, services, decisions
+    from app.routers import health, metrics, posts, services, decisions, eval
 
     app = FastAPI(
         title="Photo-to-Work-Order Service",
@@ -319,20 +319,34 @@ def create_app(
     app.include_router(posts.router)
     app.include_router(services.router)
     app.include_router(decisions.router)
+    app.include_router(eval.router)
 
-    # ── Static UI (/ui) — gated by ENABLE_UI ──────────────────────────────
+    # ── Static UI (/ui & /ui/eval) ─────────────────────────────────────────
     from app.config import get_settings
     active_settings = getattr(app.state, "settings", None) or get_settings()
-    if getattr(active_settings, "ENABLE_UI", False):
+    enable_ui = getattr(active_settings, "ENABLE_UI", False)
+    enable_eval = getattr(active_settings, "ENABLE_EVAL", False)
+
+    if enable_ui or enable_eval:
         from pathlib import Path
         from fastapi.staticfiles import StaticFiles
-        from fastapi.responses import RedirectResponse
+        from fastapi.responses import RedirectResponse, FileResponse
 
         static_dir = Path(__file__).resolve().parent / "static"
         if static_dir.exists():
-            @app.get("/ui", include_in_schema=False)
-            async def ui_redirect():
-                return RedirectResponse(url="/ui/")
+            if enable_eval:
+                @app.get("/ui/eval", include_in_schema=False)
+                @app.get("/ui/eval/", include_in_schema=False)
+                async def eval_page():
+                    eval_html_path = static_dir / "eval.html"
+                    if not eval_html_path.exists():
+                        raise HTTPException(status_code=404, detail="Evaluation UI page not found.")
+                    return FileResponse(str(eval_html_path), media_type="text/html")
+
+            if enable_ui:
+                @app.get("/ui", include_in_schema=False)
+                async def ui_redirect():
+                    return RedirectResponse(url="/ui/")
 
             app.mount("/ui", StaticFiles(directory=str(static_dir), html=True), name="ui")
 

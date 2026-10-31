@@ -59,8 +59,23 @@ def _build_response(result: ProcessedPost, idempotent_replay: bool = False) -> d
             "image_rank": c.image_rank,
             "pool_rank": c.pool_rank,
             "rerank_score": c.rerank_score,
+            "rerank_rank": c.rerank_rank,
         }
         for c in result.top_candidates
+    ]
+    all_candidates = [
+        {
+            "service_id": c.service_id,
+            "title": c.title,
+            "confidence": c.confidence,
+            "confidence_pct": c.confidence_pct,
+            "text_rank": c.text_rank,
+            "image_rank": c.image_rank,
+            "pool_rank": c.pool_rank,
+            "rerank_score": c.rerank_score,
+            "rerank_rank": c.rerank_rank,
+        }
+        for c in (result.all_candidates or result.top_candidates)
     ]
     return {
         "decision_id": result.decision_id,
@@ -72,6 +87,10 @@ def _build_response(result: ProcessedPost, idempotent_replay: bool = False) -> d
         "agree": result.agree,
         "reason": result.reason,
         "top_candidates": candidates,
+        "all_candidates": all_candidates,
+        "text_top1": result.text_top1,
+        "image_top1": result.image_top1,
+        "timings": result.timings,
         "idempotent_replay": idempotent_replay,
         "shadow": result.shadow,
     }

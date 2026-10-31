@@ -23,7 +23,8 @@ def rank_image_against_profiles(
     service_profiles: dict[int, dict[str, Any]],
     siglip_service: Any,  # SigLIPService
     top_n: int = 5,
-) -> list[dict[str, Any]]:
+    return_all_ranks: bool = False,
+) -> list[dict[str, Any]] | tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     """
     Synchronous zero-shot image ranking.
     Encodes image via SigLIP, cosine-dots against cached service text vectors.
@@ -93,5 +94,7 @@ def rank_image_against_profiles(
 
     ranked_all.sort(key=lambda x: (x["rank"], -x["score"]))
     valid = [item for item in ranked_all if item["has_visual_vote"]]
+    if return_all_ranks:
+        return valid[:top_n], ranked_all
     return valid[:top_n]
 
