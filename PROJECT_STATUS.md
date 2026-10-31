@@ -1,6 +1,44 @@
 # Project Status: SigLIP Standalone Photo-to-Work-Order Service
 
 ## Current Task
+- **Operator Console Demo Services: "Add Service" Form with Embeddings & "Demo Services" Registry/List/Delete: COMPLETED** — 2026-10-31
+  - Task A ("Add Service" Form): Added form creating a service together with all its embeddings (TEI text embeddings and optional SigLIP vision profile). Features real-time character counters, pre-saving non-blocking similarity check with warning (> 0.85), duplicate title conflict prevention (409), and 409 inactive conflict detection with one-click "Reactivate and overwrite" support. Atomic single-transaction database write with automatic in-memory cache refresh.
+  - Task B ("Demo Services" Registry, List & Delete): Lightweight atomic JSON file registry (`DEMO_REGISTRY_PATH`, default `app/data/demo_services.json`), protected with `asyncio.Lock` and temp-file replacement. Endpoints `GET /v1/services/demo`, `DELETE /v1/services/demo/{id}`, and `DELETE /v1/services/demo` with strict server-side registry ID and DB title validation. Default soft-delete or configurable hard-delete (`DEMO_HARD_DELETE`), with immediate in-memory `service_profiles` cache refresh.
+  - UI Experience (`/ui`): Interactive vanilla HTML/CSS/JS operator console additions with DEMO badges, photo-matching warning badges when no visual description exists, notice banner ("Demo services are active in the live pipeline and in evaluation runs while they exist. Delete them before running an evaluation."), and confirmation dialogs.
+
+## Completed Work
+- **Operator Console Demo Services ("Add Service" & Demo Management)** — 2026-10-31:
+  - **Database & Architecture Inspection (Step 0)**:
+    - Confirmed `WoService` contains: `id`, `title`, `description`, `keywords` (`text NULL`), `isActive`, `embeddingModel`, `updatedAt`, `titleEmb`, `descEmb`. No schema change or migration needed.
+    - Verified `ServiceImageProfile` contains: `serviceId`, `imageModel`, `visualLine`, `textUsed`, `truncated`, `textEmb`, `updatedAt`.
+    - Reused exact embedding generation pipeline: TEI `tei.embed([title, desc])` with 768-dim validation and SigLIP `siglip.encode_texts([f"{title}. {visual_line}"])` when visual line provided.
+    - Confirmed in-memory `service_profiles` cache refresh mechanism via `repo.get_all_service_profiles(db_pool, settings.SIGLIP_MODEL_ID)`, which queries `WHERE s."isActive"`, immediately reflecting creations, reactivations, and deletions in image ranking without service restarts.
+  - **Atomic Demo Registry (`app/demo_registry.py`)**:
+    - Thread-safe atomic JSON file persistence using `asyncio.Lock` and temporary file swap (`os.replace`).
+    - Configured via `DEMO_REGISTRY_PATH` (default `app/data/demo_services.json`), added to `.gitignore` and `.dockerignore`.
+    - Graceful error recovery: treats missing or corrupt file as empty list with warnings.
+    - Prunes stale or inactive entries during registry list reads.
+  - **Database Repository (`app/db/repository.py`)**:
+    - `create_or_update_service_tx()`: Single transaction (`async with conn.transaction():`) inserting/updating `WoService` and inserting/updating `ServiceImageProfile` (if visual line provided). Atomically rolls back on any failure.
+    - `hard_delete_service_tx()`: Atomic single transaction deleting both rows when `DEMO_HARD_DELETE=true`.
+    - `find_similar_services()`: Computes pgvector cosine similarities against active catalog to detect similar services prior to saving.
+    - `get_service_by_title_ci()`: Case-insensitive, trimmed lookup for collision detection.
+    - `get_services_by_ids()`: Batch retrieval of service records with visual profile joins.
+  - **Router Endpoints (`app/routers/services.py`)**:
+    - `POST /v1/services/check-similarity`: Non-blocking pre-save cosine similarity check returning top 3 active matches.
+    - `POST /v1/services/create`: Validates inputs, handles 409 active collisions and inactive reactivation prompts, computes embeddings, writes transactionally, refreshes cache, registers demo service, and returns embedding details with similarity warnings.
+    - `GET /v1/services/demo`: Returns active demo services with database metadata, auto-pruning stale entries.
+    - `DELETE /v1/services/demo/{service_id}`: Strictly verifies registry ID and database title match server-side, deletes (soft or hard), unregisters, and refreshes cache.
+    - `DELETE /v1/services/demo`: Bulk deletes all registered demo services with confirmation and cache refresh.
+  - **UI Implementation (`app/static/index.html`, `app/static/styles.css`, `app/static/app.js`)**:
+    - Add Service Form with real-time character counters (title: 200, desc: 1000, visual: 500).
+    - Visual description warning hint ("Won't match from photos") when empty.
+    - Non-blocking similarity box surfacing matches > 0.85.
+    - Reactivation alert button for 409 inactive conflict.
+    - Demo services list table with DEMO badges, photo warning badges, created timestamps, and Delete action buttons with confirmation dialogs.
+    - Bulk delete button with count-based confirmation dialog.
+    - Prominent notice banner reminding operators to delete demo services before running evaluations.
+    - API key header input and session-based persistence.
 - **Eval Suite Upgrade: Run Record Snapshot, Additive Diagnostic Storage, Run Comparison, 3-Level NONE Reporting, Signal Quality AUROC Table & Reranker Presets: COMPLETED** — 2026-10-31
   - Task 1 (Run Record): Captured comprehensive settings snapshot for every evaluation run (overrides, effective pipeline parameters, model IDs, active catalog SHA-256 hash). Surfaced in UI, exports, and added visible "RERANKER OFF" banner when reranker is disabled.
   - Task 2 (Store More Per Row): Stored all active service text scores and image similarities, candidate raw reranker scores, explicit top-1 raw score, top-1 image similarity, and top-1 text similarity without breaking pipeline or past run formats.

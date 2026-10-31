@@ -16,6 +16,7 @@
     currentDecision: null,
     selectedServiceId: null,
     catalogServices: [],
+    demoServices: [],
   };
 
   // Known emergency services requiring mandatory human review
@@ -26,7 +27,9 @@
 
   // DOM Elements
   const els = {
-    // Header
+    // Header & Auth
+    apiKeyInput: document.getElementById("api-key-input"),
+    saveKeyBtn: document.getElementById("save-key-btn"),
     systemStatus: document.getElementById("system-status"),
     statusText: document.getElementById("status-text"),
 
@@ -75,13 +78,55 @@
     historyEmpty: document.getElementById("history-empty"),
     refreshHistoryBtn: document.getElementById("refresh-history-btn"),
 
+    // Screen 4: Add Demo Service
+    screenAddService: document.getElementById("screen-add-service"),
+    addServiceForm: document.getElementById("add-service-form"),
+    svcTitle: document.getElementById("svc-title"),
+    titleCharCounter: document.getElementById("title-char-counter"),
+    svcDesc: document.getElementById("svc-desc"),
+    descCharCounter: document.getElementById("desc-char-counter"),
+    svcKeywords: document.getElementById("svc-keywords"),
+    svcVisual: document.getElementById("svc-visual"),
+    visualCharCounter: document.getElementById("visual-char-counter"),
+    noVisualWarning: document.getElementById("no-visual-warning"),
+    svcSimBox: document.getElementById("svc-sim-box"),
+    svcSimStatus: document.getElementById("svc-sim-status"),
+    svcSimList: document.getElementById("svc-sim-list"),
+    svcReactivateBox: document.getElementById("svc-reactivate-box"),
+    svcReactivateMsg: document.getElementById("svc-reactivate-msg"),
+    svcReactivateBtn: document.getElementById("svc-reactivate-btn"),
+    svcErrorAlert: document.getElementById("svc-error-alert"),
+    svcSuccessAlert: document.getElementById("svc-success-alert"),
+    saveSvcBtn: document.getElementById("save-svc-btn"),
+    saveSvcSpinner: document.getElementById("save-svc-spinner"),
+    saveSvcBtnText: document.getElementById("save-svc-btn-text"),
+    checkSimBtn: document.getElementById("check-sim-btn"),
+    checkSimSpinner: document.getElementById("check-sim-spinner"),
+    clearSvcBtn: document.getElementById("clear-svc-btn"),
+
+    // Screen 5: Demo Services
+    screenDemoServices: document.getElementById("screen-demo-services"),
+    demoCountBadge: document.getElementById("demo-count-badge"),
+    refreshDemosBtn: document.getElementById("refresh-demos-btn"),
+    deleteAllDemosBtn: document.getElementById("delete-all-demos-btn"),
+    demoServicesTable: document.getElementById("demo-services-table"),
+    demoServicesTbody: document.getElementById("demo-services-tbody"),
+    demosEmpty: document.getElementById("demos-empty"),
+
     // Feedback
     toast: document.getElementById("toast-notification"),
   };
 
   // Helper: Get Request Headers
   function getHeaders(extraHeaders = {}) {
-    return { ...extraHeaders };
+    const headers = { ...extraHeaders };
+    const savedKey = (sessionStorage.getItem("siglip_api_key") || "").trim();
+    const inputKey = els.apiKeyInput ? els.apiKeyInput.value.trim() : "";
+    const key = savedKey || inputKey;
+    if (key) {
+      headers["Authorization"] = `Bearer ${key}`;
+    }
+    return headers;
   }
 
   // Toast Helper
@@ -837,10 +882,480 @@
     }
   }
 
+  // --- Auth Handler ---
+  function initAuth() {
+    if (!els.apiKeyInput) return;
+    const savedKey = sessionStorage.getItem("siglip_api_key") || "";
+    if (savedKey) {
+      els.apiKeyInput.value = savedKey;
+    }
+    if (els.saveKeyBtn) {
+      els.saveKeyBtn.addEventListener("click", () => {
+        const val = els.apiKeyInput.value.trim();
+        if (val) {
+          sessionStorage.setItem("siglip_api_key", val);
+          showToast("API Key saved for session");
+        } else {
+          sessionStorage.removeItem("siglip_api_key");
+          showToast("API Key cleared");
+        }
+      });
+      els.apiKeyInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          els.saveKeyBtn.click();
+        }
+      });
+    }
+  }
+
+  // --- Render Similar Services Helper ---
+  function renderSimilarServices(similarServices, highestScore) {
+    if (!els.svcSimBox || !els.svcSimList) return;
+    els.svcSimList.innerHTML = "";
+    if (!similarServices || similarServices.length === 0) {
+      els.svcSimBox.style.display = "none";
+      return;
+    }
+    els.svcSimBox.style.display = "block";
+    if (highestScore > 0.85) {
+      if (els.svcSimStatus) {
+        els.svcSimStatus.textContent = "High similarity (> 85%) detected";
+        els.svcSimStatus.style.color = "#dc2626";
+      }
+    } else {
+      if (els.svcSimStatus) {
+        els.svcSimStatus.textContent = "Top active catalog matches";
+        els.svcSimStatus.style.color = "var(--text-muted)";
+      }
+    }
+
+    similarServices.forEach((item) => {
+      const itemEl = document.createElement("div");
+      itemEl.className = "sim-item";
+
+      const titleSpan = document.createElement("span");
+      titleSpan.textContent = `#${item.id} ${item.title}`;
+      itemEl.appendChild(titleSpan);
+
+      const scoreSpan = document.createElement("span");
+      const pct = (item.score * 100).toFixed(1);
+      scoreSpan.textContent = `${pct}%`;
+      if (item.score > 0.85) {
+        scoreSpan.className = "sim-badge-high";
+      } else {
+        scoreSpan.style.color = "var(--text-secondary)";
+        scoreSpan.style.fontWeight = "600";
+      }
+      itemEl.appendChild(scoreSpan);
+      els.svcSimList.appendChild(itemEl);
+    });
+  }
+
+  // --- Add Demo Service Form Handler ---
+  function initAddService() {
+    if (!els.addServiceForm) return;
+
+    function updateCounters() {
+      if (els.svcTitle && els.titleCharCounter) {
+        const len = els.svcTitle.value.length;
+        els.titleCharCounter.textContent = `${len} / 200`;
+        els.titleCharCounter.classList.toggle("near-limit", len >= 180);
+      }
+      if (els.svcDesc && els.descCharCounter) {
+        const len = els.svcDesc.value.length;
+        els.descCharCounter.textContent = `${len} / 1000`;
+        els.descCharCounter.classList.toggle("near-limit", len >= 900);
+      }
+      if (els.svcVisual && els.visualCharCounter) {
+        const len = els.svcVisual.value.length;
+        els.visualCharCounter.textContent = `${len} / 500`;
+        els.visualCharCounter.classList.toggle("near-limit", len >= 450);
+        if (els.noVisualWarning) {
+          els.noVisualWarning.style.display = len === 0 ? "block" : "none";
+        }
+      }
+    }
+
+    if (els.svcTitle) els.svcTitle.addEventListener("input", updateCounters);
+    if (els.svcDesc) els.svcDesc.addEventListener("input", updateCounters);
+    if (els.svcVisual) els.svcVisual.addEventListener("input", updateCounters);
+    updateCounters();
+
+    // Clear form
+    if (els.clearSvcBtn) {
+      els.clearSvcBtn.addEventListener("click", () => {
+        els.addServiceForm.reset();
+        updateCounters();
+        if (els.svcSimBox) els.svcSimBox.style.display = "none";
+        if (els.svcReactivateBox) els.svcReactivateBox.style.display = "none";
+        if (els.svcErrorAlert) els.svcErrorAlert.style.display = "none";
+        if (els.svcSuccessAlert) els.svcSuccessAlert.style.display = "none";
+      });
+    }
+
+    // Check similarity button
+    if (els.checkSimBtn) {
+      els.checkSimBtn.addEventListener("click", async () => {
+        const title = (els.svcTitle ? els.svcTitle.value : "").trim();
+        const desc = (els.svcDesc ? els.svcDesc.value : "").trim();
+
+        if (els.svcErrorAlert) els.svcErrorAlert.style.display = "none";
+        if (!title || !desc) {
+          if (els.svcErrorAlert) {
+            els.svcErrorAlert.textContent = "Please enter both Service Name and Description to check similarity.";
+            els.svcErrorAlert.style.display = "block";
+          }
+          return;
+        }
+
+        try {
+          els.checkSimBtn.disabled = true;
+          if (els.checkSimSpinner) els.checkSimSpinner.style.display = "inline-block";
+
+          const resp = await fetch("/v1/services/check-similarity", {
+            method: "POST",
+            headers: getHeaders({ "Content-Type": "application/json" }),
+            body: JSON.stringify({ title, description: desc }),
+          });
+
+          const data = await resp.json().catch(() => ({}));
+          if (!resp.ok) {
+            if (els.svcErrorAlert) {
+              els.svcErrorAlert.textContent = data.detail || "Failed to check similarity.";
+              els.svcErrorAlert.style.display = "block";
+            }
+            return;
+          }
+
+          renderSimilarServices(data.similar_services, data.highest_score || 0);
+        } catch (err) {
+          console.error("Check similarity error:", err);
+          if (els.svcErrorAlert) {
+            els.svcErrorAlert.textContent = "Network error while checking similarity.";
+            els.svcErrorAlert.style.display = "block";
+          }
+        } finally {
+          els.checkSimBtn.disabled = false;
+          if (els.checkSimSpinner) els.checkSimSpinner.style.display = "none";
+        }
+      });
+    }
+
+    // Submit / Save
+    async function submitService(reactivateIfExists = false) {
+      const title = (els.svcTitle ? els.svcTitle.value : "").trim();
+      const desc = (els.svcDesc ? els.svcDesc.value : "").trim();
+      const keywords = (els.svcKeywords ? els.svcKeywords.value : "").trim();
+      const visual = (els.svcVisual ? els.svcVisual.value : "").trim();
+
+      if (els.svcErrorAlert) els.svcErrorAlert.style.display = "none";
+      if (els.svcSuccessAlert) els.svcSuccessAlert.style.display = "none";
+      if (els.svcReactivateBox) els.svcReactivateBox.style.display = "none";
+
+      if (!title || !desc) {
+        if (els.svcErrorAlert) {
+          els.svcErrorAlert.textContent = "Service Name and Description are required.";
+          els.svcErrorAlert.style.display = "block";
+        }
+        return;
+      }
+
+      try {
+        if (els.saveSvcBtn) els.saveSvcBtn.disabled = true;
+        if (els.saveSvcSpinner) els.saveSvcSpinner.style.display = "inline-block";
+        if (els.saveSvcBtnText) els.saveSvcBtnText.textContent = "Saving...";
+
+        const payload = {
+          title,
+          description: desc,
+          keywords,
+          visual_description: visual,
+          reactivate_if_exists: reactivateIfExists,
+        };
+
+        const resp = await fetch("/v1/services/create", {
+          method: "POST",
+          headers: getHeaders({ "Content-Type": "application/json" }),
+          body: JSON.stringify(payload),
+        });
+
+        const data = await resp.json().catch(() => ({}));
+
+        if (resp.status === 409) {
+          if (data.can_reactivate && els.svcReactivateBox) {
+            els.svcReactivateMsg.textContent = data.detail;
+            els.svcReactivateBtn.onclick = () => submitService(true);
+            els.svcReactivateBox.style.display = "block";
+          } else if (els.svcErrorAlert) {
+            els.svcErrorAlert.textContent = data.detail || "A service with this title already exists.";
+            els.svcErrorAlert.style.display = "block";
+          }
+          return;
+        }
+
+        if (!resp.ok) {
+          if (els.svcErrorAlert) {
+            els.svcErrorAlert.textContent = data.detail || `Server error (${resp.status})`;
+            els.svcErrorAlert.style.display = "block";
+          }
+          return;
+        }
+
+        // Success
+        if (els.svcSuccessAlert) {
+          let msg = `Created demo service "${data.title}" (ID: ${data.id}). Embeddings computed (${data.embedding_dimensions || 768}d).`;
+          if (!data.has_image_profile) {
+            msg += " Notice: No image profile was created (visual description was empty).";
+          }
+          if (data.warnings && data.warnings.length > 0) {
+            msg += " Warnings: " + data.warnings.join("; ");
+          }
+          els.svcSuccessAlert.textContent = msg;
+          els.svcSuccessAlert.style.display = "block";
+        }
+
+        if (data.similar_services && data.similar_services.length > 0) {
+          renderSimilarServices(data.similar_services, data.highest_similarity || 0);
+        }
+
+        showToast(`Saved demo service "${data.title}"`);
+        els.addServiceForm.reset();
+        updateCounters();
+        fetchDemoServices();
+        fetchCatalogServices();
+      } catch (err) {
+        console.error("Save service error:", err);
+        if (els.svcErrorAlert) {
+          els.svcErrorAlert.textContent = "Network error while saving service.";
+          els.svcErrorAlert.style.display = "block";
+        }
+      } finally {
+        if (els.saveSvcBtn) els.saveSvcBtn.disabled = false;
+        if (els.saveSvcSpinner) els.saveSvcSpinner.style.display = "none";
+        if (els.saveSvcBtnText) els.saveSvcBtnText.textContent = "Save Demo Service";
+      }
+    }
+
+    els.addServiceForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      submitService(false);
+    });
+  }
+
+  // --- Demo Services List & Delete Handler ---
+  async function fetchDemoServices() {
+    if (!els.demoServicesTable || !els.demoServicesTbody) return;
+
+    try {
+      const resp = await fetch("/v1/services/demo", {
+        headers: getHeaders(),
+      });
+
+      if (!resp.ok) {
+        console.warn("Could not fetch demo services, status:", resp.status);
+        return;
+      }
+
+      const demos = await resp.json();
+      state.demoServices = demos || [];
+
+      if (els.demoCountBadge) {
+        els.demoCountBadge.textContent = `${state.demoServices.length} Demo`;
+      }
+      if (els.deleteAllDemosBtn) {
+        els.deleteAllDemosBtn.disabled = state.demoServices.length === 0;
+      }
+
+      els.demoServicesTbody.innerHTML = "";
+
+      if (state.demoServices.length === 0) {
+        if (els.demosEmpty) els.demosEmpty.style.display = "block";
+        els.demoServicesTable.style.display = "none";
+        return;
+      }
+
+      if (els.demosEmpty) els.demosEmpty.style.display = "none";
+      els.demoServicesTable.style.display = "table";
+
+      state.demoServices.forEach((item) => {
+        const tr = document.createElement("tr");
+
+        // 1. Service Title + ID + Badge
+        const tdTitle = document.createElement("td");
+        const titleDiv = document.createElement("div");
+        titleDiv.style.fontWeight = "600";
+        titleDiv.textContent = item.title;
+
+        const metaDiv = document.createElement("div");
+        metaDiv.style.display = "flex";
+        metaDiv.style.alignItems = "center";
+        metaDiv.style.gap = "6px";
+        metaDiv.style.marginTop = "4px";
+
+        const badge = document.createElement("span");
+        badge.className = "badge-demo";
+        badge.textContent = "Demo";
+        metaDiv.appendChild(badge);
+
+        const idSpan = document.createElement("span");
+        idSpan.style.fontSize = "0.75rem";
+        idSpan.style.color = "var(--text-muted)";
+        idSpan.textContent = `#${item.id}`;
+        metaDiv.appendChild(idSpan);
+
+        tdTitle.appendChild(titleDiv);
+        tdTitle.appendChild(metaDiv);
+        tr.appendChild(tdTitle);
+
+        // 2. Description + Keywords
+        const tdDesc = document.createElement("td");
+        const descDiv = document.createElement("div");
+        descDiv.style.fontSize = "0.85rem";
+        descDiv.textContent = item.description || "-";
+        tdDesc.appendChild(descDiv);
+
+        if (item.keywords) {
+          const kwDiv = document.createElement("div");
+          kwDiv.style.fontSize = "0.75rem";
+          kwDiv.style.color = "var(--text-muted)";
+          kwDiv.style.marginTop = "4px";
+          kwDiv.textContent = `Keywords: ${item.keywords}`;
+          tdDesc.appendChild(kwDiv);
+        }
+        tr.appendChild(tdDesc);
+
+        // 3. Visual Description & Warning Badge
+        const tdVisual = document.createElement("td");
+        if (item.has_image_profile && item.visual_description) {
+          const visDiv = document.createElement("div");
+          visDiv.style.fontSize = "0.85rem";
+          visDiv.textContent = item.visual_description;
+          tdVisual.appendChild(visDiv);
+        } else {
+          const warnBadge = document.createElement("span");
+          warnBadge.className = "badge-warn-visual";
+          warnBadge.textContent = "⚠ Won't match from photos";
+          tdVisual.appendChild(warnBadge);
+
+          const hint = document.createElement("div");
+          hint.style.fontSize = "0.75rem";
+          hint.style.color = "var(--text-muted)";
+          hint.style.marginTop = "4px";
+          hint.textContent = "(No visual description)";
+          tdVisual.appendChild(hint);
+        }
+        tr.appendChild(tdVisual);
+
+        // 4. Created
+        const tdCreated = document.createElement("td");
+        tdCreated.style.fontSize = "0.8rem";
+        tdCreated.style.color = "var(--text-secondary)";
+        if (item.created_at) {
+          try {
+            tdCreated.textContent = new Date(item.created_at).toLocaleDateString([], {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          } catch {
+            tdCreated.textContent = item.created_at;
+          }
+        } else {
+          tdCreated.textContent = "-";
+        }
+        tr.appendChild(tdCreated);
+
+        // 5. Delete Action Button
+        const tdAction = document.createElement("td");
+        tdAction.style.textAlign = "right";
+        const delBtn = document.createElement("button");
+        delBtn.type = "button";
+        delBtn.className = "btn btn-danger";
+        delBtn.style.padding = "4px 10px";
+        delBtn.style.fontSize = "0.75rem";
+        delBtn.textContent = "Delete";
+
+        delBtn.addEventListener("click", async () => {
+          if (!confirm(`Are you sure you want to delete demo service "${item.title}"?`)) {
+            return;
+          }
+          try {
+            delBtn.disabled = true;
+            const resp = await fetch(`/v1/services/demo/${item.id}`, {
+              method: "DELETE",
+              headers: getHeaders(),
+            });
+            const data = await resp.json().catch(() => ({}));
+            if (!resp.ok) {
+              alert(data.detail || "Failed to delete demo service.");
+              delBtn.disabled = false;
+              return;
+            }
+            showToast(`Deleted demo service "${item.title}"`);
+            fetchDemoServices();
+            fetchCatalogServices();
+          } catch (err) {
+            console.error("Delete demo service error:", err);
+            alert("Network error while deleting demo service.");
+            delBtn.disabled = false;
+          }
+        });
+
+        tdAction.appendChild(delBtn);
+        tr.appendChild(tdAction);
+
+        els.demoServicesTbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.warn("Error fetching demo services:", err);
+    }
+  }
+
+  // Hook Delete All Demo Services button
+  if (els.deleteAllDemosBtn) {
+    els.deleteAllDemosBtn.addEventListener("click", async () => {
+      const count = state.demoServices.length;
+      if (!confirm(`Are you sure you want to delete ALL ${count} demo service(s)? This cannot be undone.`)) {
+        return;
+      }
+      try {
+        els.deleteAllDemosBtn.disabled = true;
+        const resp = await fetch("/v1/services/demo", {
+          method: "DELETE",
+          headers: getHeaders(),
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (!resp.ok) {
+          alert(data.detail || "Failed to delete demo services.");
+          els.deleteAllDemosBtn.disabled = false;
+          return;
+        }
+        showToast(data.message || `Deleted ${count} demo services`);
+        fetchDemoServices();
+        fetchCatalogServices();
+      } catch (err) {
+        console.error("Delete all demo services error:", err);
+        alert("Network error while deleting demo services.");
+        els.deleteAllDemosBtn.disabled = false;
+      }
+    });
+  }
+
+  if (els.refreshDemosBtn) {
+    els.refreshDemosBtn.addEventListener("click", () => {
+      fetchDemoServices();
+    });
+  }
+
   // App Initialization
   function init() {
+    initAuth();
+    initAddService();
     updateSubmitButtonState();
     fetchCatalogServices();
+    fetchDemoServices();
     fetchHistory();
   }
 

@@ -58,9 +58,13 @@
         <h1>photoToWorkOrder</h1>
         <p class="app-subtitle">Operator Triage &amp; Work Order Review</p>
       </div>
-      <div class="status-badge" id="system-status">
-        <span class="status-dot"></span>
-        <span id="status-text">Connected</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="password" id="api-key-input" class="header-api-key" placeholder="API Key (optional)" title="Enter API Key if required by server">
+        <button type="button" id="save-key-btn" class="auth-btn">Save Key</button>
+        <div class="status-badge" id="system-status">
+          <span class="status-dot"></span>
+          <span id="status-text">Connected</span>
+        </div>
       </div>
     </header>
 
@@ -222,6 +226,134 @@
       </div>
       <div class="empty-state" id="history-empty" style="display: none;">
         No posts yet
+      </div>
+    </section>
+
+    <!-- SCREEN 4: Add Demo Service -->
+    <section id="screen-add-service" class="card">
+      <div class="form-section-title">
+        <span>Add Service (Demo)</span>
+      </div>
+      <p class="form-help-text" style="margin-bottom: 16px;">
+        Create a new service with text embeddings (TEI) and optional visual embeddings (SigLIP). Services added here are registered as demo services.
+      </p>
+
+      <form id="add-service-form" novalidate>
+        <!-- Title -->
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <label class="form-label" for="svc-title">Service Name <span style="color: var(--accent-primary);">*</span></label>
+            <span class="char-counter" id="title-char-counter">0 / 200</span>
+          </div>
+          <input type="text" id="svc-title" placeholder="e.g. Wall-Mounted AC Repair & Filter Cleaning" maxlength="200" required>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <label class="form-label" for="svc-desc">Description <span style="color: var(--accent-primary);">*</span></label>
+            <span class="char-counter" id="desc-char-counter">0 / 1000</span>
+          </div>
+          <textarea id="svc-desc" placeholder="Comprehensive description of the service and typical issues addressed..." maxlength="1000" rows="3" required></textarea>
+        </div>
+
+        <!-- Keywords -->
+        <div class="form-group">
+          <label class="form-label" for="svc-keywords">Keywords <span class="field-badge">optional</span></label>
+          <input type="text" id="svc-keywords" placeholder="Comma-separated, e.g. hvac, air conditioning, filter, cooling">
+          <p class="form-help-text">Optional comma-separated keywords for catalog lookup.</p>
+        </div>
+
+        <!-- Visual Description -->
+        <div class="form-group">
+          <div style="display: flex; justify-content: space-between; align-items: baseline;">
+            <label class="form-label" for="svc-visual">Visual Description <span class="field-badge">optional</span></label>
+            <span class="char-counter" id="visual-char-counter">0 / 500</span>
+          </div>
+          <textarea id="svc-visual" placeholder="Describe what a photo looks like, e.g. technician servicing a wall-mounted air conditioner with a ladder" maxlength="500" rows="2"></textarea>
+          <div class="alert-warning" id="no-visual-warning" style="display: none; margin-top: 6px;">
+            &#9888; Without a visual description, no image profile will be created. The service will <strong>not be matched from photos</strong> until a visual description is added.
+          </div>
+        </div>
+
+        <!-- Non-blocking Similarity Check Box -->
+        <div class="sim-box" id="svc-sim-box">
+          <div class="sim-title">
+            <span>Catalog Similarity Check</span>
+            <span id="svc-sim-status" style="font-size: 0.75rem; color: var(--text-muted);"></span>
+          </div>
+          <div class="sim-list" id="svc-sim-list"></div>
+        </div>
+
+        <!-- Reactivation Banner (for 409 inactive conflict) -->
+        <div class="alert-warning" id="svc-reactivate-box" style="display: none; margin-top: 12px;">
+          <div id="svc-reactivate-msg"></div>
+          <button type="button" class="btn btn-secondary" id="svc-reactivate-btn" style="margin-top: 8px; font-size: 0.82rem; padding: 6px 12px;">
+            Reactivate and Overwrite
+          </button>
+        </div>
+
+        <!-- Status Alerts -->
+        <div class="alert-error" id="svc-error-alert" style="display: none; margin-top: 12px;" role="alert"></div>
+        <div class="alert-success" id="svc-success-alert" style="display: none; margin-top: 12px;" role="status"></div>
+
+        <!-- Buttons Row -->
+        <div style="display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap;">
+          <button type="submit" class="btn btn-primary" id="save-svc-btn">
+            <span class="spinner" id="save-svc-spinner" style="display: none;" aria-hidden="true"></span>
+            <span id="save-svc-btn-text">Save Demo Service</span>
+          </button>
+          <button type="button" class="btn btn-secondary" id="check-sim-btn">
+            <span class="spinner" id="check-sim-spinner" style="display: none;" aria-hidden="true"></span>
+            Check Similar Services
+          </button>
+          <button type="button" class="btn btn-secondary" id="clear-svc-btn">
+            Clear Form
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- SCREEN 5: Demo Services List -->
+    <section id="screen-demo-services" class="card">
+      <div class="history-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h2 class="history-title" style="margin: 0;">Demo Services</h2>
+          <span class="badge-demo" id="demo-count-badge">0 Demo</span>
+        </div>
+        <div class="demo-actions">
+          <button type="button" class="btn btn-secondary" id="refresh-demos-btn" style="padding: 6px 12px; font-size: 0.8rem;">
+            &#8635; Refresh
+          </button>
+          <button type="button" class="btn btn-danger" id="delete-all-demos-btn" style="padding: 6px 12px; font-size: 0.8rem;" disabled>
+            Delete All Demo Services
+          </button>
+        </div>
+      </div>
+
+      <!-- Prominent Notice Banner -->
+      <div class="demo-notice-banner">
+        <strong>Notice:</strong> Demo services are active in the live pipeline and in evaluation runs while they exist. Delete them before running an evaluation.
+      </div>
+
+      <div class="table-responsive" style="margin-top: 12px;">
+        <table id="demo-services-table">
+          <thead>
+            <tr>
+              <th style="width: 25%;">Service</th>
+              <th style="width: 30%;">Description</th>
+              <th style="width: 25%;">Visual Description</th>
+              <th style="width: 10%;">Created</th>
+              <th style="width: 10%; text-align: right;">Action</th>
+            </tr>
+          </thead>
+          <tbody id="demo-services-tbody">
+            <!-- Populated via app.js -->
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="demos-empty" style="display: none;">
+        No demo services registered yet.
       </div>
     </section>
   </div>
