@@ -1,13 +1,18 @@
 # Project Status: SigLIP Standalone Photo-to-Work-Order Service
 
 ## Current Task
-- **Bugfix: Demo Service Error Formatting & Payload Alignment: COMPLETED** — 2026-11-06
-  - Fixed `[object Object]` alert rendering in operator console (`/ui`) when adding demo services or encountering backend validation/conflict/auth errors.
-  - Implemented centralized `formatErrorMessage()` helper in `app.js` to safely unpack FastAPI error responses (`detail.message`, validation error lists, string details, or fallbacks).
-  - Fixed 409 inactive conflict reactivation detection (`data.detail.can_reactivate`).
-  - Added support for both `visual_line` and `visual_description` in `CreateServicePayload` and form submission.
+- **Demo Services Route Order Fix, Lifecycle Verification & Database Cleanup: COMPLETED** — 2026-11-06
+  - Discovered and resolved FastAPI route order conflict: `@router.delete("/services/{service_id}")` was defined prior to `@router.delete("/services/demo")`, intercepting bulk delete requests and failing with 422 integer parsing error. Moved generic parameterized route to bottom.
+  - Verified full demo service lifecycle: addition with embeddings, single-item deletion (`DELETE /v1/services/demo/{id}`), bulk deletion (`DELETE /v1/services/demo`), server-side production service protection (404), and in-memory cache refresh.
+  - Purged all temporary test demo services from `WoService` and `ServiceImageProfile`; active catalog restored to pristine state (19 production services).
 
 ## Completed Work
+- **Demo Services Route Order Fix & Verification** — 2026-11-06:
+  - Re-ordered router definitions in `app/routers/services.py` so `DELETE /v1/services/demo` and `DELETE /v1/services/demo/{service_id}` are evaluated before `DELETE /v1/services/{service_id}`.
+  - Verified `DELETE /v1/services/demo` successfully deletes all registered demo services and clears `demo_services.json`.
+  - Verified `DELETE /v1/services/demo/{id}` validates registry membership and database title, rejecting production service deletion attempts.
+  - Verified `state.service_profiles` updates dynamically in memory without restarting the service (20/21 -> 19).
+  - Cleared all demo services from database and registry.
 - **Demo Service Error Formatting & Payload Alignment** — 2026-11-06:
   - Added `formatErrorMessage()` in `app/static/app.js` to prevent JavaScript `[object Object]` string conversion when FastAPI returns structured dict/array error payloads (400, 401, 409, 422, 500, 502).
   - Aligned 409 Conflict reactivation: unwraps `detail.can_reactivate` and populates the human-readable reactivation message into `#svc-reactivate-msg`.

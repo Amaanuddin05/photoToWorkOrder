@@ -186,24 +186,6 @@ async def upsert_services(
     return results
 
 
-@router.delete("/services/{service_id}")
-async def delete_service(
-    service_id: int,
-    request: Request,
-    _auth: None = Depends(_require_auth),
-) -> dict[str, Any]:
-    """Soft-delete by setting isActive=false. Preserves FK references in DecisionLog."""
-    from app.db import repository as repo
-
-    found = await repo.soft_delete_service(request.app.state.db_pool, service_id)
-    if not found:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"code": "SERVICE_NOT_FOUND", "message": f"Service {service_id} not found"},
-        )
-    return {"status": "deleted", "service_id": service_id, "note": "soft-deleted (isActive=false)"}
-
-
 # ── Demo Services & Add-Service Form Endpoints ───────────────────────────────
 
 @router.post("/services/check-similarity")
@@ -659,5 +641,26 @@ async def delete_demo_service(
         "title": db_svc["title"],
         "mode": mode,
     }
+
+
+# ── Generic Services Management ──────────────────────────────────────────────
+
+@router.delete("/services/{service_id}")
+async def delete_service(
+    service_id: int,
+    request: Request,
+    _auth: None = Depends(_require_auth),
+) -> dict[str, Any]:
+    """Soft-delete by setting isActive=false. Preserves FK references in DecisionLog."""
+    from app.db import repository as repo
+
+    found = await repo.soft_delete_service(request.app.state.db_pool, service_id)
+    if not found:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "SERVICE_NOT_FOUND", "message": f"Service {service_id} not found"},
+        )
+    return {"status": "deleted", "service_id": service_id, "note": "soft-deleted (isActive=false)"}
+
 
 
