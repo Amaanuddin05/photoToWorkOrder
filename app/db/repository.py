@@ -65,8 +65,8 @@ async def text_search(
             "description": r[2],
             "rank": idx,
             "score": round(float(r[5]), 4),
-            "title_sim": round(float(r[3]), 4),
-            "desc_sim": round(float(r[4]), 4),
+            "title_sim": float(r[3]),
+            "desc_sim": float(r[4]),
         }
         for idx, r in enumerate(rows, start=1)
     ]

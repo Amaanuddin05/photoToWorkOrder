@@ -317,6 +317,52 @@ async def process_post(
             item["service"]: float(item.get("score", 0.0)) for item in all_image_results
         }
 
+        # Part 2: Additive diagnostics per row across all active services
+        img_score_map: dict[str, float | None] = {}
+        for item in all_image_results:
+            svc_name = item.get("service")
+            if svc_name:
+                if item.get("has_visual_vote"):
+                    img_score_map[svc_name] = float(item["score"])
+                else:
+                    img_score_map[svc_name] = None
+
+        text_item_map: dict[str, dict[str, Any]] = {}
+        for item in all_text_results:
+            svc_name = item.get("service")
+            if svc_name:
+                text_item_map[svc_name] = item
+
+        all_active_titles = set(text_item_map.keys())
+        if service_profiles:
+            for p in service_profiles.values():
+                t = p.get("title")
+                if t:
+                    all_active_titles.add(t)
+
+        svc_scores: dict[str, dict[str, float | None]] = {}
+        for title in sorted(all_active_titles):
+            t_item = text_item_map.get(title)
+            if has_desc and t_item is not None:
+                d_sim = float(t_item["desc_sim"]) if t_item.get("desc_sim") is not None else None
+                t_sim = float(t_item["title_sim"]) if t_item.get("title_sim") is not None else None
+                txt_score = float(t_item["score"]) if t_item.get("score") is not None else None
+            else:
+                d_sim = None
+                t_sim = None
+                txt_score = None
+
+            i_sim = img_score_map.get(title)
+
+            svc_scores[title] = {
+                "desc_sim": d_sim,
+                "title_sim": t_sim,
+                "text_score": txt_score,
+                "image_sim": i_sim,
+            }
+
+        result.service_scores = svc_scores
+
     # ── Stage 7: Persist to DecisionLog (skipped if dry_run=True) ──────────
     if not dry_run:
         top_service_id: int | None = None

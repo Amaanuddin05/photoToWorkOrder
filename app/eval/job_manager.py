@@ -320,6 +320,20 @@ class EvalJobManager:
             },
             "catalog_hash": catalog_hash,
         }
+
+        # Check demo services in registry
+        try:
+            from app.demo_registry import load_demo_registry
+            demo_entries = await load_demo_registry(self.settings.DEMO_REGISTRY_PATH)
+            eff["has_demo_services"] = bool(demo_entries)
+            eff["demo_services_count"] = len(demo_entries)
+            eff["demo_service_titles"] = [d.get("title") for d in demo_entries if d.get("title")]
+        except Exception as exc:
+            logger.warning("Could not check demo registry at eval start: %s", exc)
+            eff["has_demo_services"] = False
+            eff["demo_services_count"] = 0
+            eff["demo_service_titles"] = []
+
         job.effective_settings = eff
 
         # Launch background execution task
@@ -511,9 +525,10 @@ class EvalJobManager:
                 full_t_rank = result.full_text_ranks.get(exp_svc) if not r_in.is_none else None
                 full_i_rank = result.full_image_ranks.get(exp_svc) if not r_in.is_none else None
 
-                # Extract all service text and image scores (Requirement 2)
+                # Extract all service text and image scores (Requirement 2 & Part 2)
                 all_service_text_scores = getattr(result, "all_service_text_scores", {})
                 all_service_image_scores = getattr(result, "all_service_image_scores", {})
+                service_scores = getattr(result, "service_scores", {})
 
                 # Extract explicit top-1 raw score and top-1 image similarity (Requirement 2)
                 top1_cand = result.top_candidates[0] if result.top_candidates else None
@@ -577,6 +592,7 @@ class EvalJobManager:
                     thumbnail_b64=thumb_b64,
                     all_service_text_scores=all_service_text_scores,
                     all_service_image_scores=all_service_image_scores,
+                    service_scores=service_scores,
                     top1_raw_score=top1_raw_score,
                     top1_image_similarity=top1_img_sim,
                     top1_text_similarity=top1_txt_sim,
@@ -626,6 +642,25 @@ class EvalJobManager:
                 min_description_words=self.settings.MIN_DESCRIPTION_WORDS,
                 enable_reranker=job.effective_settings.get("enable_reranker", True),
             )
+
+            # Check demo services in catalog and add warning to run summary if active
+            try:
+                from app.demo_registry import load_demo_registry
+                demo_entries = await load_demo_registry(self.settings.DEMO_REGISTRY_PATH)
+                if demo_entries:
+                    demo_titles = [d.get("title") for d in demo_entries if d.get("title")]
+                    demo_warn = (
+                        f"DEMO SERVICES ACTIVE: {len(demo_entries)} demo service(s) currently active in catalog "
+                        f"({', '.join(demo_titles)}). Demo services change the catalog hash and can skew evaluation results."
+                    )
+                    warnings_list = job.summary.setdefault("warnings", [])
+                    if demo_warn not in warnings_list:
+                        warnings_list.insert(0, demo_warn)
+                    job.effective_settings["has_demo_services"] = True
+                    job.effective_settings["demo_services_count"] = len(demo_entries)
+                    job.effective_settings["demo_service_titles"] = demo_titles
+            except Exception as exc:
+                logger.warning("Could not check demo registry at eval completion: %s", exc)
 
             # Persist finished run to disk
             self._save_run_to_disk(job)

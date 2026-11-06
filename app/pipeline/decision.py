@@ -65,6 +65,7 @@ class ProcessedPost:
     full_image_ranks: dict[str, int] = field(default_factory=dict)
     all_service_text_scores: dict[str, float] = field(default_factory=dict)
     all_service_image_scores: dict[str, float] = field(default_factory=dict)
+    service_scores: dict[str, dict[str, float | None]] = field(default_factory=dict)
 
 
 # ── Reranker wrapper (applies softmax to TEI raw logits) ─────────────────────

@@ -172,9 +172,10 @@ class EvalRowResult:
     # Small base64 thumbnail for live preview without disk dependency
     thumbnail_b64: str | None = None
 
-    # Additive fields (Requirement 2)
+    # Additive fields (Requirement 2 & Part 2)
     all_service_text_scores: dict[str, float] = field(default_factory=dict)
     all_service_image_scores: dict[str, float] = field(default_factory=dict)
+    service_scores: dict[str, dict[str, Any]] = field(default_factory=dict)
     top1_raw_score: float | None = None
     top1_image_similarity: float | None = None
     top1_text_similarity: float | None = None
