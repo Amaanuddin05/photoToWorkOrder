@@ -1,12 +1,44 @@
 # Project Status: SigLIP Standalone Photo-to-Work-Order Service
 
 ## Current Task
-- **Demo Services Route Order Fix, Lifecycle Verification & Database Cleanup: COMPLETED** — 2026-11-06
-  - Discovered and resolved FastAPI route order conflict: `@router.delete("/services/{service_id}")` was defined prior to `@router.delete("/services/demo")`, intercepting bulk delete requests and failing with 422 integer parsing error. Moved generic parameterized route to bottom.
-  - Verified full demo service lifecycle: addition with embeddings, single-item deletion (`DELETE /v1/services/demo/{id}`), bulk deletion (`DELETE /v1/services/demo`), server-side production service protection (404), and in-memory cache refresh.
-  - Purged all temporary test demo services from `WoService` and `ServiceImageProfile`; active catalog restored to pristine state (19 production services).
+- **Architecture & Triage Documentation (`WORK_ORDER_TRIAGE_ARCHITECTURE.md`): COMPLETED** — 2026-11-06
+  - Authored comprehensive documentation explaining how work orders are ingested and created, how the rule hierarchy distinguishes `auto_create`, `draft`, and `no_action`, the machine learning models utilized (`bge-base-en-v1.5`, `siglip-so400m-patch14-384`), mathematical weighting formulas, bi-encoder candidate fusion, temperature scaling calibration, and the 5 critical reasons for bypassing the cross-encoder reranker.
 
 ## Completed Work
+- **Work Order Triage Architecture Documentation** — 2026-11-06:
+  - Created [`WORK_ORDER_TRIAGE_ARCHITECTURE.md`](file:///C:/Users/Win11/code/shamixo/siglip/WORK_ORDER_TRIAGE_ARCHITECTURE.md) covering the end-to-end lifecycle, rule-based decision trees, mathematical equations for text and zero-shot image similarity, bi-encoder agreement boost scoring, temperature-scaled softmax calibration ($T=0.06$), confidence/gap margins, and a detailed breakdown of why cross-encoder reranking is bypassed.
+- **Offline Multimodal Fusion Explorer, Additive Row Diagnostics & Reranker OFF Everywhere (Parts 1, 2, 3)** — 2026-11-06:
+  - **Part 1 - Reranker OFF Everywhere**:
+    - `siglip/.env`: Set `ENABLE_RERANKER=false` (did NOT touch default in `app/config.py`).
+    - `siglip/.env.example`: Documented `ENABLE_RERANKER=false` and multimodal bi-encoder mode.
+    - `siglip/app/routers/health.py`: Updated `/health/ready` probe to check `reranker_enabled`; if false and `tei-rerank` is unreachable or down, marks `skipped: True, enabled: False` and reports `status: ready` (HTTP 200).
+    - `siglip/app/main.py`: Updated lifespan startup loop so TEI health probe breaks on attempt 1 when `ENABLE_RERANKER=false` without waiting or retrying for `tei-rerank`.
+    - `siglip/app/static/eval.html` & `siglip/app/static/eval.js`: Updated eval start form preset to have "Reranker OFF (bi-encoder)" preselected by default (`enableRerankerInput.checked = false`, `enableRerankerVal = "BYPASSED"`).
+  - **Part 2 - Additive Diagnostics Per Row**:
+    - `siglip/app/db/repository.py`: Updated `text_search` items to retain full float precision for `title_sim` (`float(r[3])`) and `desc_sim` (`float(r[4])`) alongside the pipeline-used `score` (`round(float(r[5]), 4)`).
+    - `siglip/app/pipeline/decision.py`: Added `service_scores: dict[str, dict[str, float | None]] = field(default_factory=dict)` to `ProcessedPost`.
+    - `siglip/app/pipeline/engine.py`: In `return_diagnostics=True` path, constructed and attached `service_scores` per active service title: `desc_sim`, `title_sim`, `text_score`, and `image_sim` (null if no visual profile or no visualLine; text sims null if no description).
+    - `siglip/app/eval/metrics.py`: Added `service_scores: dict[str, dict[str, Any]] = field(default_factory=dict)` to `EvalRowResult`.
+    - `siglip/app/eval/job_manager.py`: Extracted and assigned `service_scores` to each `EvalRowResult` during evaluation worker execution. Inspected demo services registry to record `has_demo_services`, `demo_services_count`, and `demo_service_titles` in `job.effective_settings`, prepending warnings to `job.summary["warnings"]` if demo services are active.
+    - `siglip/app/static/eval.js`: Updated expandable row details view to render `Desc Sim`, `Title Sim`, `Text Score`, and `Image Sim (SigLIP)` in the full catalog table.
+  - **Part 3 - Offline Multimodal Fusion Explorer**:
+    - `siglip/app/eval/fusion.py`: Created complete offline analysis module using **only Numpy and standard library**:
+      - Validates run exists, reranker is OFF, and Part 2 fields exist (returns `{"status": "rerun_needed"}` otherwise).
+      - Excludes warm-up rows; partitions into `normal_with_desc`, `image_only`, and `none_rows`.
+      - Substitutes row minimum image similarity for any service with `image_sim is None`.
+      - **Sanity Checks**:
+        - 0a: Replays live formula offline (candidate pool formation, agreement boost, softmax at `biencoder_temp=0.06`), verifies 0 mismatches against stored live predictions and confidences (tolerance 1e-6).
+        - 0b: Verifies text-only (w=0) equals stored `text_top1_accuracy` and image-only (w=1) equals `image_top1_accuracy`.
+        - 0c: Verifies `wd * desc_sim + (1 - wd) * title_sim == stored text_score` (tolerance 1e-4, 0 mismatches).
+      - **Formula Families**: Evaluates `BASELINE_LIVE`, `LINEAR_Z` ((1-w)z_text + w*z_img), `LINEAR_RAW` (text + k*image), `RRF` (1/(c+rank_text) + w/(c+rank_image)), and `LOGLINEAR` ((1-w)log_softmax(text/Tt) + w*log_softmax(image/Ti)) across $wd \in \{0.5, 0.6, 0.7, 0.8, 0.9, 1.0\}$.
+      - **Validated Selection**: Repeated Stratified 5-Fold CV (20 repeats = 100 splits, fixed seed 42) recording selection stability and mean held-out accuracy vs baseline.
+      - **Plateau View**: 2D $(w, wd)$ heatmaps per family; recommends center of widest high plateau.
+      - **Paired Bootstrap CI**: 2000 resamples of row differences; issues verdict `"no clear improvement: keep the current formula"` if CI includes 0, else `"clear improvement"`.
+      - **Detailed Diagnostics**: Wilson 95% intervals, per-service accuracy with `n < 5` warnings, macro/micro accuracy, confidence calibration sweep over $T \in [0.02, 0.3]$ with 10-bin reliability table, decision table simulation via pipeline's `make_decision()`, signal quality AUROC with class size warnings, and changed rows table.
+      - Full export generation for `fusion_report.json` and `fusion_report.md`.
+    - `siglip/app/routers/eval.py`: Added `POST /v1/eval/fusion` endpoint executing `run_fusion_analysis` in a worker thread (`asyncio.to_thread`). Added `GET /v1/eval/runs/{job_id}/export/fusion-md` and `GET /v1/eval/runs/{job_id}/export/fusion-json` export download endpoints.
+    - `siglip/app/static/eval.html` & `siglip/app/static/eval.css`: Added `🔬 Fusion Explorer` tab button and complete UI layout (Recommendation banner, Sanity status cards, Plateau heatmap with family selector, CV stability table, Metrics comparison table, Per-service breakdown, Calibration sweep & Canvas reliability diagram, Decision sensitivity table, Signal quality table, and Changed rows table with thumbnail modal preview).
+    - `siglip/app/static/eval.js`: Wired run selection, tab activation, execution handlers, canvas charting, modal previews, and export download triggers.
 - **Demo Services Route Order Fix & Verification** — 2026-11-06:
   - Re-ordered router definitions in `app/routers/services.py` so `DELETE /v1/services/demo` and `DELETE /v1/services/demo/{service_id}` are evaluated before `DELETE /v1/services/{service_id}`.
   - Verified `DELETE /v1/services/demo` successfully deletes all registered demo services and clears `demo_services.json`.
