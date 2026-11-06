@@ -171,13 +171,17 @@ async def lifespan(app: FastAPI):
     app.state.tei_client = tei
 
     # Probe TEI — retry but don't block startup if unreachable
+    reranker_needed = getattr(settings, "ENABLE_RERANKER", True)
     for attempt in range(4):
         try:
             dep = await tei.check_health()
             embed_ok = dep.get("tei_embed", {}).get("reachable", False)
             rerank_ok = dep.get("tei_rerank", {}).get("reachable", False)
-            if embed_ok and rerank_ok:
-                logger.info("TEI services reachable: embed=%s rerank=%s", embed_ok, rerank_ok)
+            if embed_ok and (rerank_ok or not reranker_needed):
+                logger.info(
+                    "TEI services reachable: embed=%s rerank=%s (reranker_needed=%s)",
+                    embed_ok, rerank_ok, reranker_needed,
+                )
 
                 # ── 4a. Embedding dimension verification ──────────────────
                 try:
@@ -208,7 +212,10 @@ async def lifespan(app: FastAPI):
             )
             await asyncio.sleep(wait)
     else:
-        logger.warning("TEI services not reachable at startup. Service will report not-ready.")
+        if not embed_ok or (reranker_needed and not rerank_ok):
+            logger.warning("TEI services not reachable at startup. Service will report not-ready.")
+        else:
+            logger.info("TEI embedder ready (reranker bypassed via ENABLE_RERANKER=false).")
 
     # ── 5. Load service profiles ───────────────────────────────────────────
     if db_opened:

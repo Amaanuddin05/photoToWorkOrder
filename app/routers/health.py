@@ -62,18 +62,30 @@ async def readiness(request: Request) -> JSONResponse:
         all_ok = False
 
     # TEI dependencies
+    settings = getattr(state, "settings", None)
+    reranker_enabled = getattr(settings, "ENABLE_RERANKER", True) if settings else True
+
     tei = getattr(state, "tei_client", None)
     if tei:
         dep_status = await tei.check_health()
         embed_ok = dep_status.get("tei_embed", {}).get("reachable", False)
         rerank_ok = dep_status.get("tei_rerank", {}).get("reachable", False)
         checks["tei_embed"] = dep_status.get("tei_embed", {})
-        checks["tei_rerank"] = dep_status.get("tei_rerank", {})
-        if not embed_ok or not rerank_ok:
+        rerank_info = dict(dep_status.get("tei_rerank", {}))
+        if not reranker_enabled:
+            rerank_info["skipped"] = True
+            rerank_info["enabled"] = False
+        checks["tei_rerank"] = rerank_info
+        if not embed_ok or (reranker_enabled and not rerank_ok):
             all_ok = False
     else:
         checks["tei_embed"] = {"reachable": False, "error": "client not initialised"}
-        checks["tei_rerank"] = {"reachable": False, "error": "client not initialised"}
+        checks["tei_rerank"] = {
+            "reachable": False,
+            "error": "client not initialised",
+            "skipped": not reranker_enabled,
+            "enabled": reranker_enabled,
+        }
         all_ok = False
 
     # Service profiles loaded
