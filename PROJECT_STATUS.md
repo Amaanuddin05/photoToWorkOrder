@@ -1,10 +1,17 @@
 # Project Status: SigLIP Standalone Photo-to-Work-Order Service
 
 ## Current Task
-- **Architecture & Triage Documentation (`WORK_ORDER_TRIAGE_ARCHITECTURE.md`): COMPLETED** — 2026-11-06
-  - Authored comprehensive documentation explaining how work orders are ingested and created, how the rule hierarchy distinguishes `auto_create`, `draft`, and `no_action`, the machine learning models utilized (`bge-base-en-v1.5`, `siglip-so400m-patch14-384`), mathematical weighting formulas, bi-encoder candidate fusion, temperature scaling calibration, and the 5 critical reasons for bypassing the cross-encoder reranker.
+- **Docker Container Deployment & Verification (`ghcr.io/amaanuddin05/siglip:latest`): COMPLETED** — 2026-11-06
+  - Created `.env.docker` pointing database and TEI endpoints to `host.docker.internal`.
+  - Freed host port `8083` and launched container `siglip-service` with persistent volumes (`siglip-models` for Hugging Face weights, `app/eval/runs` for evaluation history, and `app/data` for demo service registry).
+  - Verified container startup: database connection pool opened, schema verified, SigLIP model loaded (`dim=768`), TEI embedder online, and `/health/ready` probe returned HTTP 200 with `skipped=True` for disabled reranker.
+  - Confirmed `/ui/` (Operator Console), `/ui/eval` (Multimodal Evaluation Suite & Fusion Explorer), and `/v1/services` are fully responsive.
 
 ## Completed Work
+- **Docker Container Deployment & Verification** — 2026-11-06:
+  - Pulled and launched `ghcr.io/amaanuddin05/siglip:latest` on Docker Desktop for Windows.
+  - Configured `.env.docker` with `host.docker.internal` host bridge resolution.
+  - Verified container health, readiness probe (`/health/ready`), and static UI page delivery.
 - **Work Order Triage Architecture Documentation** — 2026-11-06:
   - Created [`WORK_ORDER_TRIAGE_ARCHITECTURE.md`](file:///C:/Users/Win11/code/shamixo/siglip/WORK_ORDER_TRIAGE_ARCHITECTURE.md) covering the end-to-end lifecycle, rule-based decision trees, mathematical equations for text and zero-shot image similarity, bi-encoder agreement boost scoring, temperature-scaled softmax calibration ($T=0.06$), confidence/gap margins, and a detailed breakdown of why cross-encoder reranking is bypassed.
 - **Offline Multimodal Fusion Explorer, Additive Row Diagnostics & Reranker OFF Everywhere (Parts 1, 2, 3)** — 2026-11-06:
