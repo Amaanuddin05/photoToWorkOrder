@@ -63,6 +63,10 @@ class LoadLocalPayload(BaseModel):
     path: str | None = None
 
 
+class FusionRequestPayload(BaseModel):
+    run_id: str
+
+
 async def _process_zip_and_create_job(raw_zip: bytes, request: Request) -> JSONResponse:
     from app.config import get_settings
     settings = getattr(request.app.state, "settings", None) or get_settings()
@@ -603,5 +607,106 @@ async def export_run_md(
         content=md_data,
         media_type="text/markdown; charset=utf-8",
         headers={"Content-Disposition": f'attachment; filename="eval_{job_id}_report.md"'},
+    )
+
+
+@router.post("/fusion")
+async def analyze_fusion(
+    payload: FusionRequestPayload,
+    request: Request,
+    _auth: None = Depends(_eval_auth),
+) -> JSONResponse:
+    """
+    Offline multimodal fusion exploration over saved evaluation run diagnostics.
+    Runs fast offline computation in a worker thread. Never calls TEI or SigLIP.
+    """
+    import asyncio
+    import json
+    from app.config import get_settings
+    from app.eval.fusion import run_fusion_analysis
+
+    settings = getattr(request.app.state, "settings", None) or get_settings()
+    manager = get_eval_job_manager(settings)
+
+    run_file = manager.runs_dir / f"{payload.run_id}.json"
+    if not run_file.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Evaluation run '{payload.run_id}' not found.",
+        )
+
+    try:
+        with open(run_file, "r", encoding="utf-8") as f:
+            run_data = json.load(f)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Could not read evaluation run JSON: {exc}",
+        )
+
+    # Fast offline computation in worker thread
+    report = await asyncio.to_thread(run_fusion_analysis, run_data)
+    return JSONResponse(content=report)
+
+
+@router.get("/runs/{job_id}/export/fusion-md")
+async def export_fusion_markdown(
+    job_id: str,
+    request: Request,
+    _auth: None = Depends(_eval_auth),
+) -> Response:
+    """Download offline Multimodal Fusion Explorer Markdown report."""
+    import asyncio
+    import json
+    from app.config import get_settings
+    from app.eval.fusion import run_fusion_analysis
+
+    settings = getattr(request.app.state, "settings", None) or get_settings()
+    manager = get_eval_job_manager(settings)
+
+    run_file = manager.runs_dir / f"{job_id}.json"
+    if not run_file.exists():
+        raise HTTPException(status_code=404, detail=f"Run '{job_id}' not found.")
+
+    with open(run_file, "r", encoding="utf-8") as f:
+        run_data = json.load(f)
+
+    report = await asyncio.to_thread(run_fusion_analysis, run_data)
+    md_content = report.get("markdown_report", "")
+    return Response(
+        content=md_content,
+        media_type="text/markdown; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="fusion_report_{job_id}.md"'},
+    )
+
+
+@router.get("/runs/{job_id}/export/fusion-json")
+async def export_fusion_json(
+    job_id: str,
+    request: Request,
+    _auth: None = Depends(_eval_auth),
+) -> Response:
+    """Download complete offline Multimodal Fusion Explorer JSON report."""
+    import asyncio
+    import json
+    from app.config import get_settings
+    from app.eval.fusion import run_fusion_analysis
+
+    settings = getattr(request.app.state, "settings", None) or get_settings()
+    manager = get_eval_job_manager(settings)
+
+    run_file = manager.runs_dir / f"{job_id}.json"
+    if not run_file.exists():
+        raise HTTPException(status_code=404, detail=f"Run '{job_id}' not found.")
+
+    with open(run_file, "r", encoding="utf-8") as f:
+        run_data = json.load(f)
+
+    report = await asyncio.to_thread(run_fusion_analysis, run_data)
+    json_bytes = json.dumps(report, indent=2, default=str).encode("utf-8")
+    return Response(
+        content=json_bytes,
+        media_type="application/json",
+        headers={"Content-Disposition": f'attachment; filename="fusion_report_{job_id}.json"'},
     )
 

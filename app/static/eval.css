@@ -1120,3 +1120,52 @@ canvas {
   font-weight: 600;
 }
 
+/* ── Fusion Explorer (Part 3) ─────────────────────────────────────────────── */
+.badge-verdict-clear {
+  background: rgba(16, 185, 129, 0.25);
+  color: #34d399;
+  border: 1px solid #10b981;
+}
+
+.badge-verdict-keep {
+  background: rgba(245, 158, 11, 0.25);
+  color: #fbbf24;
+  border: 1px solid #f59e0b;
+}
+
+.heatmap-table {
+  border-collapse: collapse;
+  font-size: 11px;
+  margin: 0 auto;
+}
+
+.heatmap-table th, .heatmap-table td {
+  padding: 6px 10px;
+  text-align: center;
+  border: 1px solid var(--border-color);
+}
+
+.heatmap-cell {
+  position: relative;
+  font-family: monospace;
+  font-weight: 600;
+  transition: transform 0.15s ease;
+  cursor: pointer;
+}
+
+.heatmap-cell:hover {
+  transform: scale(1.08);
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+.heatmap-cell.is-live {
+  outline: 2px solid var(--accent-cyan) !important;
+  outline-offset: -2px;
+}
+
+.heatmap-cell.is-best {
+  outline: 2px solid #eab308 !important;
+  outline-offset: -2px;
+}
+

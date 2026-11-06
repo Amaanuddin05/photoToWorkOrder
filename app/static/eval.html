@@ -175,10 +175,10 @@
         <!-- Requirement 6: Two preset buttons that only set per-run enable_reranker override -->
         <div style="grid-column: 1 / -1; display: flex; align-items: center; gap: 12px; margin-top: 4px; padding: 10px 14px; background: rgba(15, 23, 42, 0.4); border-radius: var(--radius-sm); border: 1px dashed var(--border-color);">
           <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Presets:</span>
-          <button type="button" id="presetRerankerOnBtn" class="btn btn-secondary preset-btn active" title="Enable TEI Cross-Encoder reranker override only">
+          <button type="button" id="presetRerankerOnBtn" class="btn btn-secondary preset-btn" title="Enable TEI Cross-Encoder reranker override only">
             ⚡ Reranker ON (production)
           </button>
-          <button type="button" id="presetRerankerOffBtn" class="btn btn-secondary preset-btn" title="Disable reranker, evaluate pure multimodal bi-encoder override only">
+          <button type="button" id="presetRerankerOffBtn" class="btn btn-secondary preset-btn active" title="Disable reranker, evaluate pure multimodal bi-encoder override only">
             ⚡ Reranker OFF (bi-encoder)
           </button>
         </div>
@@ -186,10 +186,10 @@
         <div class="setting-item" style="grid-column: 1 / -1; background: rgba(30, 41, 59, 0.35); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
           <div class="setting-label">
             <span>Cross-Encoder Reranker</span>
-            <span id="enableRerankerVal" class="setting-val-display" style="color: var(--accent-green); font-weight: 700;">ENABLED</span>
+            <span id="enableRerankerVal" class="setting-val-display" style="color: var(--accent-amber); font-weight: 700;">BYPASSED</span>
           </div>
           <div class="setting-input-row" style="display: flex; align-items: center; gap: 10px; margin-top: 6px;">
-            <input type="checkbox" id="enableRerankerInput" checked style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-blue);">
+            <input type="checkbox" id="enableRerankerInput" style="width: 18px; height: 18px; cursor: pointer; accent-color: var(--accent-blue);">
             <label for="enableRerankerInput" style="font-size: 13px; color: var(--text-muted); cursor: pointer;">
               Enable TEI Reranking (uncheck to test Bi-Encoder / Candidate Pool rank directly)
             </label>
@@ -389,6 +389,7 @@
           <button class="tab-btn" data-tab="tabHeatmap">Confusion Matrix</button>
           <button class="tab-btn" data-tab="tabThresholds">Threshold Sensitivity</button>
           <button class="tab-btn" data-tab="tabCalibration">Temperature Calibration</button>
+          <button class="tab-btn" data-tab="tabFusionExplorer" id="tabBtnFusion">🔬 Fusion Explorer</button>
         </div>
 
         <!-- Tab 1: Per-Service Accuracy -->
@@ -572,6 +573,299 @@
               </thead>
               <tbody id="calibBinsTableBody"></tbody>
             </table>
+          </div>
+        </div>
+
+        <!-- Tab 7: Fusion Explorer (Part 3) -->
+        <div id="tabFusionExplorer" class="tab-content" style="display: none;">
+          <!-- Controls Header -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px; background: rgba(15, 23, 42, 0.4); padding: 12px 16px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <span style="font-weight: 600; font-size: 14px;">Select Run for Fusion:</span>
+              <select id="fusionRunSelect" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: var(--radius-sm); font-size: 13px;"></select>
+              <button id="runFusionBtn" class="btn btn-primary" style="padding: 6px 14px; font-size: 13px;">🔬 Analyze Fusion</button>
+            </div>
+            <div id="fusionActionBtns" style="display: none; gap: 8px;">
+              <button id="downloadFusionMdBtn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">📥 Download fusion_report.md</button>
+              <button id="downloadFusionJsonBtn" class="btn btn-secondary" style="padding: 6px 12px; font-size: 12px;">📥 Download fusion_report.json</button>
+            </div>
+          </div>
+
+          <!-- Loading Spinner / Status -->
+          <div id="fusionLoadingState" style="display: none; padding: 40px; text-align: center;">
+            <div class="spinner" style="margin: 0 auto 12px auto; width: 32px; height: 32px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--accent-blue); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+            <div style="font-size: 14px; color: var(--text-muted);">Running offline multimodal fusion exploration & repeated cross-validation...</div>
+          </div>
+
+          <!-- Rerun Needed State -->
+          <div id="fusionRerunNeededState" class="alert-box alert-warning" style="display: none; margin-bottom: 16px;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">⚠️ Re-run Needed</div>
+            <div id="fusionRerunMsg" style="font-size: 13px;">This run was executed with reranker ON or lacks Part 2 diagnostics fields. To explore multimodal fusion, run an evaluation with Reranker OFF.</div>
+          </div>
+
+          <!-- Sanity Error State -->
+          <div id="fusionSanityErrorState" class="alert-box alert-danger" style="display: none; margin-bottom: 16px;">
+            <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px;">🛑 Sanity Checks Failed</div>
+            <div id="fusionSanityErrorMsg" style="font-size: 13px;">One or more offline sanity checks failed. Sweep halted.</div>
+            <div id="fusionSanityErrorDetails" style="margin-top: 8px; font-family: monospace; font-size: 12px;"></div>
+          </div>
+
+          <!-- Fusion Results Container -->
+          <div id="fusionResultsContainer" style="display: none;">
+            <!-- 1. RECOMMENDATION Block (at top) -->
+            <div class="card" id="fusionRecCard" style="background: rgba(30, 41, 59, 0.5); border: 2px solid var(--accent-blue); border-radius: var(--radius-md); padding: 18px; margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+                <div>
+                  <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--accent-blue); margin-bottom: 4px;">MULTIMODAL FUSION RECOMMENDATION</div>
+                  <h3 id="fusionRecVerdictTitle" style="margin: 0; font-size: 20px; font-weight: 700;">-</h3>
+                </div>
+                <div id="fusionVerdictBadge" class="badge" style="font-size: 14px; padding: 6px 14px; font-weight: 700;">-</div>
+              </div>
+              <p id="fusionRecReason" style="font-size: 13px; color: var(--text-secondary); margin: 10px 0 14px 0; line-height: 1.5;">-</p>
+
+              <!-- Formula Box -->
+              <div style="background: rgba(15, 23, 42, 0.6); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 14px; border: 1px solid var(--border-color);">
+                <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 4px;">Recommended Formula & Parameters</div>
+                <div id="fusionFormulaWords" style="font-size: 13px; color: var(--text-primary); margin-bottom: 6px;">-</div>
+                <div id="fusionFormulaEquation" style="font-family: monospace; font-size: 14px; color: var(--accent-cyan); font-weight: 600; padding: 6px 10px; background: rgba(0,0,0,0.3); border-radius: 4px;">-</div>
+              </div>
+
+              <!-- Stats row -->
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 12px;">
+                <div class="kpi-card" style="padding: 10px 14px;">
+                  <div class="kpi-label">Held-Out CV Accuracy</div>
+                  <div id="fusionHeldOutVal" class="kpi-val" style="font-size: 20px;">-</div>
+                  <div id="fusionHeldOutDelta" class="kpi-sub">-</div>
+                </div>
+                <div class="kpi-card" style="padding: 10px 14px;">
+                  <div class="kpi-label">95% Bootstrap CI (Diff)</div>
+                  <div id="fusionBootstrapCiVal" class="kpi-val" style="font-size: 20px;">-</div>
+                  <div id="fusionBootstrapCiStatus" class="kpi-sub">-</div>
+                </div>
+                <div class="kpi-card" style="padding: 10px 14px;">
+                  <div class="kpi-label">Wrong → Right Flips</div>
+                  <div id="fusionFlipsGainedVal" class="kpi-val" style="font-size: 20px; color: var(--accent-green);">-</div>
+                  <div class="kpi-sub">Gained correct</div>
+                </div>
+                <div class="kpi-card" style="padding: 10px 14px;">
+                  <div class="kpi-label">Right → Wrong Flips</div>
+                  <div id="fusionFlipsLostVal" class="kpi-val" style="font-size: 20px; color: var(--accent-red);">-</div>
+                  <div class="kpi-sub">Regressions</div>
+                </div>
+              </div>
+
+              <!-- Warnings block -->
+              <div id="fusionRecWarnings" style="display: none; margin-top: 10px;"></div>
+            </div>
+
+            <!-- 2. Sanity Checks Status Card -->
+            <div class="card" style="padding: 14px 18px; margin-bottom: 20px; background: rgba(15, 23, 42, 0.35);">
+              <div style="font-weight: 700; font-size: 14px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px;">
+                <span>0. Sanity Checks Status</span>
+                <span id="fusionSanityBadge" class="badge badge-success" style="font-size: 11px;">ALL 3 PASSED</span>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 10px; font-size: 12px;">
+                <div id="sanityReplayCard" style="background: rgba(30,41,59,0.5); padding: 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; color: var(--text-primary);">0a. Replay Current Live Formula</div>
+                  <div id="sanityReplayText" style="color: var(--text-muted); font-size: 11px; margin-top: 2px;">Offline replay vs live run: 0 mismatches (tolerance 1e-6)</div>
+                </div>
+                <div id="sanityModalityCard" style="background: rgba(30,41,59,0.5); padding: 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; color: var(--text-primary);">0b. Modality Top-1 Accuracy</div>
+                  <div id="sanityModalityText" style="color: var(--text-muted); font-size: 11px; margin-top: 2px;">Text-only (w=0) & Image-only (w=1) equal run stored values</div>
+                </div>
+                <div id="sanityRecombineCard" style="background: rgba(30,41,59,0.5); padding: 10px; border-radius: 4px; border: 1px solid var(--border-color);">
+                  <div style="font-weight: 600; color: var(--text-primary);">0c. Desc / Title Recombination</div>
+                  <div id="sanityRecombineText" style="color: var(--text-muted); font-size: 11px; margin-top: 2px;">wd*desc_sim + (1-wd)*title_sim == stored text_score</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 3. Plateau View (Heatmaps) -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                  <div style="font-weight: 700; font-size: 15px;">Plateau View: Top-1 Accuracy Heatmap</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">Explores (w, wd) parameter grid. Recommends the center of the widest high plateau, not an isolated peak.</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 12px; font-weight: 600; color: var(--text-secondary);">Family:</span>
+                  <select id="fusionFamilySelect" style="background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 4px; font-size: 12px;">
+                    <option value="LINEAR_Z">Linear Z-Score</option>
+                    <option value="LINEAR_RAW">Linear Raw</option>
+                    <option value="RRF">Reciprocal Rank Fusion (RRF)</option>
+                    <option value="LOGLINEAR">Log-Linear Mixture</option>
+                  </select>
+                </div>
+              </div>
+              <div id="fusionPlateauContainer" style="overflow-x: auto; padding-bottom: 8px;"></div>
+              <div style="display: flex; gap: 16px; margin-top: 10px; font-size: 11px; color: var(--text-muted); align-items: center;">
+                <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 12px; height: 12px; background: rgba(56, 189, 248, 0.4); border: 1px solid var(--accent-cyan);"></span> Live Config (wd=0.7)</span>
+                <span style="display: flex; align-items: center; gap: 4px;"><span style="display: inline-block; width: 12px; height: 12px; background: rgba(234, 179, 8, 0.4); border: 1px solid #eab308;"></span> Best / Plateau Center</span>
+              </div>
+            </div>
+
+            <!-- 4. Cross-Validation & Stability Summary -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+              <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Selection Stability Across CV Folds</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Repeated Stratified 5-Fold Cross-Validation (20 repeats = 100 splits, fixed seed). Shows how frequently each configuration was selected on training splits.</div>
+              <div class="table-wrap" style="max-height: 200px; overflow-y: auto;">
+                <table class="eval-table" style="font-size: 12px;">
+                  <thead>
+                    <tr>
+                      <th>Configuration</th>
+                      <th>Selection Count</th>
+                      <th>Frequency (%)</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fusionStabilityTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 5. Metrics Comparison Table -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+              <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Metrics Comparison: Recommended vs Baseline</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Wilson 95% confidence intervals, MRR, Macro/Micro accuracy, and modal agreement breakdown.</div>
+              <div class="table-wrap">
+                <table class="eval-table" style="font-size: 12px;">
+                  <thead>
+                    <tr>
+                      <th>Metric</th>
+                      <th>Recommended Configuration</th>
+                      <th>Baseline Live</th>
+                      <th>Delta</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fusionMetricsTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 6. Per-Service Accuracy -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+              <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Per-Service Accuracy Breakdown</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Sample size n, Wilson 95% CI, and warnings for categories with n < 5.</div>
+              <div class="table-wrap" style="max-height: 260px; overflow-y: auto;">
+                <table class="eval-table" style="font-size: 12px;">
+                  <thead>
+                    <tr>
+                      <th>Service Category</th>
+                      <th>Sample Count (n)</th>
+                      <th>Recommended Acc (%)</th>
+                      <th>Recommended Wilson 95% CI</th>
+                      <th>Baseline Acc (%)</th>
+                      <th>Sample Warning</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fusionPerServiceTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 7. Confidence Calibration -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                <div>
+                  <div style="font-weight: 700; font-size: 15px;">Confidence Calibration: Softmax over All Services</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">Calibrates confidence = softmax(fused_score / T) across all services. Sweeps temperature T.</div>
+                </div>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <span style="font-size: 12px;">Best T: <strong id="calibBestTVal">-</strong></span>
+                  <span style="font-size: 12px;">Best ECE: <strong id="calibBestEceVal">-</strong></span>
+                </div>
+              </div>
+              <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; margin-bottom: 14px;">
+                <div>
+                  <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px;">Temperature Sweep (ECE)</div>
+                  <div class="table-wrap" style="max-height: 180px; overflow-y: auto;">
+                    <table class="eval-table" style="font-size: 11px;">
+                      <thead>
+                        <tr><th>Temperature T</th><th>ECE (%)</th><th>Status</th></tr>
+                      </thead>
+                      <tbody id="fusionCalibSweepTableBody"></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; font-weight: 600; margin-bottom: 6px;">Reliability Diagram (Best T)</div>
+                  <canvas id="fusionReliabilityCanvas" width="340" height="180" style="width: 100%; height: 180px; background: rgba(15,23,42,0.4); border-radius: 4px; border: 1px solid var(--border-color);"></canvas>
+                </div>
+              </div>
+              <div class="table-wrap">
+                <table class="eval-table" style="font-size: 11px;">
+                  <thead>
+                    <tr><th>Bin</th><th>n</th><th>Avg Confidence</th><th>Accuracy</th><th>Sample Warning</th></tr>
+                  </thead>
+                  <tbody id="fusionReliabilityTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 8. Decision Sensitivity Grid -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+              <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Decision Sensitivity Grid (Triage Simulation)</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Recomputes make_decision() across confidence and gap thresholds at best-ECE T. Evaluates auto precision and 3-level NONE false matches.</div>
+              <div class="table-wrap" style="max-height: 260px; overflow-y: auto;">
+                <table class="eval-table" style="font-size: 11px;">
+                  <thead>
+                    <tr>
+                      <th>Conf Thresh</th>
+                      <th>Gap Thresh</th>
+                      <th>Coverage</th>
+                      <th>Auto Prec</th>
+                      <th>Auto Count</th>
+                      <th>Wrong Auto</th>
+                      <th>Draft</th>
+                      <th>No Action</th>
+                      <th>NONE L1 (Correct)</th>
+                      <th>NONE L2 (Soft Draft)</th>
+                      <th>NONE L3 (Harmful Auto)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fusionDecisionTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 9. Signal Quality (AUROC) -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+              <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Signal Quality (AUROC Predictors)</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Evaluates diagnostic signals for separating correct predictions and distinguishing normal vs NONE requests.</div>
+              <div class="table-wrap">
+                <table class="eval-table" style="font-size: 12px;">
+                  <thead>
+                    <tr>
+                      <th>Diagnostic Signal</th>
+                      <th>Task A: Top-1 Correct (AUROC)</th>
+                      <th>Task B: Normal vs NONE (AUROC)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fusionSignalQualityTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 10. Changed Rows Table -->
+            <div class="card" style="padding: 16px 20px; margin-bottom: 20px;">
+              <div style="font-weight: 700; font-size: 15px; margin-bottom: 6px;">Changed Predictions vs Baseline</div>
+              <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 12px;">Rows where top-1 prediction changed between Recommended Fusion and Baseline Live. Click thumbnail to view high-res preview.</div>
+              <div class="table-wrap">
+                <table class="eval-table" style="font-size: 11px;">
+                  <thead>
+                    <tr>
+                      <th>Row</th>
+                      <th>Thumbnail</th>
+                      <th>Expected Service</th>
+                      <th>Baseline Pred (conf)</th>
+                      <th>Recommended Pred (conf)</th>
+                      <th>Status Change</th>
+                    </tr>
+                  </thead>
+                  <tbody id="fusionChangedTableBody"></tbody>
+                </table>
+              </div>
+            </div>
           </div>
         </div>
       </div>

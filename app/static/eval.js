@@ -24,6 +24,8 @@
     activeTemp: 1.0,
     blobUrlCache: new Map(),
     effectiveSettings: null,
+    fusionJobId: null,
+    fusionReport: null,
   };
 
   const compareState = {
@@ -175,6 +177,22 @@
   const compareCountRegressed = document.getElementById("compareCountRegressed");
   const compareChangedTableBody = document.getElementById("compareChangedTableBody");
 
+  // Fusion Explorer Elements (Part 3)
+  const tabBtnFusion = document.getElementById("tabBtnFusion");
+  const fusionRunSelect = document.getElementById("fusionRunSelect");
+  const runFusionBtn = document.getElementById("runFusionBtn");
+  const fusionActionBtns = document.getElementById("fusionActionBtns");
+  const downloadFusionMdBtn = document.getElementById("downloadFusionMdBtn");
+  const downloadFusionJsonBtn = document.getElementById("downloadFusionJsonBtn");
+  const fusionLoadingState = document.getElementById("fusionLoadingState");
+  const fusionRerunNeededState = document.getElementById("fusionRerunNeededState");
+  const fusionRerunMsg = document.getElementById("fusionRerunMsg");
+  const fusionSanityErrorState = document.getElementById("fusionSanityErrorState");
+  const fusionSanityErrorMsg = document.getElementById("fusionSanityErrorMsg");
+  const fusionSanityErrorDetails = document.getElementById("fusionSanityErrorDetails");
+  const fusionResultsContainer = document.getElementById("fusionResultsContainer");
+  const fusionFamilySelect = document.getElementById("fusionFamilySelect");
+
   // Enhanced Modal Elements
   const imageModal = document.getElementById("imageModal");
   const modalImg = document.getElementById("modalImg");
@@ -221,6 +239,7 @@
 
     if (enableRerankerInput) {
       enableRerankerInput.addEventListener("change", updateRerankerToggleDisplay);
+      updateRerankerToggleDisplay();
     }
 
     // Preset buttons: Reranker ON / OFF (Requirement 6)
@@ -271,6 +290,40 @@
       });
     }
 
+    // Fusion Explorer controls (Part 3)
+    if (runFusionBtn) {
+      runFusionBtn.addEventListener("click", () => {
+        const runId = fusionRunSelect ? fusionRunSelect.value : "";
+        if (!runId) {
+          alert("Please select an evaluation run from the dropdown first.");
+          return;
+        }
+        runFusionExplorer(runId);
+      });
+    }
+
+    if (fusionFamilySelect) {
+      fusionFamilySelect.addEventListener("change", (e) => {
+        if (state.fusionReport) {
+          renderFusionPlateau(state.fusionReport, e.target.value);
+        }
+      });
+    }
+
+    if (downloadFusionMdBtn) {
+      downloadFusionMdBtn.addEventListener("click", () => {
+        if (!state.fusionJobId) return;
+        downloadFile(`/v1/eval/runs/${state.fusionJobId}/export/fusion-md`);
+      });
+    }
+
+    if (downloadFusionJsonBtn) {
+      downloadFusionJsonBtn.addEventListener("click", () => {
+        if (!state.fusionJobId) return;
+        downloadFile(`/v1/eval/runs/${state.fusionJobId}/export/fusion-json`);
+      });
+    }
+
     // Check for saved job in session
     const savedJobId = sessionStorage.getItem("siglip_eval_active_job");
     if (savedJobId) {
@@ -311,6 +364,19 @@
       const runs = data.runs || [];
 
       pastRunsSelect.innerHTML = '<option value="">Select past run...</option>';
+      if (fusionRunSelect) {
+        const curF = fusionRunSelect.value;
+        fusionRunSelect.innerHTML = '<option value="">Select run to explore...</option>';
+        runs.forEach((r) => {
+          const acc = r.top1_accuracy !== undefined && r.top1_accuracy !== null ? `Acc: ${r.top1_accuracy}%` : r.status;
+          const opt = document.createElement("option");
+          opt.value = r.job_id;
+          opt.textContent = `${r.job_id} (${r.completed_rows} rows) - ${acc}`;
+          fusionRunSelect.appendChild(opt);
+        });
+        if (curF) fusionRunSelect.value = curF;
+      }
+
       if (compareRunASelect && compareRunBSelect) {
         const curA = compareRunASelect.value;
         const curB = compareRunBSelect.value;
@@ -655,7 +721,7 @@
     floorThreshInput.value = 0.25;
     floorThreshVal.textContent = "0.25";
     if (enableRerankerInput) {
-      enableRerankerInput.checked = true;
+      enableRerankerInput.checked = false;
       updateRerankerToggleDisplay();
     }
   });
@@ -680,7 +746,7 @@
       confidence_threshold: parseFloat(confThreshInput.value),
       gap_threshold: parseFloat(gapThreshInput.value),
       no_action_floor: parseFloat(floorThreshInput.value),
-      enable_reranker: enableRerankerInput ? enableRerankerInput.checked : true,
+      enable_reranker: enableRerankerInput ? enableRerankerInput.checked : false,
     };
 
     try {
@@ -1817,31 +1883,44 @@
       </div>
     `;
 
-    // All active services scores (Requirement 2)
+    // All active services diagnostics (Part 2 & Requirement 2)
     let allScoresHtml = "";
+    const svcScores = r.service_scores || {};
     const allTxt = r.all_service_text_scores || {};
     const allImg = r.all_service_image_scores || {};
-    const allSvcs = Array.from(new Set([...Object.keys(allTxt), ...Object.keys(allImg)])).sort();
+    const allSvcs = Array.from(new Set([
+      ...Object.keys(svcScores),
+      ...Object.keys(allTxt),
+      ...Object.keys(allImg),
+    ])).sort();
 
     if (allSvcs.length > 0) {
+      const hasPart2 = Object.keys(svcScores).length > 0;
       allScoresHtml = `
         <details style="margin-top:8px; font-size:12px;">
           <summary style="cursor:pointer; color:var(--accent-blue); font-weight:600; outline:none;">
-            📊 View All Active Service Scores (Full Catalog: ${allSvcs.length} services)
+            📊 View All Active Service Diagnostics (Full Catalog: ${allSvcs.length} services)
           </summary>
-          <div style="max-height:180px; overflow-y:auto; margin-top:6px; border:1px solid var(--border-color); border-radius:4px;">
+          <div style="max-height:220px; overflow-y:auto; margin-top:6px; border:1px solid var(--border-color); border-radius:4px;">
             <table class="cand-table" style="font-size:11px; margin:0;">
               <thead>
                 <tr>
                   <th>Service</th>
-                  <th>Text Score</th>
-                  <th>Image Similarity</th>
+                  <th>Text Score (used)</th>
+                  ${hasPart2 ? `<th>Desc Sim</th><th>Title Sim</th><th>Image Sim (SigLIP)</th>` : `<th>Image Similarity</th>`}
                 </tr>
               </thead>
               <tbody>
                 ${allSvcs.map((svc) => {
-                  const tScore = allTxt[svc] !== undefined ? Number(allTxt[svc]).toFixed(4) : "-";
-                  const iScore = allImg[svc] !== undefined ? Number(allImg[svc]).toFixed(4) : "-";
+                  const entry = svcScores[svc] || {};
+                  const tScore = entry.text_score !== undefined && entry.text_score !== null
+                    ? Number(entry.text_score).toFixed(4)
+                    : (allTxt[svc] !== undefined ? Number(allTxt[svc]).toFixed(4) : "-");
+                  const dSim = entry.desc_sim !== undefined && entry.desc_sim !== null ? Number(entry.desc_sim).toFixed(4) : "-";
+                  const tiSim = entry.title_sim !== undefined && entry.title_sim !== null ? Number(entry.title_sim).toFixed(4) : "-";
+                  const iSim = entry.image_sim !== undefined && entry.image_sim !== null
+                    ? Number(entry.image_sim).toFixed(4)
+                    : (entry.image_sim === null ? '<span style="color:var(--text-muted);">null (no profile)</span>' : (allImg[svc] !== undefined ? Number(allImg[svc]).toFixed(4) : "-"));
                   const isTop = svc === r.predicted_service;
                   const isExp = svc === r.expected_service;
                   const rowBg = isExp ? "background:rgba(16, 185, 129, 0.12);" : isTop ? "background:rgba(59, 130, 246, 0.12);" : "";
@@ -1849,7 +1928,13 @@
                     <tr style="${rowBg}">
                       <td style="font-weight:600;">${escapeHtml(svc)} ${isExp ? '🎯' : ''} ${isTop ? '👑' : ''}</td>
                       <td style="font-family:monospace;">${tScore}</td>
-                      <td style="font-family:monospace;">${iScore}</td>
+                      ${hasPart2 ? `
+                        <td style="font-family:monospace;">${dSim}</td>
+                        <td style="font-family:monospace;">${tiSim}</td>
+                        <td style="font-family:monospace;">${iSim}</td>
+                      ` : `
+                        <td style="font-family:monospace;">${iSim}</td>
+                      `}
                     </tr>
                   `;
                 }).join("")}
@@ -2115,6 +2200,13 @@
         } else if (btn.dataset.tab === "tabCalibration") {
           const activeCalib = (state.summary?.calibration || []).find((c) => c.temperature === state.activeTemp) || (state.summary?.calibration || [])[0];
           if (activeCalib) renderReliabilityDiagram(activeCalib.bins || []);
+        } else if (btn.dataset.tab === "tabFusionExplorer") {
+          if (state.currentJobId && fusionRunSelect && !fusionRunSelect.value) {
+            fusionRunSelect.value = state.currentJobId;
+          }
+          if (state.fusionReport) {
+            renderFusionReliabilityDiagram(state.fusionReport.confidence_calibration?.reliability_table || []);
+          }
         }
       }
     });
@@ -2465,6 +2557,611 @@
       modalResultBadge.innerHTML = cr.change_type === "improved"
         ? '<span class="badge-correct">✓ IMPROVED IN B</span>'
         : '<span class="badge-wrong">✗ REGRESSED IN B</span>';
+    }
+    if (modalImg) modalImg.src = cr.thumbnail_b64 || "";
+    if (modalLoadingSpinner) modalLoadingSpinner.style.display = "none";
+
+    if (imageModal) {
+      imageModal.style.display = "flex";
+      imageModal.focus();
+    }
+  }
+
+  // ── Multimodal Fusion Explorer (Part 3) ───────────────────────────────────
+  async function runFusionExplorer(runId) {
+    if (!runId) return;
+
+    if (fusionLoadingState) fusionLoadingState.style.display = "block";
+    if (fusionRerunNeededState) fusionRerunNeededState.style.display = "none";
+    if (fusionSanityErrorState) fusionSanityErrorState.style.display = "none";
+    if (fusionResultsContainer) fusionResultsContainer.style.display = "none";
+    if (fusionActionBtns) fusionActionBtns.style.display = "none";
+
+    try {
+      const res = await apiFetch("/v1/eval/fusion", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ run_id: runId }),
+      });
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          alert(`Run '${runId}' not found on server.`);
+        } else {
+          const errData = await res.json().catch(() => ({}));
+          alert(`Fusion exploration failed: ${errData.detail || res.statusText}`);
+        }
+        if (fusionLoadingState) fusionLoadingState.style.display = "none";
+        return;
+      }
+
+      const data = await res.json();
+      if (fusionLoadingState) fusionLoadingState.style.display = "none";
+
+      if (data.status === "rerun_needed") {
+        if (fusionRerunNeededState) {
+          fusionRerunNeededState.style.display = "block";
+          if (fusionRerunMsg) fusionRerunMsg.textContent = data.message || "re-run needed: run does not meet Fusion Explorer requirements.";
+        }
+        return;
+      }
+
+      if (data.status === "sanity_failed") {
+        if (fusionSanityErrorState) {
+          fusionSanityErrorState.style.display = "block";
+          if (fusionSanityErrorMsg) fusionSanityErrorMsg.textContent = data.message || "Sanity checks failed: score replay or consistency mismatch.";
+          if (fusionSanityErrorDetails) {
+            const sc = data.sanity_checks || {};
+            fusionSanityErrorDetails.innerHTML = `<pre style="font-size:11px; color:#f87171; overflow-x:auto;">${escapeHtml(JSON.stringify(sc, null, 2))}</pre>`;
+          }
+        }
+        return;
+      }
+
+      if (data.status !== "success") {
+        alert(data.message || "An unexpected error occurred during fusion analysis.");
+        return;
+      }
+
+      // Store in state
+      state.fusionJobId = runId;
+      state.fusionReport = data;
+
+      // Render sections
+      renderFusionRecommendation(data);
+      renderFusionSanityStatus(data);
+      renderFusionPlateau(data, fusionFamilySelect ? fusionFamilySelect.value : "LINEAR_Z");
+      renderFusionStability(data);
+      renderFusionMetricsComparison(data);
+      renderFusionPerService(data);
+      renderFusionCalibration(data);
+      renderFusionDecisionTable(data);
+      renderFusionSignalQuality(data);
+      renderFusionChangedRows(data);
+
+      if (fusionResultsContainer) fusionResultsContainer.style.display = "block";
+      if (fusionActionBtns) fusionActionBtns.style.display = "flex";
+    } catch (err) {
+      if (fusionLoadingState) fusionLoadingState.style.display = "none";
+      console.error("Fusion exploration error:", err);
+      alert(`Error running fusion explorer: ${err.message}`);
+    }
+  }
+
+  function renderFusionRecommendation(data) {
+    const rec = data.recommendation || {};
+    const isClear = rec.verdict_type === "clear_improvement";
+
+    const titleEl = document.getElementById("fusionRecVerdictTitle");
+    if (titleEl) {
+      titleEl.textContent = isClear ? "Clear Multimodal Improvement" : "No Clear Improvement: Keep Live Formula";
+      titleEl.style.color = isClear ? "var(--accent-green)" : "var(--accent-cyan)";
+    }
+
+    const badgeEl = document.getElementById("fusionVerdictBadge");
+    if (badgeEl) {
+      badgeEl.className = `badge ${isClear ? "badge-verdict-clear" : "badge-verdict-keep"}`;
+      badgeEl.textContent = isClear ? "✓ CLEAR IMPROVEMENT" : "ℹ KEEP CURRENT FORMULA";
+    }
+
+    const reasonEl = document.getElementById("fusionRecReason");
+    if (reasonEl) reasonEl.textContent = rec.verdict_reason || "-";
+
+    const wordsEl = document.getElementById("fusionFormulaWords");
+    if (wordsEl) wordsEl.textContent = rec.formula_words || "-";
+
+    const eqEl = document.getElementById("fusionFormulaEquation");
+    if (eqEl) eqEl.textContent = rec.formula_equation || "-";
+
+    const heldOutVal = document.getElementById("fusionHeldOutVal");
+    const heldOutDelta = document.getElementById("fusionHeldOutDelta");
+    if (heldOutVal && rec.held_out_accuracy) {
+      heldOutVal.textContent = `${rec.held_out_accuracy.recommended_mean_held_out_pct}%`;
+    }
+    if (heldOutDelta && rec.held_out_accuracy) {
+      const d = rec.held_out_accuracy.mean_diff_pct;
+      heldOutDelta.textContent = `Baseline: ${rec.held_out_accuracy.baseline_mean_held_out_pct}% (${d >= 0 ? "+" : ""}${d}%)`;
+    }
+
+    const ciVal = document.getElementById("fusionBootstrapCiVal");
+    const ciStatus = document.getElementById("fusionBootstrapCiStatus");
+    if (ciVal && rec.held_out_accuracy && rec.held_out_accuracy.ci_95_bootstrap) {
+      ciVal.textContent = `[${rec.held_out_accuracy.ci_95_bootstrap[0]}%, ${rec.held_out_accuracy.ci_95_bootstrap[1]}%]`;
+    }
+    if (ciStatus && rec.held_out_accuracy) {
+      ciStatus.textContent = rec.held_out_accuracy.ci_includes_zero
+        ? "CI includes 0 (not statistically distinguishable)"
+        : "CI excludes 0 (statistically significant)";
+    }
+
+    const gainedVal = document.getElementById("fusionFlipsGainedVal");
+    const lostVal = document.getElementById("fusionFlipsLostVal");
+    if (gainedVal && rec.flips) gainedVal.textContent = `+${rec.flips.wrong_to_right}`;
+    if (lostVal && rec.flips) lostVal.textContent = `-${rec.flips.right_to_wrong}`;
+
+    const warnEl = document.getElementById("fusionRecWarnings");
+    if (warnEl) {
+      if (rec.warnings && rec.warnings.length > 0) {
+        warnEl.style.display = "block";
+        warnEl.innerHTML = rec.warnings
+          .map((w) => `<div class="alert-box alert-warning" style="margin-bottom: 6px; font-size: 12px; padding: 6px 12px;">⚠️ ${escapeHtml(w)}</div>`)
+          .join("");
+      } else {
+        warnEl.style.display = "none";
+      }
+    }
+  }
+
+  function renderFusionSanityStatus(data) {
+    const sc = data.sanity_checks || {};
+    const r0a = sc["0a_replay"] || {};
+    const r0b = sc["0b_modality"] || {};
+    const r0c = sc["0c_recombine"] || {};
+    const allPassed = r0a.passed && r0b.passed && r0c.passed;
+
+    const badge = document.getElementById("fusionSanityBadge");
+    if (badge) {
+      badge.className = `badge ${allPassed ? "badge-success" : "badge-danger"}`;
+      badge.textContent = allPassed ? "ALL 3 PASSED (0 MISMATCHES)" : "SANITY CHECKS FAILED";
+    }
+
+    const repText = document.getElementById("sanityReplayText");
+    if (repText) {
+      repText.innerHTML = `Mismatches: <strong style="color:${r0a.mismatches === 0 ? "var(--accent-green)" : "var(--accent-red)"}">${r0a.mismatches || 0}</strong> of ${r0a.total_rows || 0} rows. Replayed formula matches live predictions & confidence.`;
+    }
+
+    const modText = document.getElementById("sanityModalityText");
+    if (modText) {
+      modText.innerHTML = `Text-only (w=0): <strong>${r0b.text_only_w0_top1}%</strong> (run: ${r0b.run_text_top1_accuracy}%) | Image-only (w=1): <strong>${r0b.image_only_w1_top1}%</strong> (run: ${r0b.run_image_top1_accuracy}%). Exact match: <strong style="color:${r0b.passed ? "var(--accent-green)" : "var(--accent-red)"}">${r0b.passed ? "YES" : "NO"}</strong>.`;
+    }
+
+    const recText = document.getElementById("sanityRecombineText");
+    if (recText) {
+      recText.innerHTML = `Mismatches: <strong style="color:${r0c.mismatches === 0 ? "var(--accent-green)" : "var(--accent-red)"}">${r0c.mismatches || 0}</strong> of ${r0c.total_rows || 0} rows. Max difference: <strong>${(r0c.max_abs_diff || 0).toExponential(2)}</strong>.`;
+    }
+  }
+
+  function renderFusionPlateau(data, family) {
+    const container = document.getElementById("fusionPlateauContainer");
+    if (!container || !data.plateau_views) return;
+    const p = data.plateau_views[family];
+    if (!p) {
+      container.innerHTML = `<div style="color:var(--text-muted); padding:10px;">No plateau data available for ${family}.</div>`;
+      return;
+    }
+
+    let minAcc = 100, maxAcc = 0;
+    p.heatmap.forEach((row) => {
+      row.forEach((c) => {
+        if (c.top1_acc < minAcc) minAcc = c.top1_acc;
+        if (c.top1_acc > maxAcc) maxAcc = c.top1_acc;
+      });
+    });
+
+    let html = '<table class="heatmap-table" style="width:100%; font-size:11px; border-collapse:collapse; text-align:center;">';
+    html += '<thead><tr><th style="padding:6px 8px; background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-muted);">wd \\ w</th>';
+    p.w_values.forEach((w) => {
+      html += `<th style="padding:6px 8px; background:var(--bg-card); border:1px solid var(--border-color); color:var(--text-secondary);">${w}</th>`;
+    });
+    html += '</tr></thead><tbody>';
+
+    p.wd_values.forEach((wd, rIdx) => {
+      html += `<tr><td style="padding:6px 8px; background:var(--bg-card); font-weight:600; border:1px solid var(--border-color); color:var(--text-secondary);">wd = ${wd.toFixed(1)}</td>`;
+      const rowCells = p.heatmap[rIdx] || [];
+      p.w_values.forEach((w, cIdx) => {
+        const cell = rowCells[cIdx] || { top1_acc: 0, config_id: "" };
+        const isCenter = cell.config_id === p.center_cell;
+        const isLiveCell = Math.abs(wd - 0.7) < 1e-4 && ((family === "LINEAR_RAW" && Math.abs(w - 0.0) < 1e-4) || (family === "LINEAR_Z" && Math.abs(w - 0.0) < 1e-4));
+
+        const range = maxAcc - minAcc || 1;
+        const norm = Math.max(0, Math.min(1, (cell.top1_acc - minAcc) / range));
+        const alpha = 0.15 + 0.45 * norm;
+        let bgColor = `rgba(59, 130, 246, ${alpha.toFixed(2)})`;
+        let borderStyle = "1px solid var(--border-color)";
+        let extraBadge = "";
+
+        if (isCenter) {
+          bgColor = "rgba(234, 179, 8, 0.4)";
+          borderStyle = "2px solid #eab308";
+          extraBadge = ' <span title="Plateau Center / Recommended" style="font-size:11px;">⭐</span>';
+        } else if (isLiveCell) {
+          borderStyle = "2px solid var(--accent-cyan)";
+          extraBadge = ' <span title="Live Pipeline Equivalent" style="font-size:9px; color:var(--accent-cyan); font-weight:700;">[LIVE]</span>';
+        }
+
+        html += `<td style="padding:6px 4px; background:${bgColor}; border:${borderStyle}; font-family:monospace; font-weight:600;" title="top1: ${cell.top1_acc}%, MRR: ${cell.mrr}">
+          ${cell.top1_acc.toFixed(1)}%${extraBadge}
+        </td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    container.innerHTML = html;
+  }
+
+  function renderFusionStability(data) {
+    const tbody = document.getElementById("fusionStabilityTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    const stabs = data.cv_stability || [];
+    const recId = data.recommendation?.config_id;
+
+    stabs.forEach((s) => {
+      const tr = document.createElement("tr");
+      const isRec = s.id === recId;
+      const statusBadge = isRec
+        ? '<span class="badge badge-success" style="font-size:10px;">⭐ RECOMMENDED</span>'
+        : '<span style="color:var(--text-muted); font-size:11px;">Candidate</span>';
+      tr.innerHTML = `
+        <td style="font-weight:${isRec ? "700" : "500"}; color:${isRec ? "var(--accent-cyan)" : "var(--text-primary)"}; font-family:monospace;">${escapeHtml(s.name)}</td>
+        <td>${s.count} / 100 splits</td>
+        <td style="font-weight:700;">${s.pct}%</td>
+        <td>${statusBadge}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderFusionMetricsComparison(data) {
+    const tbody = document.getElementById("fusionMetricsTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    const mc = data.metrics_comparison || {};
+    const rec = mc.recommended || {};
+    const base = mc.baseline || {};
+
+    const rows = [
+      {
+        metric: "Top-1 Accuracy",
+        rec: `${rec.top1_pct}% <span style="color:var(--text-muted); font-size:11px;">[${rec.top1_ci_95?.[0]}%, ${rec.top1_ci_95?.[1]}%]</span>`,
+        base: `${base.top1_pct}% <span style="color:var(--text-muted); font-size:11px;">[${base.top1_ci_95?.[0]}%, ${base.top1_ci_95?.[1]}%]</span>`,
+        diff: (rec.top1_pct - base.top1_pct).toFixed(2),
+        unit: "%",
+      },
+      {
+        metric: "Top-3 Accuracy",
+        rec: `${rec.top3_pct}% <span style="color:var(--text-muted); font-size:11px;">[${rec.top3_ci_95?.[0]}%, ${rec.top3_ci_95?.[1]}%]</span>`,
+        base: `${base.top3_pct}% <span style="color:var(--text-muted); font-size:11px;">[${base.top3_ci_95?.[0]}%, ${base.top3_ci_95?.[1]}%]</span>`,
+        diff: (rec.top3_pct - base.top3_pct).toFixed(2),
+        unit: "%",
+      },
+      {
+        metric: "Mean Reciprocal Rank (MRR)",
+        rec: `${rec.mrr}`,
+        base: `${base.mrr}`,
+        diff: (rec.mrr - base.mrr).toFixed(4),
+        unit: "",
+      },
+      {
+        metric: "Micro Accuracy",
+        rec: `${rec.micro_accuracy_pct}%`,
+        base: `${base.micro_accuracy_pct}%`,
+        diff: (rec.micro_accuracy_pct - base.micro_accuracy_pct).toFixed(2),
+        unit: "%",
+      },
+      {
+        metric: "Macro Accuracy (Unweighted)",
+        rec: `${rec.macro_accuracy_pct}%`,
+        base: `${base.macro_accuracy_pct}%`,
+        diff: (rec.macro_accuracy_pct - base.macro_accuracy_pct).toFixed(2),
+        unit: "%",
+      },
+      {
+        metric: "Accuracy: Modalities Agree",
+        rec: `${rec.accuracy_when_agree_pct}%`,
+        base: `${base.accuracy_when_agree_pct}%`,
+        diff: (rec.accuracy_when_agree_pct - base.accuracy_when_agree_pct).toFixed(2),
+        unit: "%",
+      },
+      {
+        metric: "Accuracy: Modalities Disagree",
+        rec: `${rec.accuracy_when_disagree_pct}%`,
+        base: `${base.accuracy_when_disagree_pct}%`,
+        diff: (rec.accuracy_when_disagree_pct - base.accuracy_when_disagree_pct).toFixed(2),
+        unit: "%",
+      },
+      {
+        metric: "Image-Only Rows Accuracy (Image alone)",
+        rec: `${mc.image_only_accuracy_pct}% <span style="font-size:11px; color:var(--text-muted);">(n=${mc.n_image_only})</span>`,
+        base: `${mc.image_only_accuracy_pct}% <span style="font-size:11px; color:var(--text-muted);">(n=${mc.n_image_only})</span>`,
+        diff: "0.00",
+        unit: "%",
+      },
+    ];
+
+    rows.forEach((r) => {
+      const tr = document.createElement("tr");
+      const numDiff = parseFloat(r.diff);
+      let diffHtml = "-";
+      if (!isNaN(numDiff) && numDiff !== 0) {
+        const color = numDiff > 0 ? "var(--accent-green)" : "var(--accent-red)";
+        diffHtml = `<span style="color:${color}; font-weight:700;">${numDiff > 0 ? "+" : ""}${numDiff}${r.unit}</span>`;
+      } else if (numDiff === 0) {
+        diffHtml = `<span style="color:var(--text-muted);">0.00${r.unit}</span>`;
+      }
+      tr.innerHTML = `
+        <td style="font-weight:600;">${r.metric}</td>
+        <td>${r.rec}</td>
+        <td>${r.base}</td>
+        <td>${diffHtml}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderFusionPerService(data) {
+    const tbody = document.getElementById("fusionPerServiceTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    const svcs = data.per_service_accuracy || [];
+
+    svcs.forEach((s) => {
+      const tr = document.createElement("tr");
+      const warnBadge = s.warn_small_sample
+        ? '<span class="badge" style="background:rgba(245, 158, 11, 0.2); color:#fbbf24; font-size:10px;">⚠️ n &lt; 5</span>'
+        : '<span style="color:var(--accent-green); font-size:11px;">OK</span>';
+      tr.innerHTML = `
+        <td style="font-weight:600;">${escapeHtml(s.service)}</td>
+        <td>${s.n}</td>
+        <td style="font-weight:700; color:${s.recommended_acc_pct >= s.baseline_acc_pct ? "var(--accent-green)" : "var(--accent-red)"}">${s.recommended_acc_pct}%</td>
+        <td style="color:var(--text-muted); font-size:11px;">[${s.recommended_ci_95[0]}%, ${s.recommended_ci_95[1]}%]</td>
+        <td>${s.baseline_acc_pct}%</td>
+        <td>${warnBadge}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderFusionCalibration(data) {
+    const calib = data.confidence_calibration || {};
+    const bestTVal = document.getElementById("calibBestTVal");
+    const bestEceVal = document.getElementById("calibBestEceVal");
+    if (bestTVal) bestTVal.textContent = `T = ${calib.best_temperature}`;
+    if (bestEceVal) bestEceVal.textContent = `${calib.best_ece_pct}%`;
+
+    const sweepTbody = document.getElementById("fusionCalibSweepTableBody");
+    if (sweepTbody) {
+      sweepTbody.innerHTML = "";
+      (calib.sweep || []).forEach((s) => {
+        const tr = document.createElement("tr");
+        const isBest = Math.abs(s.temperature - calib.best_temperature) < 1e-4;
+        tr.innerHTML = `
+          <td style="font-family:monospace; font-weight:${isBest ? "700" : "400"}; color:${isBest ? "var(--accent-cyan)" : "inherit"};">T = ${s.temperature}</td>
+          <td style="font-weight:700;">${(s.ece * 100).toFixed(2)}%</td>
+          <td>${isBest ? '<span class="badge badge-success" style="font-size:10px;">⭐ BEST ECE</span>' : "-"}</td>
+        `;
+        sweepTbody.appendChild(tr);
+      });
+    }
+
+    renderFusionReliabilityDiagram(calib.reliability_table || []);
+
+    const relTbody = document.getElementById("fusionReliabilityTableBody");
+    if (relTbody) {
+      relTbody.innerHTML = "";
+      (calib.reliability_table || []).forEach((b) => {
+        const tr = document.createElement("tr");
+        const warnHtml = b.warn_small_sample
+          ? '<span class="badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; font-size:10px;">⚠️ n &lt; 30</span>'
+          : '<span style="color:var(--accent-green); font-size:11px;">OK</span>';
+        tr.innerHTML = `
+          <td style="font-weight:600; font-family:monospace;">${b.bin}</td>
+          <td>${b.n}</td>
+          <td>${b.avg_confidence}%</td>
+          <td style="font-weight:700;">${b.n > 0 ? b.accuracy + "%" : "-"}</td>
+          <td>${warnHtml}</td>
+        `;
+        relTbody.appendChild(tr);
+      });
+    }
+  }
+
+  function renderFusionReliabilityDiagram(bins) {
+    const canvas = document.getElementById("fusionReliabilityCanvas");
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    const w = rect.width > 0 ? rect.width : 340;
+    const h = rect.height > 0 ? rect.height : 180;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    const padLeft = 40;
+    const padRight = 20;
+    const padTop = 15;
+    const padBottom = 30;
+
+    const plotW = w - padLeft - padRight;
+    const plotH = h - padTop - padBottom;
+
+    // Diagonal perfect calibration reference line
+    ctx.strokeStyle = "#475569";
+    ctx.setLineDash([4, 4]);
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(padLeft, padTop + plotH);
+    ctx.lineTo(padLeft + plotW, padTop);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Axes
+    ctx.strokeStyle = "#334155";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(padLeft, padTop);
+    ctx.lineTo(padLeft, padTop + plotH);
+    ctx.lineTo(padLeft + plotW, padTop + plotH);
+    ctx.stroke();
+
+    // Ticks & Labels
+    ctx.fillStyle = "#94a3b8";
+    ctx.font = "10px -apple-system, BlinkMacSystemFont, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText("100%", padLeft - 6, padTop + 8);
+    ctx.fillText("0%", padLeft - 6, padTop + plotH);
+    ctx.textAlign = "center";
+    ctx.fillText("Confidence", padLeft + plotW / 2, h - 5);
+
+    // Plot observed points / bars
+    const barW = Math.max(4, plotW / (bins.length || 10) - 4);
+    bins.forEach((b, i) => {
+      if (b.n === 0) return;
+      const x = padLeft + (i / bins.length) * plotW + 2;
+      const accRatio = Math.min(1.0, b.accuracy / 100.0);
+      const barH = accRatio * plotH;
+      const y = padTop + plotH - barH;
+
+      ctx.fillStyle = "#06b6d4";
+      ctx.beginPath();
+      ctx.roundRect(x, y, barW, barH, 2);
+      ctx.fill();
+    });
+  }
+
+  function renderFusionDecisionTable(data) {
+    const tbody = document.getElementById("fusionDecisionTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    const dt = data.decision_table || [];
+
+    dt.forEach((row) => {
+      const tr = document.createElement("tr");
+      const l3Color = row.none_harmful_auto > 0 ? "color:var(--accent-red); font-weight:700;" : "color:var(--text-muted);";
+      tr.innerHTML = `
+        <td style="font-weight:600; font-family:monospace;">${row.conf_thresh}</td>
+        <td style="font-family:monospace;">${row.gap_thresh}</td>
+        <td>${row.coverage_pct}%</td>
+        <td style="font-weight:700; color:${row.auto_precision_pct >= 90 ? "var(--accent-green)" : "inherit"};">${row.auto_precision_pct}%</td>
+        <td>${row.auto_count}</td>
+        <td style="color:${row.wrong_auto_count > 0 ? "var(--accent-red)" : "inherit"}; font-weight:${row.wrong_auto_count > 0 ? "700" : "400"};">${row.wrong_auto_count}</td>
+        <td>${row.draft_count}</td>
+        <td>${row.no_action_count}</td>
+        <td style="color:var(--accent-green);">${row.none_correct_no_action}</td>
+        <td style="color:#fbbf24;">${row.none_soft_draft}</td>
+        <td style="${l3Color}">${row.none_harmful_auto}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderFusionSignalQuality(data) {
+    const tbody = document.getElementById("fusionSignalQualityTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    const sigs = data.signal_quality || [];
+
+    sigs.forEach((sig) => {
+      const tr = document.createElement("tr");
+      const aurocA = sig.task_a_auroc !== null ? sig.task_a_auroc.toFixed(3) : "N/A";
+      const aurocB = sig.task_b_auroc !== null ? sig.task_b_auroc.toFixed(3) : "N/A";
+      const warnA = sig.task_a_warn ? ' <span class="badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; font-size:10px;">⚠️ &lt;10</span>' : "";
+      const warnB = sig.task_b_warn ? ' <span class="badge" style="background:rgba(245,158,11,0.2); color:#fbbf24; font-size:10px;">⚠️ &lt;10</span>' : "";
+
+      tr.innerHTML = `
+        <td style="font-weight:600; font-family:monospace;">${escapeHtml(sig.signal_name)}</td>
+        <td><strong>${aurocA}</strong> <span style="font-size:11px; color:var(--text-muted);">(n=${sig.task_a_n})</span>${warnA}</td>
+        <td><strong>${aurocB}</strong> <span style="font-size:11px; color:var(--text-muted);">(n=${sig.task_b_n})</span>${warnB}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function renderFusionChangedRows(data) {
+    const tbody = document.getElementById("fusionChangedTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    const changed = data.changed_rows || [];
+
+    if (changed.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:16px;">No top-1 predictions changed between Recommended and Baseline.</td></tr>';
+      return;
+    }
+
+    changed.forEach((r, idx) => {
+      const tr = document.createElement("tr");
+      const thumbHtml = r.thumbnail_b64
+        ? `<img src="${r.thumbnail_b64}" class="row-thumb" data-fusion-idx="${idx}" alt="Thumb" style="cursor:pointer;" title="Click to preview" />`
+        : '<span style="color:var(--text-muted); font-size:11px;">[No img]</span>';
+
+      let badgeType = "";
+      if (r.change_type === "wrong_to_right") {
+        badgeType = '<span class="badge badge-improved">✓ WRONG &rarr; RIGHT</span>';
+      } else if (r.change_type === "right_to_wrong") {
+        badgeType = '<span class="badge badge-regressed">✗ RIGHT &rarr; WRONG</span>';
+      } else {
+        badgeType = '<span class="badge" style="background:rgba(100,116,139,0.3); color:#94a3b8;">CHANGED</span>';
+      }
+
+      tr.innerHTML = `
+        <td>#${r.row_id}</td>
+        <td>${thumbHtml}</td>
+        <td style="font-weight:600;">${escapeHtml(r.expected_service)}</td>
+        <td>
+          <div style="font-weight:600; color:${r.baseline_correct ? "var(--accent-green)" : "var(--accent-red)"}">${escapeHtml(r.baseline_pred)}</div>
+          <div style="font-size:10px; color:var(--text-muted);">conf: ${(r.baseline_conf * 100).toFixed(1)}%</div>
+        </td>
+        <td>
+          <div style="font-weight:600; color:${r.recommended_correct ? "var(--accent-green)" : "var(--accent-red)"}">${escapeHtml(r.recommended_pred)}</div>
+          <div style="font-size:10px; color:var(--text-muted);">conf: ${(r.recommended_conf * 100).toFixed(1)}% | score: ${r.fused_score}</div>
+        </td>
+        <td>${badgeType}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    tbody.querySelectorAll("img.row-thumb").forEach((img) => {
+      img.addEventListener("click", () => {
+        const idx = parseInt(img.dataset.fusionIdx, 10);
+        const cr = changed[idx];
+        if (cr) openFusionImageModal(cr);
+      });
+    });
+  }
+
+  function openFusionImageModal(cr) {
+    if (modalRowIdx) modalRowIdx.textContent = `Row #${cr.row_id}`;
+    if (modalFilename) modalFilename.textContent = cr.image || "";
+    if (modalExpectedSvc) modalExpectedSvc.textContent = cr.expected_service;
+    if (modalPredictedSvc) {
+      modalPredictedSvc.innerHTML = `Baseline: <strong>${escapeHtml(cr.baseline_pred || "NONE")}</strong> (${cr.baseline_correct ? "✓ Correct" : "✗ Wrong"})<br>` +
+                                    `Recommended: <strong>${escapeHtml(cr.recommended_pred || "NONE")}</strong> (${cr.recommended_correct ? "✓ Correct" : "✗ Wrong"})`;
+      modalPredictedSvc.style.color = "var(--text-primary)";
+    }
+    if (modalConfGap) {
+      modalConfGap.textContent = `Baseline Conf: ${(cr.baseline_conf * 100).toFixed(1)}% | Rec Conf: ${(cr.recommended_conf * 100).toFixed(1)}% | Fused Score: ${cr.fused_score}`;
+    }
+    if (modalDescription) modalDescription.textContent = cr.description || "<No description>";
+    if (modalActionBadge) {
+      const isImprovement = cr.change_type === "wrong_to_right";
+      modalActionBadge.innerHTML = `<span class="badge ${isImprovement ? "badge-improved" : (cr.change_type === "right_to_wrong" ? "badge-regressed" : "badge-neutral")}">${escapeHtml(cr.change_type)}</span>`;
+    }
+    if (modalResultBadge) {
+      modalResultBadge.innerHTML = cr.change_type === "wrong_to_right"
+        ? '<span class="badge-correct">✓ IMPROVED IN FUSION</span>'
+        : (cr.change_type === "right_to_wrong" ? '<span class="badge-wrong">✗ REGRESSED IN FUSION</span>' : '<span class="badge-neutral">CHANGED</span>');
     }
     if (modalImg) modalImg.src = cr.thumbnail_b64 || "";
     if (modalLoadingSpinner) modalLoadingSpinner.style.display = "none";
