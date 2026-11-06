@@ -142,6 +142,35 @@
     }, 3000);
   }
 
+  // Error message formatting helper (safely extracts error strings from FastAPI dicts/arrays, preventing [object Object])
+  function formatErrorMessage(errData, fallbackMessage = "An unexpected error occurred.") {
+    if (!errData) return fallbackMessage;
+
+    if (errData.detail !== undefined && errData.detail !== null) {
+      if (typeof errData.detail === "string") {
+        return errData.detail;
+      }
+      if (Array.isArray(errData.detail)) {
+        const msgs = errData.detail.map((item) => {
+          const loc = Array.isArray(item.loc) ? item.loc.slice(1).join(".") : "";
+          return (loc ? `${loc}: ` : "") + (item.msg || JSON.stringify(item));
+        });
+        return msgs.join("; ") || fallbackMessage;
+      }
+      if (typeof errData.detail === "object") {
+        if (errData.detail.message) {
+          return errData.detail.message;
+        }
+        return JSON.stringify(errData.detail);
+      }
+    }
+
+    if (errData.message) return errData.message;
+    if (errData.error && errData.error.message) return errData.error.message;
+    if (typeof errData === "string") return errData;
+    return fallbackMessage;
+  }
+
   // Reason mapping helper (maps raw/server reasons to readable human sentences)
   function formatReason(rawReason) {
     if (!rawReason) {
@@ -690,7 +719,7 @@
         let errMessage = `Error saving decision (${resp.status})`;
         try {
           const errData = await resp.json();
-          if (errData && errData.detail) errMessage = errData.detail.message || errData.detail;
+          errMessage = formatErrorMessage(errData, errMessage);
         } catch (_) {}
         throw new Error(errMessage);
       }
@@ -1022,7 +1051,7 @@
           const data = await resp.json().catch(() => ({}));
           if (!resp.ok) {
             if (els.svcErrorAlert) {
-              els.svcErrorAlert.textContent = data.detail || "Failed to check similarity.";
+              els.svcErrorAlert.textContent = formatErrorMessage(data, "Failed to check similarity.");
               els.svcErrorAlert.style.display = "block";
             }
             return;
@@ -1070,6 +1099,7 @@
           title,
           description: desc,
           keywords,
+          visual_line: visual,
           visual_description: visual,
           reactivate_if_exists: reactivateIfExists,
         };
@@ -1083,12 +1113,16 @@
         const data = await resp.json().catch(() => ({}));
 
         if (resp.status === 409) {
-          if (data.can_reactivate && els.svcReactivateBox) {
-            els.svcReactivateMsg.textContent = data.detail;
-            els.svcReactivateBtn.onclick = () => submitService(true);
+          const detailObj = (typeof data.detail === "object" && data.detail !== null) ? data.detail : {};
+          const canReactivate = Boolean(data.can_reactivate || detailObj.can_reactivate);
+          const errorMsg = formatErrorMessage(data, "A service with this title already exists.");
+
+          if (canReactivate && els.svcReactivateBox) {
+            if (els.svcReactivateMsg) els.svcReactivateMsg.textContent = errorMsg;
+            if (els.svcReactivateBtn) els.svcReactivateBtn.onclick = () => submitService(true);
             els.svcReactivateBox.style.display = "block";
           } else if (els.svcErrorAlert) {
-            els.svcErrorAlert.textContent = data.detail || "A service with this title already exists.";
+            els.svcErrorAlert.textContent = errorMsg;
             els.svcErrorAlert.style.display = "block";
           }
           return;
@@ -1096,7 +1130,7 @@
 
         if (!resp.ok) {
           if (els.svcErrorAlert) {
-            els.svcErrorAlert.textContent = data.detail || `Server error (${resp.status})`;
+            els.svcErrorAlert.textContent = formatErrorMessage(data, `Server error (${resp.status})`);
             els.svcErrorAlert.style.display = "block";
           }
           return;
@@ -1108,8 +1142,10 @@
           if (!data.has_image_profile) {
             msg += " Notice: No image profile was created (visual description was empty).";
           }
-          if (data.warnings && data.warnings.length > 0) {
-            msg += " Warnings: " + data.warnings.join("; ");
+          if (data.warning) {
+            msg += " Notice: " + data.warning;
+          } else if (data.warnings && data.warnings.length > 0) {
+            msg += " Warnings: " + (Array.isArray(data.warnings) ? data.warnings.join("; ") : data.warnings);
           }
           els.svcSuccessAlert.textContent = msg;
           els.svcSuccessAlert.style.display = "block";
@@ -1289,7 +1325,7 @@
             });
             const data = await resp.json().catch(() => ({}));
             if (!resp.ok) {
-              alert(data.detail || "Failed to delete demo service.");
+              alert(formatErrorMessage(data, "Failed to delete demo service."));
               delBtn.disabled = false;
               return;
             }
@@ -1328,7 +1364,7 @@
         });
         const data = await resp.json().catch(() => ({}));
         if (!resp.ok) {
-          alert(data.detail || "Failed to delete demo services.");
+          alert(formatErrorMessage(data, "Failed to delete demo services."));
           els.deleteAllDemosBtn.disabled = false;
           return;
         }

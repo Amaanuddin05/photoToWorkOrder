@@ -1,12 +1,18 @@
 # Project Status: SigLIP Standalone Photo-to-Work-Order Service
 
 ## Current Task
-- **Operator Console Demo Services: "Add Service" Form with Embeddings & "Demo Services" Registry/List/Delete: COMPLETED** — 2026-10-31
-  - Task A ("Add Service" Form): Added form creating a service together with all its embeddings (TEI text embeddings and optional SigLIP vision profile). Features real-time character counters, pre-saving non-blocking similarity check with warning (> 0.85), duplicate title conflict prevention (409), and 409 inactive conflict detection with one-click "Reactivate and overwrite" support. Atomic single-transaction database write with automatic in-memory cache refresh.
-  - Task B ("Demo Services" Registry, List & Delete): Lightweight atomic JSON file registry (`DEMO_REGISTRY_PATH`, default `app/data/demo_services.json`), protected with `asyncio.Lock` and temp-file replacement. Endpoints `GET /v1/services/demo`, `DELETE /v1/services/demo/{id}`, and `DELETE /v1/services/demo` with strict server-side registry ID and DB title validation. Default soft-delete or configurable hard-delete (`DEMO_HARD_DELETE`), with immediate in-memory `service_profiles` cache refresh.
-  - UI Experience (`/ui`): Interactive vanilla HTML/CSS/JS operator console additions with DEMO badges, photo-matching warning badges when no visual description exists, notice banner ("Demo services are active in the live pipeline and in evaluation runs while they exist. Delete them before running an evaluation."), and confirmation dialogs.
+- **Bugfix: Demo Service Error Formatting & Payload Alignment: COMPLETED** — 2026-11-06
+  - Fixed `[object Object]` alert rendering in operator console (`/ui`) when adding demo services or encountering backend validation/conflict/auth errors.
+  - Implemented centralized `formatErrorMessage()` helper in `app.js` to safely unpack FastAPI error responses (`detail.message`, validation error lists, string details, or fallbacks).
+  - Fixed 409 inactive conflict reactivation detection (`data.detail.can_reactivate`).
+  - Added support for both `visual_line` and `visual_description` in `CreateServicePayload` and form submission.
 
 ## Completed Work
+- **Demo Service Error Formatting & Payload Alignment** — 2026-11-06:
+  - Added `formatErrorMessage()` in `app/static/app.js` to prevent JavaScript `[object Object]` string conversion when FastAPI returns structured dict/array error payloads (400, 401, 409, 422, 500, 502).
+  - Aligned 409 Conflict reactivation: unwraps `detail.can_reactivate` and populates the human-readable reactivation message into `#svc-reactivate-msg`.
+  - Added `visual_description` alias alongside `visual_line` in `CreateServicePayload` (`app/routers/services.py`) and wired both in `app.js` payload to ensure visual descriptions are accurately recognized and embedded by SigLIP.
+  - Updated delete error alerts in `delBtn` and `deleteAllDemosBtn` to safely display formatted error messages.
 - **Operator Console Demo Services ("Add Service" & Demo Management)** — 2026-10-31:
   - **Database & Architecture Inspection (Step 0)**:
     - Confirmed `WoService` contains: `id`, `title`, `description`, `keywords` (`text NULL`), `isActive`, `embeddingModel`, `updatedAt`, `titleEmb`, `descEmb`. No schema change or migration needed.

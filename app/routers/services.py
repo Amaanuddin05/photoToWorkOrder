@@ -36,6 +36,7 @@ class CreateServicePayload(BaseModel):
     description: str
     keywords: str | None = None
     visual_line: str | None = None
+    visual_description: str | None = None
     reactivate_if_exists: bool = False
 
 
@@ -307,7 +308,8 @@ async def create_service(
             detail={"code": "DESC_TOO_LONG", "message": "Description must be at most 1000 characters."},
         )
 
-    visual_line = payload.visual_line.strip() if payload.visual_line and payload.visual_line.strip() else None
+    visual_raw = payload.visual_line or payload.visual_description
+    visual_line = visual_raw.strip() if visual_raw and visual_raw.strip() else None
     if visual_line and len(visual_line) > 500:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
