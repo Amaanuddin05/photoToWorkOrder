@@ -15,6 +15,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel
 
+from app.catalog_text import catalog_texts
+
 logger = logging.getLogger("siglip.routers.services")
 router = APIRouter(prefix="/v1", tags=["services"])
 
@@ -122,9 +124,10 @@ async def upsert_services(
             # For simplicity: always re-embed (TEI is fast for small batches)
             pass
 
-        # 1. Text embeddings via TEI (passages: NO query prefix)
+        # 1. Text embeddings via TEI (passages: NO query prefix).
+        #    Same recipe as the rest of the catalog: title, and "{description}. {keywords}".
         try:
-            vecs = await tei.embed([title, desc])
+            vecs = await tei.embed(list(catalog_texts(title, desc, svc.keywords)))
             title_emb = vecs[0]
             desc_emb = vecs[1]
         except Exception as exc:
@@ -330,8 +333,9 @@ async def create_service(
             existing_id = existing["id"]
 
     # 1. Compute ALL embeddings FIRST before writing anything
+    #    Same recipe as the rest of the catalog: title, and "{description}. {keywords}".
     try:
-        vecs = await tei.embed([title, desc])
+        vecs = await tei.embed(list(catalog_texts(title, desc, keywords)))
         title_emb = vecs[0]
         desc_emb = vecs[1]
     except Exception as exc:
