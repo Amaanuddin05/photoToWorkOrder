@@ -284,6 +284,8 @@ async def process_post(
 
     # ── Stage 6: Decision ──────────────────────────────────────────────────
     t_decide = time.perf_counter()
+    # Text-guard thresholds for the embedding model actually used (per-model profile)
+    guard_floor, guard_auto_min, _guard_src = settings.text_guard_for(text_model_used)
     result = make_decision(
         description=description,
         has_image=has_image,
@@ -303,8 +305,8 @@ async def process_post(
         min_description_words=settings.MIN_DESCRIPTION_WORDS,
         enable_reranker=getattr(settings, "ENABLE_RERANKER", True),
         text_guard_enabled=getattr(settings, "DECISION_TEXT_GUARD_ENABLED", True),
-        text_no_action_floor=getattr(settings, "DECISION_TEXT_NO_ACTION_FLOOR", 0.40),
-        text_auto_min=getattr(settings, "DECISION_TEXT_AUTO_MIN", 0.45),
+        text_no_action_floor=guard_floor,
+        text_auto_min=guard_auto_min,
     )
     timings["decision_ms"] = round((time.perf_counter() - t_decide) * 1000, 2)
     timings["decide_ms"] = timings["decision_ms"]

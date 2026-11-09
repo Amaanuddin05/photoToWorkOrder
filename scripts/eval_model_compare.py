@@ -64,7 +64,8 @@ def _http_json(url: str, data: bytes | None = None, headers: dict[str, str] | No
         return json.loads(resp.read().decode("utf-8"))
 
 
-def run_pipeline_eval(base_url: str, zip_path: Path, timeout_s: float) -> dict[str, Any]:
+def run_pipeline_eval(base_url: str, zip_path: Path, timeout_s: float,
+                      extra_overrides: dict[str, Any] | None = None) -> dict[str, Any]:
     zip_bytes = zip_path.read_bytes()
     boundary = f"----EvalBoundary{int(time.time() * 1000)}"
     body = (
@@ -81,7 +82,7 @@ def run_pipeline_eval(base_url: str, zip_path: Path, timeout_s: float) -> dict[s
 
     _http_json(
         f"{base_url}/v1/eval/jobs/{job_id}/start",
-        json.dumps({"enable_reranker": False}).encode("utf-8"),
+        json.dumps({"enable_reranker": False, **(extra_overrides or {})}).encode("utf-8"),
         {"Content-Type": "application/json"},
     )
     t0 = time.perf_counter()
@@ -171,7 +172,12 @@ def cmd_run(args: argparse.Namespace) -> None:
     RUNS_DIR.mkdir(parents=True, exist_ok=True)
     ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    run = run_pipeline_eval(args.base_url, Path(args.zip), args.timeout)
+    overrides: dict[str, Any] = {}
+    if args.text_floor is not None:
+        overrides["text_no_action_floor"] = args.text_floor
+    if args.text_auto_min is not None:
+        overrides["text_auto_min"] = args.text_auto_min
+    run = run_pipeline_eval(args.base_url, Path(args.zip), args.timeout, overrides)
     run["rows"] = [r for r in run.get("rows", []) if not r.get("is_warmup")]
     csv_path = save_rows_csv(run, args.tag, ts)
     m = analyze_run(run)
@@ -287,6 +293,8 @@ def main() -> None:
     r.add_argument("--base-url", default="http://localhost:8083")
     r.add_argument("--zip", default=str(base_dir / "eval_dataset.zip"))
     r.add_argument("--timeout", type=float, default=900.0)
+    r.add_argument("--text-floor", type=float, default=None, help="per-run override of the text no_action floor")
+    r.add_argument("--text-auto-min", type=float, default=None, help="per-run override of the text auto_min")
     c = sub.add_parser("compare")
     c.add_argument("a")
     c.add_argument("b")

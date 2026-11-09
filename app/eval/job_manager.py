@@ -306,6 +306,9 @@ class EvalJobManager:
         except Exception as exc:
             logger.warning("Could not read TEI embed model for eval run record: %s", exc)
         reranker_model = await rerank_model_id(app_state.tei_client, self.settings) if run_reranker else None
+        # Text-guard values for this model (per-model profile); explicit run overrides win
+        prof_floor, prof_auto_min, prof_src = self.settings.text_guard_for(text_model_id)
+        guard_src = "override" if ("text_no_action_floor" in ov or "text_auto_min" in ov) else prof_src
 
         eff = {
             "overrides": dict(ov),
@@ -325,8 +328,9 @@ class EvalJobManager:
             "min_description_words": int(self.settings.MIN_DESCRIPTION_WORDS),
             "auto_create_enabled": bool(ov.get("auto_create_enabled", self.settings.AUTO_CREATE_ENABLED)),
             "text_guard_enabled": bool(ov.get("text_guard_enabled", getattr(self.settings, "DECISION_TEXT_GUARD_ENABLED", True))),
-            "text_no_action_floor": float(ov.get("text_no_action_floor", getattr(self.settings, "DECISION_TEXT_NO_ACTION_FLOOR", 0.40))),
-            "text_auto_min": float(ov.get("text_auto_min", getattr(self.settings, "DECISION_TEXT_AUTO_MIN", 0.45))),
+            "text_no_action_floor": float(ov.get("text_no_action_floor", prof_floor)),
+            "text_auto_min": float(ov.get("text_auto_min", prof_auto_min)),
+            "text_guard_source": guard_src,
             "model_ids": {
                 "text": text_model_id,
                 "text_dim": text_dim,
@@ -428,6 +432,8 @@ class EvalJobManager:
             "DECISION_TEXT_GUARD_ENABLED": job.effective_settings.get("text_guard_enabled", getattr(self.settings, "DECISION_TEXT_GUARD_ENABLED", True)),
             "DECISION_TEXT_NO_ACTION_FLOOR": job.effective_settings.get("text_no_action_floor", getattr(self.settings, "DECISION_TEXT_NO_ACTION_FLOOR", 0.40)),
             "DECISION_TEXT_AUTO_MIN": job.effective_settings.get("text_auto_min", getattr(self.settings, "DECISION_TEXT_AUTO_MIN", 0.45)),
+            # The values above are already resolved for this run's model (profile or override)
+            "TEXT_GUARD_PINNED": True,
         })
 
         valid_rows = [

@@ -237,11 +237,32 @@ TEI settings for bge-m3 (`cpu-1.9`): `--pooling cls --max-batch-tokens 2048 --ma
 `--max-batch-tokens 2048` is required on a ~7.6 GB Docker VM (8192 was OOM-killed during TEI warm-up);
 with TEI's default auto-truncate this also caps inputs at 2048 tokens (descriptions are <= 1000 chars).
 
-### Results on the 62-row English ground truth (reranker off, same settings)
-| Model | text-only top-1 / top-3 | pipeline top-1 | auto precision |
+### Per-model text-guard thresholds
+The text guard compares the top-1 text score (an absolute cosine value) with a no-action floor
+and an auto-create minimum, so the values depend on the model. `TEXT_GUARD_PROFILES` (JSON) holds
+per-model values; models without an entry use `DECISION_TEXT_NO_ACTION_FLOOR` / `DECISION_TEXT_AUTO_MIN`
+(0.40 / 0.45, calibrated on bge-base). Eval runs record the values used (`text_guard_source`), and
+explicit per-run overrides still win.
+
+| Model | no_action_floor | auto_min | How it was chosen |
 | :--- | :--- | :--- | :--- |
-| `BAAI/bge-base-en-v1.5` | 93.55% / 98.39% | 95.16% | 97.50% |
-| `BAAI/bge-m3` | 82.26% / 91.94% | 90.32% | 100.00% (0 wrong) |
+| `BAAI/bge-base-en-v1.5` | 0.40 | 0.45 | global defaults |
+| `BAAI/bge-m3` | **0.35** | 0.45 | lowest real request across EN + AR ground truth and held-out sets scored 0.3604; 0.35 ignores none of the 250. auto_min 0.40-0.45 gave identical results; 0.48 would block the one Arabic wrong auto-create but turn 6 correct Arabic auto-creates into drafts |
+
+Recalibrate after a model or catalog change: `..\venv\Scripts\python.exe scripts\calibrate_text_guard.py`
+(read-only; uses `groundTruth.csv`, `groundTruth_ar.csv`, `eval/holdout_text_queries.csv`, `eval/calibration_ar.json`).
+
+Note: posts **without a photo** are also subject to the confidence floor `DECISION_NO_ACTION_FLOOR` (0.25),
+which was set on posts with photos. For text-only posts it ignores many real requests for **both** models
+(bge-base: 9/62 test and 24/63 held-out English rows; bge-m3: 22/62 and 30/63) — see the calibration output.
+
+### Results on the ground truth (reranker off, enriched catalog, per-model guard)
+| Model | Language | text-only top-1 / top-3 | pipeline top-1 | auto precision | real requests ignored |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `BAAI/bge-base-en-v1.5` | English | 95.16% / 98.39% | 95.16% | 97.56% | 0 |
+| `BAAI/bge-base-en-v1.5` | Arabic | 8.06% / 19.35% | 32.26% | 100% (5 autos) | 4 |
+| `BAAI/bge-m3` | English | 83.87% / 96.77% | 91.94% | 100% | 0 |
+| `BAAI/bge-m3` | Arabic | 70.97% / 85.48% | 88.71% | 96.77% (1 wrong) | 1 (confidence floor) |
 
 Compare runs with `scripts\eval_model_compare.py run --tag <name>` (outputs in
 `app/eval/runs/model_compare/`) and `scripts\eval_model_compare.py compare <a.json> <b.json>`.

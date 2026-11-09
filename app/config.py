@@ -80,9 +80,19 @@ class Settings(BaseSettings):
         '"Emergency Reactive Cleaning (Spills, Vomit, Incidents)"]'
     )
     # ── Text Score Guard (Bi-encoder mode) ────────────────────────────────────
+    # Global values (calibrated on BAAI/bge-base-en-v1.5); used for any model
+    # without an entry in TEXT_GUARD_PROFILES.
     DECISION_TEXT_NO_ACTION_FLOOR: float = 0.40
     DECISION_TEXT_AUTO_MIN: float = 0.45
     DECISION_TEXT_GUARD_ENABLED: bool = True
+    # Per-model guard values (the guard uses absolute cosine scores, whose scale
+    # depends on the embedding model). JSON: {model_id: {"no_action_floor": x, "auto_min": y}}.
+    # bge-m3 calibrated with scripts/calibrate_text_guard.py (EN + AR ground truth and
+    # held-out sets): floor 0.35 keeps every real request above it; auto_min unchanged.
+    TEXT_GUARD_PROFILES: str = '{"BAAI/bge-m3": {"no_action_floor": 0.35, "auto_min": 0.45}}'
+    # Internal: when True (eval runs, which resolve the values up front), the
+    # DECISION_TEXT_* values are used as-is and profiles are ignored.
+    TEXT_GUARD_PINNED: bool = False
 
     # ── Security & Auth ───────────────────────────────────────────────────────
     API_KEYS: str = ""          # comma-separated; empty = no auth required
@@ -125,6 +135,25 @@ class Settings(BaseSettings):
             return json.loads(self.ALWAYS_DRAFT_SERVICES)
         except Exception:
             return []
+
+    def text_guard_for(self, model_id: str | None) -> tuple[float, float, str]:
+        """
+        (no_action_floor, auto_min, source) of the text guard for this embedding model:
+        its TEXT_GUARD_PROFILES entry if any (unless TEXT_GUARD_PINNED), otherwise the
+        global DECISION_TEXT_NO_ACTION_FLOOR / DECISION_TEXT_AUTO_MIN.
+        """
+        if not self.TEXT_GUARD_PINNED and model_id:
+            try:
+                prof = json.loads(self.TEXT_GUARD_PROFILES or "{}").get(model_id)
+            except Exception:
+                prof = None
+            if prof:
+                return (
+                    float(prof.get("no_action_floor", self.DECISION_TEXT_NO_ACTION_FLOOR)),
+                    float(prof.get("auto_min", self.DECISION_TEXT_AUTO_MIN)),
+                    f"profile:{model_id}",
+                )
+        return float(self.DECISION_TEXT_NO_ACTION_FLOOR), float(self.DECISION_TEXT_AUTO_MIN), "global"
 
     @property
     def config_version(self) -> str:

@@ -93,6 +93,8 @@ async def evaluate_descriptions(
 
     # Search the catalog vectors of the model TEI serves (ServiceTextEmbedding)
     text_model, _dim, _info = await probe_tei_embedder(tei_client)
+    # Guard thresholds for this model (per-model profile, else global settings)
+    guard_floor, guard_auto_min, _src = settings.text_guard_for(text_model)
     vectors = await tei_client.embed([d.strip() for d in descriptions])
 
     results: list[dict[str, Any]] = []
@@ -166,8 +168,8 @@ async def evaluate_descriptions(
             min_description_words=settings.MIN_DESCRIPTION_WORDS,
             enable_reranker=settings.ENABLE_RERANKER,
             text_guard_enabled=settings.DECISION_TEXT_GUARD_ENABLED,
-            text_no_action_floor=settings.DECISION_TEXT_NO_ACTION_FLOOR,
-            text_auto_min=settings.DECISION_TEXT_AUTO_MIN,
+            text_no_action_floor=guard_floor,
+            text_auto_min=guard_auto_min,
         )
 
         top1_item = reranked[0]
@@ -229,7 +231,7 @@ async def main_async() -> None:
     print("=" * 105)
     print("               TEXT-SCORE GUARD ANALYSIS: TEXT-ONLY JUNK & COMPLETION CHECK")
     print("=" * 105)
-    print(f"Guard Settings: ENABLED={settings.DECISION_TEXT_GUARD_ENABLED} | NO_ACTION_FLOOR={settings.DECISION_TEXT_NO_ACTION_FLOOR:.2f} | AUTO_MIN={settings.DECISION_TEXT_AUTO_MIN:.2f}")
+    print(f"Guard Settings: ENABLED={settings.DECISION_TEXT_GUARD_ENABLED} | global NO_ACTION_FLOOR={settings.DECISION_TEXT_NO_ACTION_FLOOR:.2f} | AUTO_MIN={settings.DECISION_TEXT_AUTO_MIN:.2f} (per-model TEXT_GUARD_PROFILES applied)")
     print(f"Reranker Mode : {'ON (Cross-encoder)' if settings.ENABLE_RERANKER else 'OFF (Bi-encoder mode)'}")
     print(f"TEI Embed URL : {settings.TEI_EMBED_URL}")
     print(f"Database URL  : {settings.DATABASE_URL.split('@')[-1]}")
