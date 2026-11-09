@@ -292,6 +292,9 @@ async def process_post(
         text_guard_enabled=getattr(settings, "DECISION_TEXT_GUARD_ENABLED", True),
         text_no_action_floor=getattr(settings, "DECISION_TEXT_NO_ACTION_FLOOR", 0.40),
         text_auto_min=getattr(settings, "DECISION_TEXT_AUTO_MIN", 0.45),
+        safety_services=settings.safety_services_list,
+        safety_near_tie_margin=getattr(settings, "DECISION_SAFETY_NEAR_TIE_MARGIN", 0.0),
+        safety_image_top_k=getattr(settings, "DECISION_SAFETY_IMAGE_TOP_K", 3),
     )
     timings["decision_ms"] = round((time.perf_counter() - t_decide) * 1000, 2)
     timings["decide_ms"] = timings["decision_ms"]
