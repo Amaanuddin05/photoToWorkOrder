@@ -29,9 +29,6 @@ from app.pipeline.pool import build_candidate_pool
 
 logger = logging.getLogger("siglip.pipeline.engine")
 
-# BGE asymmetric query instruction prefix (passages are embedded WITHOUT this)
-BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
-
 
 async def process_post(
     *,
@@ -90,10 +87,9 @@ async def process_post(
     all_text_results: list[dict[str, Any]] = []
 
     if has_desc and description:
-        prefixed = BGE_QUERY_PREFIX + description.strip()
         try:
             t_embed = time.perf_counter()
-            vectors = await tei_client.embed([prefixed])
+            vectors = await tei_client.embed([description.strip()])
             timings["text_embed_ms"] = round((time.perf_counter() - t_embed) * 1000, 2)
             query_vec = vectors[0]
 
@@ -292,6 +288,10 @@ async def process_post(
         require_agree=settings.DECISION_REQUIRE_AGREE,
         always_draft_services=settings.always_draft_services_list,
         min_description_words=settings.MIN_DESCRIPTION_WORDS,
+        enable_reranker=getattr(settings, "ENABLE_RERANKER", True),
+        text_guard_enabled=getattr(settings, "DECISION_TEXT_GUARD_ENABLED", True),
+        text_no_action_floor=getattr(settings, "DECISION_TEXT_NO_ACTION_FLOOR", 0.40),
+        text_auto_min=getattr(settings, "DECISION_TEXT_AUTO_MIN", 0.45),
     )
     timings["decision_ms"] = round((time.perf_counter() - t_decide) * 1000, 2)
     timings["decide_ms"] = timings["decision_ms"]
@@ -387,6 +387,7 @@ async def process_post(
                 "action": result.action,
                 "would_be_action": result.would_be_action,
                 "reason": result.reason,
+                "text_guard": result.text_guard,
                 "text_model": "BAAI/bge-base-en-v1.5",
                 "image_model": settings.SIGLIP_MODEL_ID,
                 "reranker_model": "BAAI/bge-reranker-base",

@@ -18,7 +18,6 @@ from pydantic import BaseModel
 logger = logging.getLogger("siglip.routers.services")
 router = APIRouter(prefix="/v1", tags=["services"])
 
-BGE_QUERY_PREFIX = "Represent this sentence for searching relevant passages: "
 SIGLIP_TOKEN_LIMIT = 64
 
 

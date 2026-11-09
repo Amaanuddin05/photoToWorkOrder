@@ -318,6 +318,9 @@ def compute_metrics(
     always_draft_services: list[str] | None = None,
     min_description_words: int = 3,
     enable_reranker: bool = True,
+    text_guard_enabled: bool = True,
+    text_no_action_floor: float = 0.40,
+    text_auto_min: float = 0.45,
 ) -> dict[str, Any]:
     """
     Computes complete statistical report across all completed rows.
@@ -607,12 +610,13 @@ def compute_metrics(
                         "service_id": c.get("service_id"),
                         "confidence": c.get("confidence"),
                         "rerank_score": c.get("raw_score"),
+                        "text_score": c.get("text_score") or (r.top1_text_similarity if c_idx == 0 else None),
                         "text_rank": c.get("text_rank"),
                         "image_rank": c.get("image_rank"),
                         "pool_rank": c.get("pool_rank"),
                         "rerank_rank": c.get("rerank_rank"),
                     }
-                    for c in (r.candidates or [])
+                    for c_idx, c in enumerate(r.candidates or [])
                 ]
                 text_top_dicts = [{"service": r.text_top1}] if r.text_top1 else []
                 image_top_dicts = [{"service": r.image_top1}] if r.image_top1 else []
@@ -635,6 +639,10 @@ def compute_metrics(
                     require_agree=require_agree,
                     always_draft_services=always_draft_list,
                     min_description_words=min_description_words,
+                    enable_reranker=enable_reranker,
+                    text_guard_enabled=text_guard_enabled,
+                    text_no_action_floor=text_no_action_floor,
+                    text_auto_min=text_auto_min,
                 )
 
                 act = dec.action

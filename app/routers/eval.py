@@ -57,6 +57,9 @@ class StartJobPayload(BaseModel):
     gap_threshold: float | None = None
     no_action_floor: float | None = None
     enable_reranker: bool | None = None
+    text_guard_enabled: bool | None = None
+    text_no_action_floor: float | None = None
+    text_auto_min: float | None = None
 
 
 class LoadLocalPayload(BaseModel):

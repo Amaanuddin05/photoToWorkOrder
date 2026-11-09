@@ -42,6 +42,7 @@ class CandidateOut:
     rerank_score: float | None = None
     rerank_rank: int | None = None
     raw_score: float | None = None
+    text_score: float | None = None
 
 
 @dataclass
@@ -66,6 +67,7 @@ class ProcessedPost:
     all_service_text_scores: dict[str, float] = field(default_factory=dict)
     all_service_image_scores: dict[str, float] = field(default_factory=dict)
     service_scores: dict[str, dict[str, float | None]] = field(default_factory=dict)
+    text_guard: dict[str, Any] | None = None
 
 
 # ── Reranker wrapper (applies softmax to TEI raw logits) ─────────────────────
@@ -118,6 +120,11 @@ def make_decision(
     always_draft_services: list[str],
     min_description_words: int,
     top_candidates_count: int = 3,
+    # text guard config
+    enable_reranker: bool = False,
+    text_guard_enabled: bool = True,
+    text_no_action_floor: float = 0.40,
+    text_auto_min: float = 0.45,
 ) -> ProcessedPost:
     """
     Rule-based decision engine — identical business logic to RuleBasedDecider.decide().
@@ -162,17 +169,20 @@ def make_decision(
     all_candidates = []
     for idx, item in enumerate(candidate_source, start=1):
         conf = item.get("confidence")
+        t_rank = item.get("text_rank")
+        t_score = item.get("text_score") if t_rank is not None else None
         c_out = CandidateOut(
             service_id=item.get("service_id"),
             title=item["service"],
             confidence=conf,
             confidence_pct=f"{conf * 100:.1f}%" if conf is not None else None,
-            text_rank=item.get("text_rank"),
+            text_rank=t_rank,
             image_rank=item.get("image_rank"),
             pool_rank=item.get("pool_rank"),
             rerank_score=item.get("rerank_score"),
             rerank_rank=item.get("rerank_rank", idx),
             raw_score=item.get("rerank_score"),
+            text_score=t_score,
         )
         all_candidates.append(c_out)
         if len(candidates) < top_candidates_count:
@@ -209,6 +219,48 @@ def make_decision(
             reason=f"Service '{top_service}' requires mandatory human draft review for safety",
         )
 
+    # ── Text Guard (bi-encoder path only, description present) ───────────────
+    text_guard_info: dict[str, Any] | None = None
+    text_auto_blocked = False
+
+    is_biencoder = not enable_reranker
+    if is_biencoder and text_guard_enabled and trimmed_desc and candidates:
+        top1_cand = candidates[0]
+        # s = raw text_score of final top-1 candidate (same as exported top1_text_score, before softmax)
+        s = getattr(top1_cand, "text_score", None)
+        if s is None and candidate_source:
+            if candidate_source[0].get("text_rank") is not None:
+                s = candidate_source[0].get("text_score")
+
+        if s is not None:
+            text_guard_info = {
+                "score": round(float(s), 4),
+                "no_action_floor": text_no_action_floor,
+                "auto_min": text_auto_min,
+            }
+            if s < text_no_action_floor:
+                reason = f"text_score_below_floor (score={s:.4f} < floor={text_no_action_floor:.2f}, auto_min={text_auto_min:.2f})"
+                text_guard_info["triggered"] = True
+                text_guard_info["action"] = "no_action"
+                text_guard_info["reason"] = "text_score_below_floor"
+                return ProcessedPost(
+                    decision_id=None,
+                    action="no_action",
+                    would_be_action="no_action",
+                    top_candidates=candidates,
+                    all_candidates=all_candidates,
+                    confidence=confidence,
+                    gap=gap,
+                    agree=agree,
+                    reason=reason,
+                    text_guard=text_guard_info,
+                )
+            elif s < text_auto_min:
+                text_auto_blocked = True
+                text_guard_info["triggered"] = True
+                text_guard_info["action"] = "draft"
+                text_guard_info["reason"] = "text_score_below_auto_min"
+
     # Case 4: Below confidence floor → no_action
     if confidence is not None and confidence < no_action_floor:
         return ProcessedPost(
@@ -221,6 +273,7 @@ def make_decision(
             gap=gap,
             agree=agree,
             reason=f"Confidence {confidence:.4f} is below floor threshold ({no_action_floor})",
+            text_guard=text_guard_info,
         )
 
     # Case 5: Meets auto_create criteria
@@ -229,36 +282,57 @@ def make_decision(
     meets_agree = (agree is True) or (agree is None) or (not require_agree)
 
     if meets_conf and meets_gap and meets_agree:
-        would_be = "auto_create"
-        if auto_create_enabled:
-            action = "auto_create"
-            reason = (
-                f"High confidence ({confidence:.4f} >= {confidence_threshold}) "
-                f"and gap ({gap:.4f} >= {gap_threshold})"
+        if text_auto_blocked:
+            s_val = text_guard_info.get("score") if text_guard_info else 0.0
+            reason = f"text_score_below_auto_min (score={s_val:.4f} < auto_min={text_auto_min:.2f}, floor={text_no_action_floor:.2f})"
+            return ProcessedPost(
+                decision_id=None,
+                action="draft",
+                would_be_action="draft",
+                top_candidates=candidates,
+                all_candidates=all_candidates,
+                confidence=confidence,
+                gap=gap,
+                agree=agree,
+                reason=reason,
+                text_guard=text_guard_info,
             )
-            shadow = False
         else:
-            action = "draft"
-            reason = (
-                f"Shadow mode: would be auto_create "
-                f"(conf={confidence:.4f}>={confidence_threshold}, gap={gap:.4f}>={gap_threshold}), "
-                f"routed to draft"
+            would_be = "auto_create"
+            if auto_create_enabled:
+                action = "auto_create"
+                reason = (
+                    f"High confidence ({confidence:.4f} >= {confidence_threshold}) "
+                    f"and gap ({gap:.4f} >= {gap_threshold})"
+                )
+                shadow = False
+            else:
+                action = "draft"
+                reason = (
+                    f"Shadow mode: would be auto_create "
+                    f"(conf={confidence:.4f}>={confidence_threshold}, gap={gap:.4f}>={gap_threshold}), "
+                    f"routed to draft"
+                )
+                shadow = True
+            return ProcessedPost(
+                decision_id=None,
+                action=action,
+                would_be_action=would_be,
+                top_candidates=candidates,
+                all_candidates=all_candidates,
+                confidence=confidence,
+                gap=gap,
+                agree=agree,
+                reason=reason,
+                shadow=shadow,
+                text_guard=text_guard_info,
             )
-            shadow = True
-        return ProcessedPost(
-            decision_id=None,
-            action=action,
-            would_be_action=would_be,
-            top_candidates=candidates,
-            all_candidates=all_candidates,
-            confidence=confidence,
-            gap=gap,
-            agree=agree,
-            reason=reason,
-            shadow=shadow,
-        )
 
     # Case 6: Default → draft
+    default_reason = f"Criteria for auto_create not met (conf={confidence}, gap={gap}, agree={agree})"
+    if text_auto_blocked:
+        s_val = text_guard_info.get("score") if text_guard_info else 0.0
+        default_reason = f"text_score_below_auto_min (score={s_val:.4f} < auto_min={text_auto_min:.2f}, floor={text_no_action_floor:.2f})"
     return ProcessedPost(
         decision_id=None,
         action="draft",
@@ -268,6 +342,7 @@ def make_decision(
         confidence=confidence,
         gap=gap,
         agree=agree,
-        reason=f"Criteria for auto_create not met (conf={confidence}, gap={gap}, agree={agree})",
+        reason=default_reason,
+        text_guard=text_guard_info,
     )
 

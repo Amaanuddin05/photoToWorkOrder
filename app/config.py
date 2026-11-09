@@ -68,6 +68,10 @@ class Settings(BaseSettings):
         '["Emergency Response & Area Securing", '
         '"Emergency Reactive Cleaning (Spills, Vomit, Incidents)"]'
     )
+    # ── Text Score Guard (Bi-encoder mode) ────────────────────────────────────
+    DECISION_TEXT_NO_ACTION_FLOOR: float = 0.40
+    DECISION_TEXT_AUTO_MIN: float = 0.45
+    DECISION_TEXT_GUARD_ENABLED: bool = True
 
     # ── Security & Auth ───────────────────────────────────────────────────────
     API_KEYS: str = ""          # comma-separated; empty = no auth required

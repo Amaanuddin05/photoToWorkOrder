@@ -313,6 +313,9 @@ class EvalJobManager:
             "always_draft_services": list(self.settings.always_draft_services_list),
             "min_description_words": int(self.settings.MIN_DESCRIPTION_WORDS),
             "auto_create_enabled": bool(ov.get("auto_create_enabled", self.settings.AUTO_CREATE_ENABLED)),
+            "text_guard_enabled": bool(ov.get("text_guard_enabled", getattr(self.settings, "DECISION_TEXT_GUARD_ENABLED", True))),
+            "text_no_action_floor": float(ov.get("text_no_action_floor", getattr(self.settings, "DECISION_TEXT_NO_ACTION_FLOOR", 0.40))),
+            "text_auto_min": float(ov.get("text_auto_min", getattr(self.settings, "DECISION_TEXT_AUTO_MIN", 0.45))),
             "model_ids": {
                 "text": "BAAI/bge-base-en-v1.5",
                 "image": self.settings.SIGLIP_MODEL_ID,
@@ -409,6 +412,9 @@ class EvalJobManager:
             "DECISION_GAP_THRESHOLD": job.effective_settings["gap_threshold"],
             "DECISION_NO_ACTION_FLOOR": job.effective_settings["no_action_floor"],
             "ENABLE_RERANKER": job.effective_settings.get("enable_reranker", True),
+            "DECISION_TEXT_GUARD_ENABLED": job.effective_settings.get("text_guard_enabled", getattr(self.settings, "DECISION_TEXT_GUARD_ENABLED", True)),
+            "DECISION_TEXT_NO_ACTION_FLOOR": job.effective_settings.get("text_no_action_floor", getattr(self.settings, "DECISION_TEXT_NO_ACTION_FLOOR", 0.40)),
+            "DECISION_TEXT_AUTO_MIN": job.effective_settings.get("text_auto_min", getattr(self.settings, "DECISION_TEXT_AUTO_MIN", 0.45)),
         })
 
         valid_rows = [
@@ -550,6 +556,7 @@ class EvalJobManager:
                         "confidence_pct": c.confidence_pct,
                         "raw_score": raw_s,
                         "raw_reranker_score": raw_s,
+                        "text_score": getattr(c, "text_score", None),
                         "text_rank": c.text_rank,
                         "image_rank": c.image_rank,
                         "pool_rank": c.pool_rank,

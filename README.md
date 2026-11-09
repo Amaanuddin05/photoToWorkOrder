@@ -31,7 +31,7 @@ flowchart TD
 ```
 
 ### Pipeline Execution Stages
-1. **Text Ranking**: Query embedded via TEI `/embed` with instruction prefix (`Represent this sentence for searching relevant passages: `). Cosine similarity computed against `"WoService"` in PostgreSQL using `pgvector` (`w * desc_sim + (1-w) * title_sim`).
+1. **Text Ranking**: Query embedded via TEI `/embed` as plain text with no instruction prefix. Cosine similarity computed against `"WoService"` in PostgreSQL using `pgvector` (`w * desc_sim + (1-w) * title_sim`).
 2. **Image Ranking**: Image encoded via in-process SigLIP 2 model, dot-producted against in-memory cached visual profiles. Non-visual services receive middle-rank and are excluded from the visual vote pool.
 3. **Pool Merger**: Union of text top-N and image top-N, sorted by `min(text_rank, image_rank)`, capped at `pool_max` (default 10).
 4. **Cross-Encoder Reranking**: Candidate pairs `(description, "{title}. {description}")` scored via TEI `/rerank` with `raw_scores: true`. Temperature-scaled softmax ($T=1.0$) is applied locally to preserve calibration against legacy thresholds.

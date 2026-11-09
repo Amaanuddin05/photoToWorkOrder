@@ -1,14 +1,26 @@
 # Project Status: SigLIP Standalone Photo-to-Work-Order Service
 
 ## Current Task
-- **Docker Container Deployment & Verification (`ghcr.io/amaanuddin05/siglip:latest`): COMPLETED** — 2026-11-06
-  - Created `.env.docker` pointing database and TEI endpoints to `host.docker.internal`.
-  - Freed host port `8083` and launched container `siglip-service` with persistent volumes (`siglip-models` for Hugging Face weights, `app/eval/runs` for evaluation history, and `app/data` for demo service registry).
-  - Verified container startup: database connection pool opened, schema verified, SigLIP model loaded (`dim=768`), TEI embedder online, and `/health/ready` probe returned HTTP 200 with `skipped=True` for disabled reranker.
-  - Confirmed `/ui/` (Operator Console), `/ui/eval` (Multimodal Evaluation Suite & Fusion Explorer), and `/v1/services` are fully responsive.
+- **Removed BGE Query Prefix Completely**:
+  - Deleted `BGE_QUERY_PREFIX` constant and references across engine, services router, and scripts (`check_text_floor.py`).
+  - Embed stripped descriptions directly: `tei_client.embed([description.strip()])`.
+  - Removed `TEXT_QUERY_PREFIX` configuration, environment setting, and evaluation overrides.
+  - Updated architectural and pipeline documentation (`README.md`, `WORK_ORDER_TRIAGE_ARCHITECTURE.md`, `docs/DESIGN.md`, `docs/EVAL_PIPELINE_TRACE.md`) noting plain text embedding with no instruction prefix for both queries and catalog passages.
 
 ## Completed Work
-- **Docker Container Deployment & Verification** — 2026-11-06:
+- **BGE Query Prefix Removal** — 2026-11-09:
+  - Removed all code, configuration, and documentation references to instruction query prefixes. Both queries and catalog passages now embed directly as plain text.
+- **A/B Testing of BGE Query Prefix** — 2026-11-09:
+  - Added env-overridable `TEXT_QUERY_PREFIX` with backward-compatible default.
+  - Implemented [`scripts/ab_prefix.py`](file:///C:/Users/Win11/code/shamixo/siglip/scripts/ab_prefix.py) for side-by-side metric computation across text-only accuracy, pipeline outcomes, score distributions, AUROC, and junk text actions.
+- **Absolute Text-Score Guard in Bi-Encoder Decision Engine** — 2026-11-09:
+  - Integrated `text_guard` into `make_decision()`, `engine.py`, `repository.py`, and `job_manager.py`.
+  - Added [`scripts/check_text_floor.py`](file:///C:/Users/Win11/code/shamixo/siglip/scripts/check_text_floor.py) for text-only message scoring and distribution analysis.
+- **Read-Only Evaluation Pipeline Analysis Script & NONE Row Discrimination Analysis** — 2026-11-09:
+  - Created [`scripts/analyze_none_rows.py`](file:///C:/Users/Win11/code/shamixo/siglip/scripts/analyze_none_rows.py), a standalone CLI script that communicates with the live service API or reads local saved eval run JSONs without modifying any pipeline logic or thresholds.
+  - Automatically exported 67 rows with columns: `image`, `label`, `predicted_top1_service`, `correct`, `top1_text_score`, `top1_image_sim`, `max_image_sim_over_all_services`, `softmax_confidence`, `gap`, and `description_word_count`.
+  - Calculated min/median/max and Wilcoxon rank-sum AUROCs (in pure NumPy without scipy/sklearn).
+- **Docker Container Deployment & Verification (`ghcr.io/amaanuddin05/siglip:latest`)** — 2026-11-06:
   - Pulled and launched `ghcr.io/amaanuddin05/siglip:latest` on Docker Desktop for Windows.
   - Configured `.env.docker` with `host.docker.internal` host bridge resolution.
   - Verified container health, readiness probe (`/health/ready`), and static UI page delivery.

@@ -51,7 +51,7 @@ def build_candidate_pool(
                 "description": item.get("description", ""),
                 "text_rank": float("inf"),
                 "image_rank": float(item["rank"]),
-                "text_score": 0.0,
+                "text_score": None,
                 "image_score": float(item.get("score", 0.0)),
             }
 

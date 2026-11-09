@@ -164,6 +164,8 @@ async def insert_decision_log(
             }
             if idem_key:
                 models_val["idempotency_key"] = idem_key
+            if data.get("text_guard"):
+                models_val["text_guard"] = data["text_guard"]
 
             cur = await conn.execute(
                 """

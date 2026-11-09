@@ -452,7 +452,7 @@ flowchart TD
    - Validates existence of `"WoService"`, `"ServiceImageProfile"`, `"DecisionLog"`.
    - Checks presence of required columns, types (`vector`, `jsonb`, `timestamptz`), and constraints.
 2. **TEI Embedding Model & Dimension Verification:**
-   - Sends test input to `POST {TEI_EMBED_URL}/embed` (`"Represent this sentence for searching relevant passages: probe"`).
+   - Queries and catalog passages are both embedded as plain text with no instruction prefix. Sends test input to `POST {TEI_EMBED_URL}/embed` (`"probe"`).
    - Measures output vector dimension $D_{\text{real}}$.
    - Queries `atttypmod` on `"WoService"."titleEmb"` and `"descEmb"`. Asserts $D_{\text{real}} == 768$. On mismatch, fails immediately with:
      `ConfigurationError: TEI Embedder dimension (X) does not match WoService embedding column dimension (768).`

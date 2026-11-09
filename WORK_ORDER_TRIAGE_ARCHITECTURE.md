@@ -73,9 +73,9 @@ When a maintenance ticket is submitted to `POST /v1/posts/process`:
 
 ### Stage 2: Dual Modal Encoding
 1. **Text Path**:
-   - The user description is prefixed with the BGE retrieval prompt:
+   - Queries and catalog passages are both embedded as plain text with no instruction prefix:
      ```
-     Represent this sentence for searching relevant passages: {description}
+     {description}
      ```
    - The query is dispatched to the Hugging Face Text Embeddings Inference (TEI) container on port 8081 (`BAAI/bge-base-en-v1.5`), returning a 768-dimensional normalized dense embedding.
 2. **Vision Path**:

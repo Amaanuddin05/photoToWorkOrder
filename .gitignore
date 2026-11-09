@@ -13,3 +13,6 @@ scratch_test.py
 demo_services.json
 /photos
 
+
+# Local DB backups (contain real data) - never commit
+backups/

@@ -60,6 +60,7 @@ def _build_response(result: ProcessedPost, idempotent_replay: bool = False) -> d
             "pool_rank": c.pool_rank,
             "rerank_score": c.rerank_score,
             "rerank_rank": c.rerank_rank,
+            "text_score": getattr(c, "text_score", None),
         }
         for c in result.top_candidates
     ]
@@ -74,6 +75,7 @@ def _build_response(result: ProcessedPost, idempotent_replay: bool = False) -> d
             "pool_rank": c.pool_rank,
             "rerank_score": c.rerank_score,
             "rerank_rank": c.rerank_rank,
+            "text_score": getattr(c, "text_score", None),
         }
         for c in (result.all_candidates or result.top_candidates)
     ]
@@ -93,6 +95,7 @@ def _build_response(result: ProcessedPost, idempotent_replay: bool = False) -> d
         "timings": result.timings,
         "idempotent_replay": idempotent_replay,
         "shadow": result.shadow,
+        "text_guard": getattr(result, "text_guard", None),
     }
 
 
