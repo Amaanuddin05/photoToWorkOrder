@@ -17,8 +17,8 @@ The system follows a clean hexagonal (ports and adapters) architecture:
 - **Core Pipeline Engine:** Pure, framework-agnostic pipeline stages (text ranking, zero-shot image ranking, pool merging, cross-encoder reranking, rule-based decision engine) with abstract interfaces.
 - **Vision Inference Adapter:** Local CPU inference using Hugging Face `transformers` for `google/siglip2-base-patch16-224`, generating 768-dimensional normalized image embeddings and text embeddings (max 64 tokens).
 - **Text Embedding & Reranker Adapters:** Asynchronous HTTP client (`TEIClient`) communicating with separate TEI containers:
-  - `TEI Embedder`: `BAAI/bge-base-en-v1.5` for 768-dim text embeddings (`/embed`).
-  - `TEI Reranker`: `BAAI/bge-reranker-base` (or `bge-reranker-v2-m3`) for cross-encoder pair scoring (`/rerank`).
+  - `TEI Embedder`: any model TEI serves, e.g. `BAAI/bge-m3` (multilingual, 1024-d) or `BAAI/bge-base-en-v1.5` (768-d), for text embeddings (`/embed`).
+  - `TEI Reranker`: `BAAI/bge-reranker-v2-m3` (multilingual) for cross-encoder pair scoring (`/rerank`); disabled by default (`ENABLE_RERANKER=false`).
 - **Database Adapter:** Async PostgreSQL repository using `psycopg` connection pooling and `pgvector` for cosine distance calculations (`<=>`) against pre-embedded service catalog vectors.
 - **HTTP Layer:** FastAPI with strict Pydantic v2 schemas, OpenAPI documentation, structured JSON logging, constant-time API key verification, Prometheus metrics, and Kubernetes/Coolify health probes.
 
@@ -31,8 +31,8 @@ flowchart TD
     Auth --> Pipeline[Pipeline Engine]
 
     subgraph External TEI Services [TEI HTTP Microservices]
-        TEI_E[TEI Embedder: bge-base-en-v1.5<br>:8081 /embed]
-        TEI_R[TEI Reranker: bge-reranker-base<br>:8082 /rerank]
+        TEI_E[TEI Embedder: bge-m3<br>:8081 /embed]
+        TEI_R[TEI Reranker: bge-reranker-v2-m3<br>:8082 /rerank]
     end
 
     subgraph Local In-Process [SigLIP Microservice Container]
@@ -47,7 +47,7 @@ flowchart TD
     end
 
     Pipeline -->|1. Text Query| TEI_E
-    TEI_E -->|Query Vector 768d| Pipeline
+    TEI_E -->|Query Vector| Pipeline
     Pipeline -->|2. Cosine Distance <=>| T_S
     Pipeline -->|3. Encode Image| SigLIP_M
     SigLIP_M -->|4. Cosine Dot Product| MemCache
@@ -74,7 +74,7 @@ A read-only live schema inspection was executed on 2026-10-30 against the active
 ### 2.2 Table-by-Table Schema Inspection
 
 #### Table 1: `"WoService"`
-Stores the canonical service catalog with text bi-encoder embeddings (`BAAI/bge-base-en-v1.5`).
+Stores the canonical service catalog. Its `"titleEmb"`/`"descEmb"` columns hold the original `BAAI/bge-base-en-v1.5` vectors (main branch, WoSemanticSearch). On this branch ranking uses the per-model store `"ServiceTextEmbedding"` instead (see section 6).
 - **Row Count:** 19 rows (all `isActive = true`)
 - **Columns:**
   | Column Name | Data Type | UDT | Nullable | Default | Notes |
@@ -86,8 +86,8 @@ Stores the canonical service catalog with text bi-encoder embeddings (`BAAI/bge-
   | `"isActive"` | boolean | `bool` | NO | `true` | Quoted CamelCase identifier |
   | `"embeddingModel"` | text | `text` | YES | None | Quoted CamelCase (`'BAAI/bge-base-en-v1.5'`) |
   | `"updatedAt"` | timestamptz | `timestamptz` | NO | `now()` | Quoted CamelCase |
-  | `"titleEmb"` | USER-DEFINED | `vector(768)` | YES | None | Quoted CamelCase; dimension = 768 |
-  | `"descEmb"` | USER-DEFINED | `vector(768)` | YES | None | Quoted CamelCase; dimension = 768 |
+  | `"titleEmb"` | USER-DEFINED | `vector(768)` | YES | None | Quoted CamelCase; dimension = 768 (original bge-base vectors) |
+  | `"descEmb"` | USER-DEFINED | `vector(768)` | YES | None | Quoted CamelCase; dimension = 768 (original bge-base vectors) |
 - **Indexes:**
   - `"WoService_pkey"`: `UNIQUE INDEX ON "WoService" USING btree (id)`
   - `"WoService_title_key"`: `UNIQUE INDEX ON "WoService" USING btree (title)`
@@ -177,7 +177,7 @@ Created and used exclusively by `WoSemanticSearch` for text search query analyti
    - **Resolution:** The new service repository must explicitly double-quote all table names (`"WoService"`, `"ServiceImageProfile"`, `"DecisionLog"`) and column names in all SQL queries to prevent lowercase folding errors.
 
 4. **Vector Dimension Constraints in DDL:**
-   - In `WoService`: `"titleEmb"` and `"descEmb"` are defined as `vector(768)` (strict dimension enforced by PostgreSQL).
+   - In `WoService`: `"titleEmb"` and `"descEmb"` are defined as `vector(768)` (strict dimension enforced by PostgreSQL). Per-model vectors of any dimension live in `"ServiceTextEmbedding"` (unconstrained `vector`).
    - In `ServiceImageProfile`: `"textEmb"` is defined as `vector` without an explicit dimension parameter (`vector` vs `vector(768)`).
    - **Finding:** While the column is unconstrained in DDL, `SELECT DISTINCT vector_dims("textEmb") FROM "ServiceImageProfile"` confirms that all 19 rows contain exactly 768 dimensions matching `google/siglip2-base-patch16-224`.
 
@@ -375,8 +375,11 @@ Records operator ground truth on an existing decision (mirroring `photoToWorkOrd
     "status": "ready",
     "database": {"connected": true, "pgvector_version": "0.8.7", "schema_verified": true},
     "siglip_model": {"loaded": true, "model_id": "google/siglip2-base-patch16-224", "dim": 768},
-    "tei_embed": {"reachable": true, "url": "http://tei-embed:80", "model_id": "BAAI/bge-base-en-v1.5", "dim": 768},
-    "tei_rerank": {"reachable": true, "url": "http://tei-rerank:80", "model_id": "BAAI/bge-reranker-base"}
+    "tei_embed": {"reachable": true, "url": "http://tei-embed:80"},
+    "tei_rerank": {"reachable": true, "url": "http://tei-rerank:80", "skipped": true, "enabled": false},
+    "text_embedding": {"ok": true, "tei_model_id": "BAAI/bge-m3", "tei_dim": 1024, "services_total": 21,
+                       "services_embedded_current": 21, "store_models": {"BAAI/bge-base-en-v1.5": 21, "BAAI/bge-m3": 21},
+                       "legacy_columns_writable": false, "sync_in_progress": false, "problems": []}
   }
   ```
 - `GET /metrics`: Standard Prometheus metrics exposition (counters, histograms, gauges).
@@ -426,46 +429,43 @@ All configurations are strictly managed via `pydantic-settings` with environment
 
 ---
 
-## 6. Embedding & Model Validation at Startup (Fail Fast)
+## 6. Embedding & Model Validation at Startup
 
-To prevent catastrophic metric degradation from silent model mixing, the application executes strict startup validation before accepting traffic:
+The service adapts to whatever text model the TEI embedder serves, and never ranks with vectors from a
+different model than the query:
 
 ```mermaid
 flowchart TD
     Start([Application Lifespan Startup]) --> Step1[1. Verify PostgreSQL Connectivity & Extensions]
     Step1 -->|Fail| Abort1[Fatal Error: DB unreachable or pgvector missing]
     Step1 -->|Pass| Step2[2. Verify Database Schema Tables & Columns]
-    Step2 -->|Fail| Abort2[Fatal Error: Missing required table/column or type drift]
-    Step2 -->|Pass| Step3[3. Probe TEI Embedder /info and /embed]
-    Step3 -->|Fail| Abort3[Fatal Error: TEI Embedder unreachable or error]
-    Step3 -->|Pass| Step4[4. Compare Real TEI Vector Dim vs WoService Column]
-    Step4 -->|Mismatch != 768| Abort4[Fatal Error: TEI dim does not match vector 768]
-    Step4 -->|Match 768| Step5[5. Probe TEI Reranker /info and /rerank]
-    Step5 -->|Fail| Abort5[Fatal Error: TEI Reranker unreachable or error]
-    Step5 -->|Pass| Step6[6. Load SigLIP Model & Verify Hidden Dim == 768]
-    Step6 -->|Match 768| Step7[7. Load & Cache ServiceImageProfile in Memory]
-    Step7 --> Ready([Mark Service Ready: HTTP 200 /health/ready])
+    Step2 -->|Fail| Abort2[Fatal Error: Missing table/column, or titleEmb/descEmb dims differ]
+    Step2 -->|Pass| Step3[3. Load SigLIP Model]
+    Step3 --> Step4[4. TEI health; reranker only required if ENABLE_RERANKER]
+    Step4 --> Step5[5. Sync ServiceTextEmbedding for the TEI model: embed missing/stale services only]
+    Step5 --> Step6[6. Guard: store complete + current for TEI model, pin respected]
+    Step6 -->|Not ready| NotReady[Service runs; /health/ready = 503 and retries the sync in the background]
+    Step6 -->|Ready| Step7[7. Load & Cache ServiceImageProfile in Memory]
+    Step7 --> Ready([Ready: HTTP 200 /health/ready])
 ```
 
 ### 6.1 Validation Checks
-1. **Database Schema Verification:**
-   - Validates existence of `"WoService"`, `"ServiceImageProfile"`, `"DecisionLog"`.
-   - Checks presence of required columns, types (`vector`, `jsonb`, `timestamptz`), and constraints.
-2. **TEI Embedding Model & Dimension Verification:**
-   - Queries and catalog passages are both embedded as plain text with no instruction prefix. Sends test input to `POST {TEI_EMBED_URL}/embed` (`"probe"`).
-   - Measures output vector dimension $D_{\text{real}}$.
-   - Queries `atttypmod` on `"WoService"."titleEmb"` and `"descEmb"`. Asserts $D_{\text{real}} == 768$. On mismatch, fails immediately with:
-     `ConfigurationError: TEI Embedder dimension (X) does not match WoService embedding column dimension (768).`
-   - Inspects `GET {TEI_EMBED_URL}/info` to log model ID (`BAAI/bge-base-en-v1.5`).
+1. **Database Schema Verification** (`app/db/schema_verify.py`):
+   - Validates existence of `"WoService"`, `"ServiceImageProfile"`, `"DecisionLog"` and their required columns.
+   - Checks that the original `"titleEmb"` and `"descEmb"` columns share one dimension. No dimension is hardcoded.
+2. **Model-adaptive text embeddings** (`app/text_embedding.py`):
+   - `probe_tei_embedder()` reads TEI `/info` `model_id`; TEI 1.9 `/info` has no dimension field, so the dimension is measured with a probe `POST /embed` (cached per model id + sha).
+   - `sync_catalog_embeddings()` embeds (plain text, no prefix; title and `"{description}. {keywords}"`) every service with no row, another dimension or a stale `contentHash` for that model, in one transaction under `pg_advisory_xact_lock`.
+   - `check_text_embedding()` (startup and every `/health/ready`) requires the store to be complete and current for the TEI model and, if `TEXT_EMBED_MODEL_ID` is set, TEI to serve that model. If not, `/health/ready` starts one background sync and reports not-ready until it ends.
+   - Queries use `resolve_query_model()`: the live TEI model, only once its catalog vectors are verified.
+   - Catalog writes and similarity checks (`embed_catalog_texts()`) fail with `503 EMBEDDING_MODEL_MISMATCH` while the store is not ready.
 3. **SigLIP Image Model Verification:**
    - Validates `embedding_dim == 768`.
    - Validates `vector_dims("textEmb")` in `"ServiceImageProfile"`.
-4. **Reindexing CLI Tooling:**
-   - A dedicated CLI command `python -m app.cli reindex` is provided. It:
-     - Queries all active services from `"WoService"`.
-     - Re-embeds title and description via TEI `/embed` and updates `"WoService"`.
-     - Re-embeds `textUsed` via SigLIP text encoder and updates `"ServiceImageProfile"`.
-     - Runs idempotently using transaction blocks.
+4. **Text Catalog Tooling:**
+   - `scripts/migrate_text_embeddings.py` applies `sql/001_service_text_embedding.sql` (create table only; idempotent).
+   - `scripts/reembed_catalog.py` runs the same sync by hand (`--force` re-embeds everything for the current model). It does not touch `"WoService"."titleEmb"/"descEmb"` or `"ServiceImageProfile"`.
+   - See README section 6 for switching models.
 
 ---
 
@@ -548,7 +548,7 @@ WHERE "idempotencyKey" IS NOT NULL;
 | Risk / Question | Severity | Mitigation Strategy |
 | :--- | :---: | :--- |
 | **1. Memory Footprint on CPU** | Medium | SigLIP 2 occupies ~2.1 GB RSS on CPU. In `docker-compose.dev.yml`, memory limits are pinned to 4 GB for `siglip` and 2 GB each for `tei-embed` and `tei-rerank`. Semaphores restrict concurrent PyTorch passes to 2. |
-| **2. TEI Reranker Model Divergence** | Low | Live TEI reranker container runs `BAAI/bge-reranker-base`, while earlier scripts mentioned `BAAI/bge-reranker-v2-m3`. Both return pairwise cross-encoder logits compatible with temperature softmax. The client adapts to either model. |
+| **2. TEI Reranker Model Change** | Low | The TEI reranker container now runs `BAAI/bge-reranker-v2-m3` (was `bge-reranker-base`). It is disabled in the pipeline (`ENABLE_RERANKER=false`); `PIPELINE_RERANKER_TEMP` was calibrated on the old model's logits and must be re-calibrated before enabling it. |
 | **3. Foreign Key Deletion Failure** | Low | Hard deletion of a service referenced in `"DecisionLog"` will trigger `ON DELETE NO ACTION`. Deletion endpoint defaults to soft-delete (`"isActive" = false`). |
 | **4. External Docker Network Connection** | Low | When deployed on Coolify, the `siglip` container joins the user's existing Docker bridge network (e.g. `coolify` or `tei_default`) to reach PostgreSQL and TEI without exposing ports publicly. |
 
@@ -574,8 +574,20 @@ CREATE TABLE IF NOT EXISTS public."WoService" (
     "isActive" BOOLEAN NOT NULL DEFAULT TRUE,
     "embeddingModel" TEXT NOT NULL,
     "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT now(),
-    "titleEmb" vector(768) NOT NULL,
-    "descEmb" vector(768) NOT NULL
+    "titleEmb" vector(768),
+    "descEmb" vector(768)
+);
+
+-- 2b. Per-model text embeddings (sql/001_service_text_embedding.sql; rows written by the service)
+CREATE TABLE IF NOT EXISTS public."ServiceTextEmbedding" (
+    "serviceId" integer NOT NULL REFERENCES public."WoService"(id) ON DELETE CASCADE,
+    "textModel" text NOT NULL,
+    "dim" integer NOT NULL CHECK ("dim" > 0),
+    "titleEmb" vector NOT NULL,
+    "descEmb" vector NOT NULL,
+    "contentHash" text NOT NULL,
+    "updatedAt" timestamptz NOT NULL DEFAULT now(),
+    PRIMARY KEY ("serviceId", "textModel")
 );
 
 -- 3. ServiceImageProfile table (visual lines and SigLIP text embeddings)

@@ -13,7 +13,7 @@ flowchart TD
     Client["Client / Web UI / Mobile App"] -->|"POST /v1/posts/process"| Ingest["Ingestion & Validation<br/>(Image Decode + Word Count)"]
     
     subgraph ParallelEncoders["Parallel Feature Extraction"]
-        TextPath["1. TEI Text Embedder<br/>(BAAI/bge-base-en-v1.5 / 768d)"]
+        TextPath["1. TEI Text Embedder<br/>(model served by TEI, e.g. BAAI/bge-m3 1024d)"]
         ImagePath["2. In-Process SigLIP Vision Model<br/>(google/siglip-so400m-patch14-384)"]
     end
     
@@ -77,14 +77,14 @@ When a maintenance ticket is submitted to `POST /v1/posts/process`:
      ```
      {description}
      ```
-   - The query is dispatched to the Hugging Face Text Embeddings Inference (TEI) container on port 8081 (`BAAI/bge-base-en-v1.5`), returning a 768-dimensional normalized dense embedding.
+   - The query is dispatched to the Hugging Face Text Embeddings Inference (TEI) container on port 8081 (whatever model it serves, e.g. `BAAI/bge-m3` 1024-d or `BAAI/bge-base-en-v1.5` 768-d), returning a normalized dense embedding. The catalog is matched against that model's vectors in `ServiceTextEmbedding`, which the service re-embeds automatically when the TEI model changes.
 2. **Vision Path**:
    - The image is preprocessed in-process using Google's SigLIP model (`google/siglip-so400m-patch14-384`).
    - PyTorch CPU inference runs under a concurrency semaphore (`SIGLIP_MAX_CONCURRENCY=2`), generating an $L_2$-normalized 1152-dimensional visual embedding.
 
 ### Stage 3: Catalog Matching
 1. **Text Search in PostgreSQL (`pgvector`)**:
-   - Executes an HNSW-indexed cosine distance query against `WoService` where `isActive = true`:
+   - Executes an exact cosine distance query (no HNSW/IVFFlat index; the catalog is ~20 rows) against `WoService` where `isActive = true`:
      $$\text{text\_score}(s) = w_d \cdot (1 - (\text{descEmb} \Leftrightarrow \mathbf{q})) + (1 - w_d) \cdot (1 - (\text{titleEmb} \Leftrightarrow \mathbf{q}))$$
    - The description weight $w_d$ is `PIPELINE_TEXT_DESC_WEIGHT` (default `0.7`), giving 70% weight to service description semantics and 30% weight to service title semantics.
    - Retrieves the top $N_t = 10$ services.
@@ -167,9 +167,9 @@ A ticket is routed to `draft` whenever automated assignment cannot guarantee saf
 
 | Role | Model Architecture | Execution Context | Vector Dimension | Purpose |
 | :--- | :--- | :--- | :--- | :--- |
-| **Text Embedder** | `BAAI/bge-base-en-v1.5` | External TEI Container (Port 8081) | 768 dense float32 | Asymmetric semantic retrieval of maintenance descriptions against PostgreSQL service catalog |
+| **Text Embedder** | Model served by TEI (e.g. `BAAI/bge-m3`) | External TEI Container (Port 8081) | Model dimension (bge-m3: 1024) dense float32 | Asymmetric semantic retrieval of maintenance descriptions against PostgreSQL service catalog |
 | **Vision / Multimodal Encoder** | `google/siglip-so400m-patch14-384` | In-Process PyTorch CPU (Transformers) | 1152 dense float32 | Zero-shot visual representation of damage photos matched against descriptive service visual lines |
-| **Reranker (Bypassed / Optional)** | `BAAI/bge-reranker-base` | External TEI Container (Port 8082) | Logit scalar | Cross-attention text reranker (disabled in bi-encoder mode) |
+| **Reranker (Bypassed / Optional)** | `BAAI/bge-reranker-v2-m3` | External TEI Container (Port 8082) | Logit scalar | Cross-attention text reranker (disabled in bi-encoder mode) |
 
 ### Why SigLIP 2 / SigLIP SO400M?
 Google's SigLIP (Sigmoid Loss for Language-Image Pre-training) replaces CLIP's softmax loss with a pairwise sigmoid loss. This prevents negative-pair batch competition, leading to dramatically better zero-shot classification on complex visual scenes (e.g. discriminating water stains on ceilings from air conditioner condensation).
@@ -235,7 +235,7 @@ Bi-Encoder (Dual Encoder) Architecture:
        │ BGE Embed          │ SigLIP Embed
        ▼                    ▼
 ┌──────────────┐     ┌──────────────┐
-│ Vector (768) │     │ Vector (1152)│
+│ Vector (TEI) │     │ Vector (1152)│
 └──────┬───────┘     └──────┬───────┘
        │                    │
        └─────────┬──────────┘
@@ -266,7 +266,7 @@ Cross-Encoder Architecture:
 Although the codebase maintains backwards compatibility for TEI reranking, the service runs in **Reranker OFF (bi-encoder)** mode by default (`ENABLE_RERANKER=false`). Here is why:
 
 ### 1. Multimodal Blind Spot of Text Cross-Encoders
-A text cross-encoder like `BAAI/bge-reranker-base` only ingests text tokens. It has **no vision encoder and cannot see photos**.
+A text cross-encoder like `BAAI/bge-reranker-v2-m3` only ingests text tokens. It has **no vision encoder and cannot see photos**.
 - In maintenance requests, user descriptions are frequently ambiguous or misleading:
   - Example: User writes *"it is leaking"* and uploads a photo of an **AC condensation tray**.
   - A text reranker sees *"it is leaking"* and ranks `Plumbing Services` as #1 with 95% confidence, completely overriding the visual signal.

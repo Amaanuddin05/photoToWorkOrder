@@ -14,30 +14,23 @@ from psycopg_pool import AsyncConnectionPool
 
 logger = logging.getLogger("siglip.db.repository")
 
-# ── Text search SQL (identical to WoSemanticSearch/app/search.py) ─────────────
-RANKING_SQL = """
-    SELECT id, title, description,
-           1 - ("titleEmb" <=> %(q)s::vector) AS title_sim,
-           1 - ("descEmb"  <=> %(q)s::vector) AS desc_sim,
-           %(w)s * (1 - ("descEmb"  <=> %(q)s::vector))
-             + (1 - %(w)s) * (1 - ("titleEmb" <=> %(q)s::vector)) AS score
-    FROM "WoService"
-    WHERE "isActive"
+# ── Text search SQL ───────────────────────────────────────────────────────────
+# Same scoring as WoSemanticSearch/app/search.py, but the vectors come from the
+# per-model store "ServiceTextEmbedding" for the model TEI currently serves, so
+# any embedding model/dimension works. WoService.titleEmb/descEmb are not used.
+_RANKING_BASE = """
+    SELECT s.id, s.title, s.description,
+           1 - (e."titleEmb" <=> %(q)s::vector) AS title_sim,
+           1 - (e."descEmb"  <=> %(q)s::vector) AS desc_sim,
+           %(w)s * (1 - (e."descEmb"  <=> %(q)s::vector))
+             + (1 - %(w)s) * (1 - (e."titleEmb" <=> %(q)s::vector)) AS score
+    FROM "WoService" s
+    JOIN "ServiceTextEmbedding" e ON e."serviceId" = s.id AND e."textModel" = %(m)s
+    WHERE s."isActive"
     ORDER BY score DESC
-    LIMIT %(top_n)s;
 """
-
-
-RANKING_ALL_SQL = """
-    SELECT id, title, description,
-           1 - ("titleEmb" <=> %(q)s::vector) AS title_sim,
-           1 - ("descEmb"  <=> %(q)s::vector) AS desc_sim,
-           %(w)s * (1 - ("descEmb"  <=> %(q)s::vector))
-             + (1 - %(w)s) * (1 - ("titleEmb" <=> %(q)s::vector)) AS score
-    FROM "WoService"
-    WHERE "isActive"
-    ORDER BY score DESC;
-"""
+RANKING_SQL = _RANKING_BASE + "    LIMIT %(top_n)s;\n"
+RANKING_ALL_SQL = _RANKING_BASE + ";\n"
 
 
 async def text_search(
@@ -46,11 +39,13 @@ async def text_search(
     desc_weight: float,
     top_n: int,
     return_all: bool = False,
+    *,
+    text_model: str,
 ) -> list[dict[str, Any]] | tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    """Cosine similarity search against WoService title/desc embeddings."""
+    """Cosine similarity search against the per-model title/desc embeddings of `text_model`."""
     vec_str = "[" + ",".join(str(v) for v in query_vector) + "]"
     sql = RANKING_ALL_SQL if return_all else RANKING_SQL
-    params: dict[str, Any] = {"q": vec_str, "w": desc_weight}
+    params: dict[str, Any] = {"q": vec_str, "w": desc_weight, "m": text_model}
     if not return_all:
         params["top_n"] = top_n
 
@@ -376,6 +371,41 @@ async def get_all_services(
     return results
 
 
+async def _upsert_text_embedding(
+    conn,
+    service_id: int,
+    text_model: str,
+    title_vec: str,
+    desc_vec: str,
+    dim: int,
+    content_hash: str,
+) -> None:
+    await conn.execute(
+        """
+        INSERT INTO "ServiceTextEmbedding"
+            ("serviceId", "textModel", "dim", "titleEmb", "descEmb", "contentHash", "updatedAt")
+        VALUES (%s, %s, %s, %s::vector, %s::vector, %s, now())
+        ON CONFLICT ("serviceId", "textModel") DO UPDATE SET
+            "dim" = EXCLUDED."dim",
+            "titleEmb" = EXCLUDED."titleEmb",
+            "descEmb" = EXCLUDED."descEmb",
+            "contentHash" = EXCLUDED."contentHash",
+            "updatedAt" = now();
+        """,
+        (service_id, text_model, dim, title_vec, desc_vec, content_hash),
+    )
+
+
+def _legacy_note(write_legacy: bool, service_id: int, text_model: str) -> None:
+    if not write_legacy:
+        logger.warning(
+            'Service %s embedded with %s only in "ServiceTextEmbedding"; the original '
+            '"WoService"."titleEmb"/"descEmb" (English model) were left unchanged and must be '
+            "re-embedded by the English stack if the title/description changed.",
+            service_id, text_model,
+        )
+
+
 async def upsert_service(
     pool: AsyncConnectionPool,
     title: str,
@@ -386,48 +416,63 @@ async def upsert_service(
     desc_emb: list[float],
     embedding_model: str,
     existing_id: int | None = None,
+    *,
+    text_dim: int,
+    content_hash: str,
+    write_legacy: bool,
 ) -> dict[str, Any]:
-    """Upsert a service and its text embeddings. Returns the service row."""
+    """
+    Upsert a service and its text embeddings in one transaction. Vectors always go to
+    "ServiceTextEmbedding" for `embedding_model`; the original WoService vector columns
+    are written only when write_legacy (TEI serves the legacy English model).
+    """
     title_vec = "[" + ",".join(str(v) for v in title_emb) + "]"
     desc_vec = "[" + ",".join(str(v) for v in desc_emb) + "]"
+    legacy_t = title_vec if write_legacy else None
+    legacy_d = desc_vec if write_legacy else None
+    legacy_m = embedding_model if write_legacy else None
 
     async with pool.connection() as conn:
-        if existing_id is not None:
-            cur = await conn.execute(
-                """
-                UPDATE "WoService"
-                SET title = %s, description = %s, keywords = %s,
-                    "isActive" = %s, "embeddingModel" = %s,
-                    "titleEmb" = %s::vector, "descEmb" = %s::vector,
-                    "updatedAt" = now()
-                WHERE id = %s
-                RETURNING id, title, "updatedAt";
-                """,
-                (title, description, keywords, is_active,
-                 embedding_model, title_vec, desc_vec, existing_id),
-            )
-        else:
-            cur = await conn.execute(
-                """
-                INSERT INTO "WoService"
-                    (title, description, keywords, "isActive",
-                     "embeddingModel", "titleEmb", "descEmb", "updatedAt")
-                VALUES (%s, %s, %s, %s, %s, %s::vector, %s::vector, now())
-                ON CONFLICT (title) DO UPDATE
-                    SET description = EXCLUDED.description,
-                        keywords = EXCLUDED.keywords,
-                        "isActive" = EXCLUDED."isActive",
-                        "embeddingModel" = EXCLUDED."embeddingModel",
-                        "titleEmb" = EXCLUDED."titleEmb",
-                        "descEmb" = EXCLUDED."descEmb",
+        async with conn.transaction():
+            if existing_id is not None:
+                cur = await conn.execute(
+                    """
+                    UPDATE "WoService"
+                    SET title = %s, description = %s, keywords = %s,
+                        "isActive" = %s,
+                        "embeddingModel" = COALESCE(%s, "embeddingModel"),
+                        "titleEmb" = COALESCE(%s::vector, "titleEmb"),
+                        "descEmb" = COALESCE(%s::vector, "descEmb"),
                         "updatedAt" = now()
-                RETURNING id, title, "updatedAt";
-                """,
-                (title, description, keywords, is_active,
-                 embedding_model, title_vec, desc_vec),
-            )
-        row = await cur.fetchone()
-        await conn.commit()
+                    WHERE id = %s
+                    RETURNING id, title, "updatedAt";
+                    """,
+                    (title, description, keywords, is_active,
+                     legacy_m, legacy_t, legacy_d, existing_id),
+                )
+            else:
+                cur = await conn.execute(
+                    """
+                    INSERT INTO "WoService"
+                        (title, description, keywords, "isActive",
+                         "embeddingModel", "titleEmb", "descEmb", "updatedAt")
+                    VALUES (%s, %s, %s, %s, %s, %s::vector, %s::vector, now())
+                    ON CONFLICT (title) DO UPDATE
+                        SET description = EXCLUDED.description,
+                            keywords = EXCLUDED.keywords,
+                            "isActive" = EXCLUDED."isActive",
+                            "embeddingModel" = COALESCE(EXCLUDED."embeddingModel", "WoService"."embeddingModel"),
+                            "titleEmb" = COALESCE(EXCLUDED."titleEmb", "WoService"."titleEmb"),
+                            "descEmb" = COALESCE(EXCLUDED."descEmb", "WoService"."descEmb"),
+                            "updatedAt" = now()
+                    RETURNING id, title, "updatedAt";
+                    """,
+                    (title, description, keywords, is_active,
+                     legacy_m, legacy_t, legacy_d),
+                )
+            row = await cur.fetchone()
+            await _upsert_text_embedding(conn, row[0], embedding_model, title_vec, desc_vec, text_dim, content_hash)
+    _legacy_note(write_legacy, row[0], embedding_model)
     return {"id": row[0], "title": row[1], "updated_at": row[2].isoformat() if row[2] else None}
 
 
@@ -619,13 +664,20 @@ async def create_or_update_service_tx(
     text_used: str | None = None,
     image_emb: list[float] | None = None,
     truncated: bool = False,
+    text_dim: int = 0,
+    content_hash: str = "",
+    write_legacy: bool = False,
 ) -> dict[str, Any]:
     """
-    Creates or updates WoService and ServiceImageProfile in ONE single database transaction.
-    Either both rows exist or neither (rolls back on any error).
+    Creates or updates WoService, its per-model text embedding ("ServiceTextEmbedding")
+    and ServiceImageProfile in ONE single database transaction (all or nothing).
+    The original WoService vector columns are written only when write_legacy.
     """
     title_vec = "[" + ",".join(str(v) for v in title_emb) + "]"
     desc_vec = "[" + ",".join(str(v) for v in desc_emb) + "]"
+    legacy_t = title_vec if write_legacy else None
+    legacy_d = desc_vec if write_legacy else None
+    legacy_m = embedding_model if write_legacy else None
 
     async with pool.connection() as conn:
         async with conn.transaction():
@@ -634,14 +686,16 @@ async def create_or_update_service_tx(
                     """
                     UPDATE "WoService"
                     SET title = %s, description = %s, keywords = %s,
-                        "isActive" = %s, "embeddingModel" = %s,
-                        "titleEmb" = %s::vector, "descEmb" = %s::vector,
+                        "isActive" = %s,
+                        "embeddingModel" = COALESCE(%s, "embeddingModel"),
+                        "titleEmb" = COALESCE(%s::vector, "titleEmb"),
+                        "descEmb" = COALESCE(%s::vector, "descEmb"),
                         "updatedAt" = now()
                     WHERE id = %s
                     RETURNING id, title, "updatedAt";
                     """,
                     (title, description, keywords, is_active,
-                     embedding_model, title_vec, desc_vec, existing_id),
+                     legacy_m, legacy_t, legacy_d, existing_id),
                 )
             else:
                 cur = await conn.execute(
@@ -653,13 +707,14 @@ async def create_or_update_service_tx(
                     RETURNING id, title, "updatedAt";
                     """,
                     (title, description, keywords, is_active,
-                     embedding_model, title_vec, desc_vec),
+                     legacy_m, legacy_t, legacy_d),
                 )
             row = await cur.fetchone()
             if not row:
                 raise RuntimeError("Failed to insert or update WoService")
             service_id = row[0]
             updated_at = row[2].isoformat() if row[2] else None
+            await _upsert_text_embedding(conn, service_id, embedding_model, title_vec, desc_vec, text_dim, content_hash)
 
             if image_emb is not None and image_model:
                 emb_vec = "[" + ",".join(str(v) for v in image_emb) + "]"
@@ -687,6 +742,7 @@ async def create_or_update_service_tx(
                     (service_id, image_model),
                 )
 
+    _legacy_note(write_legacy, service_id, embedding_model)
     return {"id": service_id, "title": title, "updated_at": updated_at}
 
 
@@ -708,9 +764,12 @@ async def find_similar_services(
     desc_emb: list[float],
     top_n: int = 3,
     exclude_id: int | None = None,
+    *,
+    text_model: str,
 ) -> list[dict[str, Any]]:
     """
-    Finds top-N most similar active services by cosine similarity against title and description.
+    Finds top-N most similar active services by cosine similarity against title and
+    description, using the per-model embeddings of `text_model`.
     """
     title_vec = "[" + ",".join(str(v) for v in title_emb) + "]"
     desc_vec = "[" + ",".join(str(v) for v in desc_emb) + "]"
@@ -718,21 +777,22 @@ async def find_similar_services(
     async with pool.connection() as conn:
         cur = await conn.execute(
             """
-            SELECT id, title, description,
+            SELECT s.id, s.title, s.description,
                    GREATEST(
-                       1 - ("titleEmb" <=> %(t_q)s::vector),
-                       1 - ("descEmb"  <=> %(d_q)s::vector),
-                       0.7 * (1 - ("descEmb" <=> %(d_q)s::vector)) + 0.3 * (1 - ("titleEmb" <=> %(t_q)s::vector))
+                       1 - (e."titleEmb" <=> %(t_q)s::vector),
+                       1 - (e."descEmb"  <=> %(d_q)s::vector),
+                       0.7 * (1 - (e."descEmb" <=> %(d_q)s::vector)) + 0.3 * (1 - (e."titleEmb" <=> %(t_q)s::vector))
                    ) AS sim_score,
-                   1 - ("titleEmb" <=> %(t_q)s::vector) AS title_sim,
-                   1 - ("descEmb"  <=> %(d_q)s::vector) AS desc_sim
-            FROM "WoService"
-            WHERE "isActive" AND "titleEmb" IS NOT NULL AND "descEmb" IS NOT NULL
-              AND (%(exclude_id)s::int IS NULL OR id != %(exclude_id)s)
+                   1 - (e."titleEmb" <=> %(t_q)s::vector) AS title_sim,
+                   1 - (e."descEmb"  <=> %(d_q)s::vector) AS desc_sim
+            FROM "WoService" s
+            JOIN "ServiceTextEmbedding" e ON e."serviceId" = s.id AND e."textModel" = %(m)s
+            WHERE s."isActive"
+              AND (%(exclude_id)s::int IS NULL OR s.id != %(exclude_id)s)
             ORDER BY sim_score DESC
             LIMIT %(top_n)s;
             """,
-            {"t_q": title_vec, "d_q": desc_vec, "top_n": top_n, "exclude_id": exclude_id},
+            {"t_q": title_vec, "d_q": desc_vec, "top_n": top_n, "exclude_id": exclude_id, "m": text_model},
         )
         rows = await cur.fetchall()
 

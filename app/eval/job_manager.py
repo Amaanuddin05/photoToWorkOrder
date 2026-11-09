@@ -296,6 +296,17 @@ class EvalJobManager:
 
         # Compute effective per-request settings (snapshot of all pipeline-affecting parameters)
         ov = overrides or {}
+
+        # Actual models served by TEI for this run (so runs can be compared by model)
+        from app.text_embedding import probe_tei_embedder, rerank_model_id
+        run_reranker = bool(ov.get("enable_reranker", getattr(self.settings, "ENABLE_RERANKER", True)))
+        text_model_id, text_dim = self.settings.TEXT_EMBED_MODEL_ID, None
+        try:
+            text_model_id, text_dim, _info = await probe_tei_embedder(app_state.tei_client)
+        except Exception as exc:
+            logger.warning("Could not read TEI embed model for eval run record: %s", exc)
+        reranker_model = await rerank_model_id(app_state.tei_client, self.settings) if run_reranker else None
+
         eff = {
             "overrides": dict(ov),
             "enable_reranker": bool(ov.get("enable_reranker", getattr(self.settings, "ENABLE_RERANKER", True))),
@@ -317,9 +328,11 @@ class EvalJobManager:
             "text_no_action_floor": float(ov.get("text_no_action_floor", getattr(self.settings, "DECISION_TEXT_NO_ACTION_FLOOR", 0.40))),
             "text_auto_min": float(ov.get("text_auto_min", getattr(self.settings, "DECISION_TEXT_AUTO_MIN", 0.45))),
             "model_ids": {
-                "text": "BAAI/bge-base-en-v1.5",
+                "text": text_model_id,
+                "text_dim": text_dim,
                 "image": self.settings.SIGLIP_MODEL_ID,
-                "reranker": "BAAI/bge-reranker-base",
+                # Reranker model only recorded when the reranker is enabled for this run.
+                "reranker": reranker_model,
             },
             "catalog_hash": catalog_hash,
         }

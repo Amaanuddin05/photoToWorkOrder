@@ -86,12 +86,23 @@ async def process_post(
     text_top: list[dict[str, Any]] = []
     all_text_results: list[dict[str, Any]] = []
 
+    text_model_used: str | None = None
     if has_desc and description:
         try:
+            # The live TEI model; the catalog must already be embedded for it
+            # (ServiceTextEmbedding). Raises while a re-embed is pending.
+            from app.text_embedding import resolve_query_model
+            text_model_used, expected_dim = await resolve_query_model(tei_client)
+
             t_embed = time.perf_counter()
             vectors = await tei_client.embed([description.strip()])
             timings["text_embed_ms"] = round((time.perf_counter() - t_embed) * 1000, 2)
             query_vec = vectors[0]
+            if len(query_vec) != expected_dim:
+                raise RuntimeError(
+                    f"TEI query embedding has dim={len(query_vec)}, expected {expected_dim} "
+                    f"for '{text_model_used}'."
+                )
 
             t_pg = time.perf_counter()
             if return_diagnostics:
@@ -100,12 +111,14 @@ async def process_post(
                     settings.PIPELINE_TEXT_DESC_WEIGHT,
                     settings.PIPELINE_TEXT_TOP_N,
                     return_all=True,
+                    text_model=text_model_used,
                 )
             else:
                 text_top = await repo.text_search(
                     pool, query_vec,
                     settings.PIPELINE_TEXT_DESC_WEIGHT,
                     settings.PIPELINE_TEXT_TOP_N,
+                    text_model=text_model_used,
                 )
             timings["pgvector_search_ms"] = round((time.perf_counter() - t_pg) * 1000, 2)
         except Exception as exc:
@@ -370,6 +383,18 @@ async def process_post(
             top_service_id = result.top_candidates[0].service_id
 
         try:
+            reranker_used = bool(enable_rerank and reranked and has_desc)
+            if text_model_used is None:
+                # No description: record the model TEI serves anyway, so runs compare by model.
+                try:
+                    from app.text_embedding import probe_tei_embedder
+                    text_model_used = (await probe_tei_embedder(tei_client))[0]
+                except Exception:
+                    text_model_used = settings.TEXT_EMBED_MODEL_ID
+            reranker_model_used = None
+            if reranker_used:
+                from app.text_embedding import rerank_model_id
+                reranker_model_used = await rerank_model_id(tei_client, settings)
             log_data: dict[str, Any] = {
                 "description": description,
                 "store_description": settings.STORE_DESCRIPTION,
@@ -388,9 +413,10 @@ async def process_post(
                 "would_be_action": result.would_be_action,
                 "reason": result.reason,
                 "text_guard": result.text_guard,
-                "text_model": "BAAI/bge-base-en-v1.5",
+                "text_model": text_model_used,
                 "image_model": settings.SIGLIP_MODEL_ID,
-                "reranker_model": "BAAI/bge-reranker-base",
+                # Only recorded when the cross-encoder reranker was actually used.
+                "reranker_model": reranker_model_used,
                 "config_version": settings.config_version,
                 "timings": timings,
                 "idempotency_key": idempotency_key,

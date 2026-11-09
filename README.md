@@ -13,14 +13,15 @@ flowchart TD
     Client["Client / Web UI / Mobile App"] -->|"POST /v1/posts/process"| SigLIP["SigLIP Standalone Service<br/>(FastAPI / PyTorch CPU)"]
     
     subgraph Storage["Existing PostgreSQL Database"]
-        WoService["'WoService' (768d text vectors)"]
+        WoService["'WoService' (catalog + original 768d English text vectors)"]
+        TextStore["'ServiceTextEmbedding' (text vectors per TEI model)"]
         ServiceImageProfile["'ServiceImageProfile' (768d SigLIP vectors)"]
         DecisionLog["'DecisionLog' (Triage audit & calibration)"]
     end
 
     subgraph TEI["External TEI Containers"]
-        TEI_Embed["TEI Embedder<br/>(BAAI/bge-base-en-v1.5 / Port 8081)"]
-        TEI_Rerank["TEI Reranker<br/>(BAAI/bge-reranker-base / Port 8082)"]
+        TEI_Embed["TEI Embedder<br/>(any model, e.g. BAAI/bge-m3 or BAAI/bge-base-en-v1.5 / Port 8081)"]
+        TEI_Rerank["TEI Reranker<br/>(BAAI/bge-reranker-v2-m3 / Port 8082, disabled by default)"]
     end
 
     SigLIP -->|"1. Embed Query"| TEI_Embed
@@ -31,7 +32,7 @@ flowchart TD
 ```
 
 ### Pipeline Execution Stages
-1. **Text Ranking**: Query embedded via TEI `/embed` as plain text with no instruction prefix. Cosine similarity computed against `"WoService"` in PostgreSQL using `pgvector` (`w * desc_sim + (1-w) * title_sim`).
+1. **Text Ranking**: Query embedded via TEI `/embed` with whatever model TEI serves, as plain text with no instruction prefix. Cosine similarity computed against that model's catalog vectors in `"ServiceTextEmbedding"` (joined to active `"WoService"` rows) in PostgreSQL using `pgvector` (`w * desc_sim + (1-w) * title_sim`).
 2. **Image Ranking**: Image encoded via in-process SigLIP 2 model, dot-producted against in-memory cached visual profiles. Non-visual services receive middle-rank and are excluded from the visual vote pool.
 3. **Pool Merger**: Union of text top-N and image top-N, sorted by `min(text_rank, image_rank)`, capped at `pool_max` (default 10).
 4. **Cross-Encoder Reranking**: Candidate pairs `(description, "{title}. {description}")` scored via TEI `/rerank` with `raw_scores: true`. Temperature-scaled softmax ($T=1.0$) is applied locally to preserve calibration against legacy thresholds.
@@ -116,6 +117,9 @@ All settings are managed via environment variables (or `.env` file):
 | `TEI_API_KEY` | `None` | Optional Bearer token for TEI container auth |
 | `TEI_TIMEOUT_SECONDS` | `10.0` | TEI request timeout |
 | `TEI_MAX_RETRIES` | `2` | Maximum retry attempts for transient TEI connection drops |
+| `TEXT_EMBED_MODEL_ID` | *(unset)* | Optional pin. Unset = use whatever model TEI serves (catalog re-embedded automatically). Set = TEI must serve exactly this model, else not-ready |
+| `RERANK_MODEL_ID` | *(unset)* | Optional reranker label for logs; unset = read from the rerank container's `/info` (logged only when `ENABLE_RERANKER=true`) |
+| `LEGACY_TEXT_MODEL_ID` | `BAAI/bge-base-en-v1.5` | Model of the original `WoService.titleEmb/descEmb` columns; they are only written when TEI serves this model |
 | `SIGLIP_MODEL_ID` | `google/siglip2-base-patch16-224` | Hugging Face model identifier for vision encoder |
 | `SIGLIP_TORCH_THREADS` | `2` | Number of PyTorch CPU inference threads |
 | `SIGLIP_MAX_CONCURRENCY` | `2` | Semaphore limiting concurrent vision inference passes |
@@ -175,8 +179,69 @@ GRANT USAGE ON SCHEMA public TO siglip_service;
 GRANT SELECT, INSERT, UPDATE ON TABLE public."WoService" TO siglip_service;
 GRANT SELECT, INSERT, UPDATE ON TABLE public."ServiceImageProfile" TO siglip_service;
 GRANT SELECT, INSERT, UPDATE ON TABLE public."DecisionLog" TO siglip_service;
+GRANT SELECT, INSERT, UPDATE ON TABLE public."ServiceTextEmbedding" TO siglip_service;   -- per-model text vectors
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO siglip_service;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO siglip_service;
 
 REVOKE CREATE ON SCHEMA public FROM siglip_service;
 ```
+
+---
+
+## 6. Text Embedding Models (multilingual branch)
+
+This branch works with **whatever model the TEI embedder serves**. The catalog's text vectors are
+stored per model in `"ServiceTextEmbedding"` (one row per service and model, like
+`"ServiceImageProfile"` is keyed by `imageModel`):
+
+| Column | Meaning |
+| :--- | :--- |
+| `serviceId`, `textModel` | primary key (`textModel` = TEI `/info` `model_id`) |
+| `dim` | dimension measured from TEI (TEI `/info` has no dimension field; a probe `/embed` is used) |
+| `titleEmb`, `descEmb` | unconstrained `vector` (any dimension) |
+| `contentHash` | sha256 of the embedded texts; an edit to title/description/keywords triggers a re-embed |
+
+Embedded texts (plain text, no prefix) follow the recipe of the original catalog vectors:
+**title** and **`"{description}. {keywords}"`** (description alone when there are no keywords).
+
+**Automatic re-embedding.** On startup the service embeds every service (active and inactive) that is
+missing, stale or has another dimension for the current TEI model; a restart with the same model embeds
+nothing. If the TEI model is switched while the service runs, `/health/ready` reports not-ready
+("re-embedding catalog in the background"), starts one background re-embed, and is ready again when it
+finishes (a few seconds for ~20 services). All writes happen in one transaction under an advisory lock.
+
+**Original columns are kept.** `"WoService"."titleEmb"/"descEmb"` stay the original `vector(768)`
+`BAAI/bge-base-en-v1.5` vectors used by the `main` branch and WoSemanticSearch. They are only written
+when TEI serves `LEGACY_TEXT_MODEL_ID` with that dimension; with any other model, catalog writes leave
+them unchanged and log a warning. `"ServiceImageProfile"` (SigLIP) is never touched.
+
+### One-time setup (DB role allowed to CREATE TABLE)
+```powershell
+..\venv\Scripts\python.exe scripts\migrate_text_embeddings.py --dry-run
+..\venv\Scripts\python.exe scripts\migrate_text_embeddings.py        # CREATE TABLE IF NOT EXISTS "ServiceTextEmbedding"
+```
+
+### Switching the embedding model
+TEI compose files live in the `tei` folder: `docker-compose.yml` (English: bge-base-en-v1.5 +
+bge-reranker-base) and `docker-compose.multilingual.yml` (bge-m3 + bge-reranker-v2-m3).
+On a ~7.6 GB Docker VM bge-m3 (~5.5 GB resident) cannot run next to a second large model, so stop the
+reranker first (it is disabled in the pipeline by default):
+```powershell
+docker compose stop tei-rerank
+docker compose -f docker-compose.multilingual.yml up -d tei-embed   # or: docker compose up -d   (English)
+```
+Nothing else is needed: the running service re-embeds the catalog for the new model. To trigger it
+by hand: `..\venv\Scripts\python.exe scripts\reembed_catalog.py` (`--force` re-embeds everything).
+
+TEI settings for bge-m3 (`cpu-1.9`): `--pooling cls --max-batch-tokens 2048 --max-client-batch-size 32`.
+`--max-batch-tokens 2048` is required on a ~7.6 GB Docker VM (8192 was OOM-killed during TEI warm-up);
+with TEI's default auto-truncate this also caps inputs at 2048 tokens (descriptions are <= 1000 chars).
+
+### Results on the 62-row English ground truth (reranker off, same settings)
+| Model | text-only top-1 / top-3 | pipeline top-1 | auto precision |
+| :--- | :--- | :--- | :--- |
+| `BAAI/bge-base-en-v1.5` | 93.55% / 98.39% | 95.16% | 97.50% |
+| `BAAI/bge-m3` | 82.26% / 91.94% | 90.32% | 100.00% (0 wrong) |
+
+Compare runs with `scripts\eval_model_compare.py run --tag <name>` (outputs in
+`app/eval/runs/model_compare/`) and `scripts\eval_model_compare.py compare <a.json> <b.json>`.

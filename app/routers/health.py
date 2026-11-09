@@ -26,7 +26,9 @@ async def readiness(request: Request) -> JSONResponse:
     """
     Readiness probe. Returns 200 only when all components are healthy.
     Returns 503 with per-component details otherwise.
-    Reports: database, schema, siglip_model, tei_embed, tei_rerank.
+    Reports: database, schema, siglip_model, tei_embed, tei_rerank, text_embedding.
+    text_embedding is not-ready while the catalog is not embedded for the model
+    TEI serves (a background re-embed is started automatically).
     """
     state = request.app.state
     checks: dict[str, Any] = {}
@@ -86,6 +88,33 @@ async def readiness(request: Request) -> JSONResponse:
             "skipped": not reranker_enabled,
             "enabled": reranker_enabled,
         }
+        all_ok = False
+
+    # Text-embedding guard: the catalog must be embedded (ServiceTextEmbedding)
+    # for the model TEI serves right now. Checked live on every readiness call.
+    # If TEI's model changed (or services were added/edited elsewhere), one
+    # background re-embed is started and the service is not-ready until it ends.
+    db_pool = getattr(state, "db_pool", None)
+    if tei and db_pool is not None and settings is not None:
+        from app.text_embedding import STORE_TABLE, check_text_embedding, start_background_sync
+        st = await check_text_embedding(db_pool, tei, settings)
+        sync_task = getattr(state, "text_sync_task", None)
+        if not st.ok:
+            pin_violated = bool(st.pinned_model_id and st.tei_model_id and st.tei_model_id != st.pinned_model_id)
+            store_missing = any(STORE_TABLE in p and "does not exist" in p for p in st.problems)
+            if st.tei_model_id and not pin_violated and not store_missing:
+                start_background_sync(state)
+            sync_task = getattr(state, "text_sync_task", None)
+        st.sync_in_progress = bool(sync_task is not None and not sync_task.done())
+        st.last_sync = getattr(state, "text_sync_result", None)
+        if st.sync_in_progress:
+            st.message = f"Re-embedding catalog for '{st.tei_model_id}' in the background. " + st.message
+        state.text_embed_status = st
+        checks["text_embedding"] = st.to_dict()
+        if not st.ok:
+            all_ok = False
+    else:
+        checks["text_embedding"] = {"ok": False, "message": "TEI client or database pool not initialised"}
         all_ok = False
 
     # Service profiles loaded

@@ -33,6 +33,17 @@ class Settings(BaseSettings):
     TEI_API_KEY: str | None = None
     TEI_TIMEOUT_SECONDS: float = 10.0
     TEI_MAX_RETRIES: int = 2
+    # Optional pin for the TEI embed model. Unset (default) = use whatever model TEI
+    # serves: the catalog is re-embedded for it automatically (ServiceTextEmbedding).
+    # Set = TEI must serve exactly this model, otherwise the service is not-ready.
+    TEXT_EMBED_MODEL_ID: str | None = None
+    # Optional label for the TEI rerank model (logged only when ENABLE_RERANKER=true).
+    # Unset = the model id is read from the rerank container's /info.
+    RERANK_MODEL_ID: str | None = None
+    # Model of the ORIGINAL "WoService"."titleEmb"/"descEmb" columns (English stack and
+    # WoSemanticSearch). They are only written when TEI serves this model with the
+    # columns' dimension; otherwise they are left untouched.
+    LEGACY_TEXT_MODEL_ID: str = "BAAI/bge-base-en-v1.5"
 
     # ── SigLIP Vision Model ───────────────────────────────────────────────────
     SIGLIP_MODEL_ID: str = "google/siglip2-base-patch16-224"
@@ -120,6 +131,8 @@ class Settings(BaseSettings):
         """Stable hash of pipeline-affecting config values."""
         payload = "|".join(str(v) for v in [
             self.SIGLIP_MODEL_ID,
+            self.TEXT_EMBED_MODEL_ID,
+            self.RERANK_MODEL_ID if self.ENABLE_RERANKER else "",
             self.PIPELINE_TEXT_DESC_WEIGHT,
             self.PIPELINE_TEXT_TOP_N,
             self.PIPELINE_IMAGE_TOP_N,
@@ -140,6 +153,8 @@ class Settings(BaseSettings):
             "SIGLIP_MODEL_ID": self.SIGLIP_MODEL_ID,
             "TEI_EMBED_URL": self.TEI_EMBED_URL,
             "TEI_RERANK_URL": self.TEI_RERANK_URL,
+            "TEXT_EMBED_MODEL_ID": self.TEXT_EMBED_MODEL_ID,
+            "RERANK_MODEL_ID": self.RERANK_MODEL_ID,
             "TEI_API_KEY": "***" if self.TEI_API_KEY else None,
             "API_KEYS": f"[{len(self.api_key_list)} keys]",
             "DATABASE_URL": "***@" + self.DATABASE_URL.split("@")[-1] if "@" in self.DATABASE_URL else "***",

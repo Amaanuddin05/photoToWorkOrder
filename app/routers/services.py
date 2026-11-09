@@ -15,6 +15,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, Header, HTTPException, Request, status
 from pydantic import BaseModel
 
+from app.text_embedding import content_hash
+
 logger = logging.getLogger("siglip.routers.services")
 router = APIRouter(prefix="/v1", tags=["services"])
 
@@ -57,6 +59,37 @@ def _clean_keywords(raw: str | None) -> str | None:
     return ", ".join(cleaned) if cleaned else None
 
 
+async def _embed_title_desc(
+    state: Any, settings: Any, title: str, desc: str, keywords: str | None = None
+) -> tuple[list[float], list[float], Any]:
+    """
+    Embed a service with the single catalog embedding call (plain text, no prefix)
+    using whatever model TEI serves. Texts follow catalog_texts(): the title, and
+    "{description}. {keywords}" (the recipe the original catalog vectors use).
+    Fails with 503 EMBEDDING_MODEL_MISMATCH if the catalog is not (yet) embedded
+    for that model, 502 TEI_EMBED_ERROR if TEI fails.
+    Returns (title_emb, desc_emb, status) where status.tei_model_id / tei_dim /
+    legacy_columns_writable describe where the vectors go.
+    """
+    from app.text_embedding import EmbeddingMismatchError, catalog_texts, embed_catalog_texts
+
+    try:
+        vecs, st = await embed_catalog_texts(
+            state.db_pool, state.tei_client, settings, list(catalog_texts(title, desc, keywords))
+        )
+    except EmbeddingMismatchError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={"code": EmbeddingMismatchError.code, "message": str(exc)},
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"code": "TEI_EMBED_ERROR", "message": f"Failed to compute text embeddings: {exc}"},
+        )
+    return vecs[0], vecs[1], st
+
+
 def _require_auth(request: Request, authorization: str | None = Header(None)) -> None:
     from app.config import get_settings
     settings = get_settings()
@@ -90,10 +123,12 @@ async def upsert_services(
 ) -> list[dict[str, Any]]:
     """
     Bulk upsert. For each service:
-    1. Compute content hash; skip re-embedding if unchanged.
-    2. Re-embed title+description via TEI (BGE passages, no prefix).
+    1. Re-embed title and "{description}. {keywords}" via TEI with the model it serves
+       (plain text, no prefix; the catalog must be embedded for that model).
+    2. Upsert WoService + its "ServiceTextEmbedding" row in one transaction (original
+       WoService vector columns only written when TEI serves LEGACY_TEXT_MODEL_ID).
     3. Re-embed textUsed via SigLIP text encoder.
-    4. Upsert WoService and ServiceImageProfile.
+    4. Upsert ServiceImageProfile.
     5. Refresh in-memory service profiles.
     """
     from app.config import get_settings
@@ -103,7 +138,6 @@ async def upsert_services(
     state = request.app.state
     settings = get_settings()
     db_pool = state.db_pool
-    tei = state.tei_client
     siglip = state.siglip_service
 
     results = []
@@ -112,28 +146,12 @@ async def upsert_services(
         title = svc.title.strip()
         desc = svc.description.strip()
         visual_line = svc.visual_line.strip() if svc.visual_line else None
-        text_hash = hashlib.sha256(f"{title}\n{desc}".encode()).hexdigest()
         image_text = f"{title}. {visual_line}" if visual_line else title
 
-        # Lookup existing
-        existing = await repo.get_service_by_title(db_pool, title)
-        if existing and existing.get("id") == svc.id and existing.get("embedding_model") == "BAAI/bge-base-en-v1.5":
-            # Check if text content changed via hash stored in embeddingModel or always re-embed
-            # For simplicity: always re-embed (TEI is fast for small batches)
-            pass
+        # 1. Text embeddings via TEI (always re-embedded; title, "{description}. {keywords}")
+        title_emb, desc_emb, emb_st = await _embed_title_desc(state, settings, title, desc, svc.keywords)
 
-        # 1. Text embeddings via TEI (passages: NO query prefix)
-        try:
-            vecs = await tei.embed([title, desc])
-            title_emb = vecs[0]
-            desc_emb = vecs[1]
-        except Exception as exc:
-            raise HTTPException(
-                status_code=status.HTTP_502_BAD_GATEWAY,
-                detail={"code": "TEI_EMBED_ERROR", "message": f"Failed to embed service text: {exc}"},
-            )
-
-        # 2. Upsert WoService
+        # 2. Upsert WoService + per-model text embedding (one transaction)
         db_svc = await repo.upsert_service(
             db_pool,
             title=title,
@@ -142,8 +160,11 @@ async def upsert_services(
             is_active=svc.is_active,
             title_emb=title_emb,
             desc_emb=desc_emb,
-            embedding_model="BAAI/bge-base-en-v1.5",
+            embedding_model=emb_st.tei_model_id,
             existing_id=svc.id,
+            text_dim=emb_st.tei_dim,
+            content_hash=content_hash(title, desc, svc.keywords),
+            write_legacy=bool(emb_st.legacy_columns_writable),
         )
         service_id = db_svc["id"]
 
@@ -212,27 +233,16 @@ async def check_similarity(
             detail={"code": "DESC_REQUIRED", "message": "Service description is required."},
         )
 
+    from app.config import get_settings
+
     state = request.app.state
     db_pool = state.db_pool
-    tei = state.tei_client
 
-    try:
-        vecs = await tei.embed([title, desc])
-        title_emb = vecs[0]
-        desc_emb = vecs[1]
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={"code": "TEI_EMBED_ERROR", "message": f"Failed to compute embeddings: {exc}"},
-        )
+    title_emb, desc_emb, emb_st = await _embed_title_desc(state, get_settings(), title, desc)
 
-    if len(title_emb) != 768 or len(desc_emb) != 768:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={"code": "INVALID_EMBEDDING_DIM", "message": f"Expected 768 dimensions from TEI, got title={len(title_emb)}, desc={len(desc_emb)}"},
-        )
-
-    similar = await repo.find_similar_services(db_pool, title_emb, desc_emb, top_n=3)
+    similar = await repo.find_similar_services(
+        db_pool, title_emb, desc_emb, top_n=3, text_model=emb_st.tei_model_id
+    )
     highest_score = similar[0]["score"] if similar else 0.0
 
     return {
@@ -262,7 +272,6 @@ async def create_service(
     state = request.app.state
     settings = get_settings()
     db_pool = state.db_pool
-    tei = state.tei_client
     siglip = state.siglip_service
 
     title = payload.title.strip()
@@ -330,24 +339,8 @@ async def create_service(
             existing_id = existing["id"]
 
     # 1. Compute ALL embeddings FIRST before writing anything
-    try:
-        vecs = await tei.embed([title, desc])
-        title_emb = vecs[0]
-        desc_emb = vecs[1]
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={"code": "TEI_EMBED_ERROR", "message": f"Failed to compute text embeddings: {exc}"},
-        )
-
-    if len(title_emb) != 768 or len(desc_emb) != 768:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail={
-                "code": "INVALID_EMBEDDING_DIM",
-                "message": f"Expected 768 dimensions from TEI, got title={len(title_emb)}, desc={len(desc_emb)}",
-            },
-        )
+    title_emb, desc_emb, emb_st = await _embed_title_desc(state, settings, title, desc, keywords)
+    text_dim = emb_st.tei_dim
 
     image_emb = None
     truncated = False
@@ -374,7 +367,7 @@ async def create_service(
 
     # 2. Similarity analysis (non-blocking warning)
     similar_services = await repo.find_similar_services(
-        db_pool, title_emb, desc_emb, top_n=3, exclude_id=existing_id
+        db_pool, title_emb, desc_emb, top_n=3, exclude_id=existing_id, text_model=emb_st.tei_model_id
     )
 
     # 3. Transactional Write: either both rows exist or neither
@@ -387,13 +380,16 @@ async def create_service(
             is_active=True,
             title_emb=title_emb,
             desc_emb=desc_emb,
-            embedding_model="BAAI/bge-base-en-v1.5",
+            embedding_model=emb_st.tei_model_id,
             existing_id=existing_id,
             image_model=settings.SIGLIP_MODEL_ID,
             visual_line=visual_line,
             text_used=text_used,
             image_emb=image_emb,
             truncated=truncated,
+            text_dim=text_dim,
+            content_hash=content_hash(title, desc, keywords),
+            write_legacy=bool(emb_st.legacy_columns_writable),
         )
         service_id = db_svc["id"]
     except Exception as exc:
@@ -444,7 +440,7 @@ async def create_service(
         "keywords": keywords,
         "visual_line": visual_line,
         "has_image_profile": bool(image_emb is not None),
-        "embedding_dimensions": 768,
+        "embedding_dimensions": text_dim,
         "reactivated": bool(existing_id is not None),
         "similar_services": similar_services,
         "warning": warning,

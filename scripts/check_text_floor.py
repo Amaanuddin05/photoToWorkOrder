@@ -89,6 +89,10 @@ async def evaluate_descriptions(
     Embeds each description, queries pgvector active services,
     and runs make_decision with the text guard enabled.
     """
+    from app.text_embedding import probe_tei_embedder
+
+    # Search the catalog vectors of the model TEI serves (ServiceTextEmbedding)
+    text_model, _dim, _info = await probe_tei_embedder(tei_client)
     vectors = await tei_client.embed([d.strip() for d in descriptions])
 
     results: list[dict[str, Any]] = []
@@ -99,6 +103,7 @@ async def evaluate_descriptions(
             query_vec,
             settings.PIPELINE_TEXT_DESC_WEIGHT,
             settings.PIPELINE_TEXT_TOP_N,
+            text_model=text_model,
         )
 
         if not text_top:

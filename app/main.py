@@ -93,6 +93,7 @@ async def lifespan(app: FastAPI):
     from app.db.repository import get_all_service_profiles
     from app.model import SigLIPService
     from app.tei_client import TEIClient
+    from app.text_embedding import check_text_embedding, probe_tei_embedder, sync_catalog_embeddings
 
     settings: Settings = get_settings()
     _configure_logging(settings.LOG_LEVEL, settings.LOG_FORMAT)
@@ -111,6 +112,9 @@ async def lifespan(app: FastAPI):
     app.state.db_pool = None
     app.state.siglip_service = None
     app.state.tei_client = None
+    app.state.text_embed_status = None
+    app.state.text_sync_task = None
+    app.state.text_sync_result = None
 
     # ── 1. DB pool ─────────────────────────────────────────────────────────
     pool = create_pool(settings)
@@ -183,27 +187,32 @@ async def lifespan(app: FastAPI):
                     embed_ok, rerank_ok, reranker_needed,
                 )
 
-                # ── 4a. Embedding dimension verification ──────────────────
-                try:
-                    test_vecs = await tei.embed(["probe"])
-                    tei_dim = len(test_vecs[0]) if test_vecs else 0
-                    schema_dim = app.state.schema_info.get("title_dim") or 768
-                    if tei_dim != schema_dim:
-                        msg = (
-                            f"FATAL: TEI embedder returns dim={tei_dim} "
-                            f"but WoService expects vector({schema_dim}). "
-                            f"Check TEI_EMBED_URL points to the right model."
-                        )
-                        logger.error(msg)
-                        raise ConfigurationError(msg)
-                    logger.info("TEI embedding dimension verified: %d", tei_dim)
-                except ConfigurationError:
-                    raise
-                except Exception as exc:
-                    logger.warning("Could not verify TEI embedding dimension: %s", exc)
+                # ── 4a. Model-adaptive catalog text embeddings ───────────
+                # Re-embed the catalog (ServiceTextEmbedding) for whatever model
+                # TEI serves: only missing/stale services are embedded, so a
+                # restart with the same model embeds nothing. Then run the guard.
+                # Problems do NOT stop the process: /health/ready reports
+                # not-ready (and retries the sync in the background).
+                if db_opened:
+                    try:
+                        tei_model, _dim, _info = await probe_tei_embedder(tei)
+                        pinned = settings.TEXT_EMBED_MODEL_ID
+                        if pinned and tei_model != pinned:
+                            logger.error(
+                                "TEI embedder serves '%s' but TEXT_EMBED_MODEL_ID pins '%s'; catalog not re-embedded.",
+                                tei_model, pinned,
+                            )
+                        else:
+                            app.state.text_sync_result = await sync_catalog_embeddings(pool, tei)
+                    except Exception as exc:
+                        logger.error("Catalog text embedding sync failed at startup: %s", exc)
+                    st = await check_text_embedding(pool, tei, settings)
+                    app.state.text_embed_status = st
+                    if st.ok:
+                        logger.info(st.message)
+                    else:
+                        logger.error("NOT READY - %s", st.message)
                 break
-        except ConfigurationError:
-            raise
         except Exception as exc:
             wait = 2 ** attempt
             logger.warning(

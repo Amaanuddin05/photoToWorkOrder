@@ -125,6 +125,14 @@ class TEIClient:
 
         return data
 
+    async def embed_batched(self, texts: List[str], batch_size: int = 32) -> List[List[float]]:
+        """embed() in chunks of at most batch_size inputs (TEI --max-client-batch-size)."""
+        out: List[List[float]] = []
+        step = max(1, int(batch_size))
+        for i in range(0, len(texts), step):
+            out.extend(await self.embed(texts[i:i + step]))
+        return out
+
     async def rerank(self, query: str, texts: List[str], raw_scores: bool = True) -> List[Dict[str, Any]]:
         """
         Calls TEI rerank endpoint: POST {rerank_url}/rerank

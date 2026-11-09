@@ -36,8 +36,10 @@ REQUIRED_TABLES: dict[str, list[str]] = {
     ],
 }
 
-# pgvector atttypmod directly encodes dims; -1 means unconstrained
-_EXPECTED_TEXT_DIM = 768
+# No text-embedding dimension is hardcoded here. Ranking uses the per-model store
+# "ServiceTextEmbedding" (any model/dimension), checked by app/text_embedding.py,
+# which reports not-ready instead of exiting. This module only checks that the two
+# original WoService text columns are declared with the same dimension.
 
 
 async def verify_schema(conn: psycopg.AsyncConnection) -> dict:
@@ -85,21 +87,14 @@ async def verify_schema(conn: psycopg.AsyncConnection) -> dict:
         )
 
     # 3. Verify vector dimensions on WoService embedding columns
-    title_dim = await _get_vector_dim(conn, "WoService", "titleEmb")
-    desc_dim  = await _get_vector_dim(conn, "WoService", "descEmb")
+    title_dim = await get_vector_dim(conn, "WoService", "titleEmb")
+    desc_dim  = await get_vector_dim(conn, "WoService", "descEmb")
 
-    dim_errors = []
-    if title_dim is not None and title_dim != _EXPECTED_TEXT_DIM:
-        dim_errors.append(
-            f'"WoService"."titleEmb" has dim={title_dim}, expected {_EXPECTED_TEXT_DIM}'
-        )
-    if desc_dim is not None and desc_dim != _EXPECTED_TEXT_DIM:
-        dim_errors.append(
-            f'"WoService"."descEmb" has dim={desc_dim}, expected {_EXPECTED_TEXT_DIM}'
-        )
-    if dim_errors:
+    if title_dim is not None and desc_dim is not None and title_dim != desc_dim:
         raise ConfigurationError(
-            "Vector dimension mismatch:\n" + "\n".join(f"  - {e}" for e in dim_errors)
+            "Vector dimension mismatch: "
+            f'"WoService"."titleEmb" is vector({title_dim}) but "descEmb" is vector({desc_dim}). '
+            "The two original WoService text columns must have the same dimension."
         )
 
     logger.info(
@@ -117,7 +112,7 @@ async def verify_schema(conn: psycopg.AsyncConnection) -> dict:
     }
 
 
-async def _get_vector_dim(
+async def get_vector_dim(
     conn: psycopg.AsyncConnection, table: str, column: str
 ) -> int | None:
     """
