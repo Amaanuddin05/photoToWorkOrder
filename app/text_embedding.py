@@ -36,6 +36,8 @@ from typing import Any
 import psycopg
 from psycopg_pool import AsyncConnectionPool
 
+from app.catalog_text import catalog_texts  # single source of the catalog text recipe
+
 logger = logging.getLogger("siglip.text_embedding")
 
 STORE_TABLE = "ServiceTextEmbedding"
@@ -73,19 +75,6 @@ class TextEmbedStatus:
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
-
-
-def catalog_texts(title: str | None, description: str | None, keywords: str | None) -> tuple[str, str]:
-    """
-    The texts embedded for a service, matching how the original catalog vectors were
-    built (verified against WoService.titleEmb/descEmb: exact for the seeded services):
-      title text       = title
-      description text = f"{description}. {keywords}"  (description alone when no keywords)
-    """
-    t = (title or "").strip()
-    d = (description or "").strip()
-    k = (keywords or "").strip()
-    return t, (f"{d}. {k}" if k else d)
 
 
 def content_hash(title: str | None, description: str | None, keywords: str | None = None) -> str:
