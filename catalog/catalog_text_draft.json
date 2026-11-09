@@ -1,0 +1,58 @@
+[
+  {
+    "title": "AC Services",
+    "current_description": "AC not cooling / overcooling",
+    "proposed_description": "Repair and maintenance of air-conditioning units: no cooling or overcooling, water leaking from the AC, noisy units, thermostat faults and AC filter cleaning.",
+    "proposed_keywords": null,
+    "why": "Was a 28-char fragment; now names the AC faults this service covers."
+  },
+  {
+    "title": "BUILDING FACADE CLEANING",
+    "current_description": "Exterior Building Cleaning",
+    "proposed_description": "Scheduled high-level cleaning of the building's outer facade: external walls, cladding panels and exterior glass of the building envelope, done with access equipment.",
+    "proposed_keywords": null,
+    "why": "Was 3 generic words ('exterior building cleaning') that matched any dirt or cleaning request; now specific to the facade/envelope."
+  },
+  {
+    "title": "Door / Locker Lock Assistance",
+    "current_description": "Unlocking of rooms, lockers, or furniture.",
+    "proposed_description": "Unlocking service when someone is locked out or a lock is jammed: opening locked rooms, lockers, cabinets and drawers when the key is lost, stuck or not working.",
+    "proposed_keywords": null,
+    "why": "Generic nouns (rooms, furniture) attracted moving/repair requests; now centred on being locked out and opening locks, with no repair vocabulary."
+  },
+  {
+    "title": "Key Duplication",
+    "current_description": "Duplication of room keys and cabinets only",
+    "proposed_description": "Cutting duplicate or spare copies of existing keys for rooms, offices and cabinets when an additional key is needed.",
+    "proposed_keywords": null,
+    "why": "Clarifies it is about making extra copies of a key, not opening locks."
+  },
+  {
+    "title": "ROOF CLEANING",
+    "current_description": "Monthly Roof Cleaning",
+    "proposed_description": "Monthly cleaning of the roof and rooftop terraces: removing debris, leaves and standing water, and clearing roof gutters and drains.",
+    "proposed_keywords": null,
+    "why": "Was the title repeated; now describes the rooftop work."
+  },
+  {
+    "title": "Volleyball Setup",
+    "current_description": "Setup for Volleyball Court.",
+    "proposed_description": "Setting up the volleyball court for PE lessons and matches: installing the posts and net, marking court lines and placing the sports equipment.",
+    "proposed_keywords": null,
+    "why": "Was 3 words; now describes the volleyball-specific setup so general event setup does not land here."
+  },
+  {
+    "title": "WATER BOTTLE REPLACEMENT FOR DRINKING STATIONS",
+    "current_description": "WATER BOTTLE REPLACEMENT FOR DRINKING STATIONS",
+    "proposed_description": "Replacing empty large water bottles on drinking water dispensers and coolers so that every drinking station has water available.",
+    "proposed_keywords": null,
+    "why": "Description was the all-caps title repeated; now a normal sentence describing the task."
+  },
+  {
+    "title": "Washroom Deep Cleaning",
+    "current_description": "Deep cleaning of all washroom fixtures",
+    "proposed_description": "Periodic deep cleaning of washrooms beyond routine cleaning: descaling and scrubbing toilets, urinals, sinks and tiles to remove limescale, stubborn stains and odours.",
+    "proposed_keywords": null,
+    "why": "Separates deep cleaning (limescale, stains, odours) from routine toilet cleaning under General Areas Cleaning."
+  }
+]
