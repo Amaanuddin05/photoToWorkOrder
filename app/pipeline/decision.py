@@ -98,6 +98,34 @@ def apply_reranker_softmax(
     return reranked
 
 
+def _safety_near_tie(
+    top_service: str,
+    text_top: list[dict[str, Any]],
+    image_top: list[dict[str, Any]] | None,
+    safety_services: list[str],
+    margin: float | None,
+    image_top_k: int,
+) -> tuple[str, float, int] | None:
+    """
+    Return (safety_service, text_margin, photo_rank) when a safety-critical service other
+    than the chosen one is in the text top-3 within `margin` of the top text score and in
+    the photo top-k; otherwise None.
+    """
+    if not margin or not safety_services or top_service in safety_services or not text_top:
+        return None
+    top_score = text_top[0].get("score")
+    if top_score is None:
+        return None
+    photo_rank = {it.get("service"): int(it.get("rank", 99)) for it in (image_top or [])}
+    for item in text_top[:3]:
+        svc = item.get("service")
+        if svc in safety_services and svc != top_service and item.get("score") is not None:
+            diff = float(top_score) - float(item["score"])
+            if diff <= margin and photo_rank.get(svc, 99) <= image_top_k:
+                return svc, diff, photo_rank[svc]
+    return None
+
+
 # ── Decision engine — ported 1:1 from photoToWorkOrder/ptwo/decision.py ──────
 
 def make_decision(
@@ -125,6 +153,10 @@ def make_decision(
     text_guard_enabled: bool = True,
     text_no_action_floor: float = 0.40,
     text_auto_min: float = 0.45,
+    # safety near-tie config
+    safety_services: list[str] | None = None,
+    safety_near_tie_margin: float | None = None,
+    safety_image_top_k: int = 3,
 ) -> ProcessedPost:
     """
     Rule-based decision engine — identical business logic to RuleBasedDecider.decide().
@@ -298,6 +330,29 @@ def make_decision(
                 text_guard=text_guard_info,
             )
         else:
+            # Safety near-tie: never auto-route a request to a non-safety service when a
+            # safety-critical service (e.g. Emergency Response) is almost tied on the text
+            # AND also shows up in the photo ranking - a human must look at it.
+            tie = _safety_near_tie(
+                top_service, text_top, image_top,
+                safety_services or [], safety_near_tie_margin, safety_image_top_k,
+            )
+            if tie is not None:
+                return ProcessedPost(
+                    decision_id=None,
+                    action="draft",
+                    would_be_action="draft",
+                    top_candidates=candidates,
+                    all_candidates=all_candidates,
+                    confidence=confidence,
+                    gap=gap,
+                    agree=agree,
+                    reason=(
+                        f"safety_near_tie ('{tie[0]}' text score within {tie[1]:.4f} of top-1 "
+                        f"'{top_service}' and photo rank {tie[2]}): human review required"
+                    ),
+                    text_guard=text_guard_info,
+                )
             would_be = "auto_create"
             if auto_create_enabled:
                 action = "auto_create"

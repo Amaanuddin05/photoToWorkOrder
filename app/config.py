@@ -93,6 +93,16 @@ class Settings(BaseSettings):
     # Internal: when True (eval runs, which resolve the values up front), the
     # DECISION_TEXT_* values are used as-is and profiles are ignored.
     TEXT_GUARD_PINNED: bool = False
+    # ── Safety near-tie ───────────────────────────────────────────────────────
+    # A post that would be auto-created for a non-safety service goes to draft when a
+    # safety-critical service is in the text top-3 within this text-score margin of the
+    # top-1 AND in the photo top-K. 0 / empty list disables the rule.
+    DECISION_SAFETY_SERVICES: str = (
+        '["Emergency Response & Area Securing", '
+        '"Emergency Reactive Cleaning (Spills, Vomit, Incidents)"]'
+    )
+    DECISION_SAFETY_NEAR_TIE_MARGIN: float = 0.02
+    DECISION_SAFETY_IMAGE_TOP_K: int = 3
 
     # ── Security & Auth ───────────────────────────────────────────────────────
     API_KEYS: str = ""          # comma-separated; empty = no auth required
@@ -128,6 +138,13 @@ class Settings(BaseSettings):
         if self.SIGLIP_API_KEY and self.SIGLIP_API_KEY.strip() not in keys:
             keys.append(self.SIGLIP_API_KEY.strip())
         return keys
+
+    @property
+    def safety_services_list(self) -> list[str]:
+        try:
+            return json.loads(self.DECISION_SAFETY_SERVICES)
+        except Exception:
+            return []
 
     @property
     def always_draft_services_list(self) -> list[str]:
