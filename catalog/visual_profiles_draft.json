@@ -1,0 +1,44 @@
+[
+  {
+    "title": "Emergency Response & Area Securing",
+    "current_visual_line": "yellow caution hazard tape, safety cones, or barricaded hazardous area",
+    "proposed_visual_line": "a hazardous emergency scene: flood water on the floor, fire or smoke, a fallen tree or collapsed structure, damaged electrical equipment or shattered glass, area closed off with caution tape or cones",
+    "why": "Old line described only the barrier (tape/cones); worker photos show the hazard itself. Wording follows the service scope and keywords (fire, flooding, hazard, unsafe area, cordon off)."
+  },
+  {
+    "title": "Elevator / Lift Breakdown Response",
+    "current_visual_line": "Elevator doors with metallic panels, exposed control cabinet, electrical wiring, circuit boards, maintenance tools, and a service area with tiled flooring.",
+    "proposed_visual_line": "elevator car or lift doors in a building lobby, lift call buttons and floor indicator, an elevator stuck with doors half open",
+    "why": "Generic terms (electrical wiring, circuit boards, tiled flooring) matched electrical hazards, corridors and doors; now specific to lifts."
+  },
+  {
+    "title": "BUILDING FACADE CLEANING",
+    "current_visual_line": "exterior building wall, architectural facade, or high-rise outer wall",
+    "proposed_visual_line": "the outside wall of a multi-storey building seen from the ground, stained, dusty or algae-covered facade and cladding panels",
+    "why": "Clarifies a ground-level view of the building's outer wall surface, distinct from rooftops and windows."
+  },
+  {
+    "title": "External Areas Cleaning",
+    "current_visual_line": "outdoor pavement, walkway, or courtyard with fallen leaves and outdoor debris",
+    "proposed_visual_line": "outdoor ground of a school site, a paved walkway, courtyard, playground or driveway covered with leaves, sand, mud or scattered litter",
+    "why": "Emphasises the open outdoor ground surface rather than bins, to separate it from Waste Management."
+  },
+  {
+    "title": "General Areas Cleaning (Classrooms, Offices, Toilets)",
+    "current_visual_line": "dirty classroom or corridor floor needing sweeping and mopping",
+    "proposed_visual_line": "indoor classroom, corridor or staircase with a dusty, dirty or muddy floor that needs sweeping and mopping",
+    "why": "Adds staircase/indoor context; routine floor cleaning inside the building."
+  },
+  {
+    "title": "Door / Locker Lock Assistance",
+    "current_visual_line": "locked door handle, keyhole, padlock on locker or cabinet",
+    "proposed_visual_line": "close-up of a locked door, metal locker or cabinet drawer with a key stuck in the lock or a padlock that will not open",
+    "why": "Focus on the locked state (key in lock, closed padlock) rather than generic door hardware, which also matched handyman repairs."
+  },
+  {
+    "title": "Furniture Moving Service",
+    "current_visual_line": "office desks, chairs, or tables stacked and prepared for relocation",
+    "proposed_visual_line": "desks, chairs, sofas or shelves being carried or moved between rooms, furniture pushed together ready for relocation",
+    "why": "Adds the act of moving and more furniture types (sofas, shelves) from the service keywords."
+  }
+]
