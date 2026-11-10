@@ -14,7 +14,6 @@
     submittedDesc: "",
     submittedLoc: "",
     currentDecision: null,
-    selectedServiceId: null,
     catalogServices: [],
     demoServices: [],
   };
@@ -63,13 +62,9 @@
     submittedDescText: document.getElementById("submitted-desc-text"),
     submittedLocTitle: document.getElementById("submitted-loc-title"),
     submittedLocText: document.getElementById("submitted-loc-text"),
-    candidateCards: document.getElementById("candidate-cards"),
-    serviceSearchFilter: document.getElementById("service-search-filter"),
-    anotherServiceDropdown: document.getElementById("another-service-dropdown"),
-    confirmBtn: document.getElementById("confirm-btn"),
-    confirmSpinner: document.getElementById("confirm-spinner"),
-    confirmBtnText: document.getElementById("confirm-btn-text"),
-    nextPostBtn: document.getElementById("next-post-btn"),
+    decisionDetails: document.getElementById("decision-details"),
+    candidateTbody: document.getElementById("candidate-tbody"),
+    toggleAddServiceBtn: document.getElementById("toggle-add-service-btn"),
     resultError: document.getElementById("result-error"),
 
     // Screen 3: History
@@ -403,8 +398,8 @@
       formData.append("agree_mode", agreeModeEl.value);  // test-only per-request override
     }
     const intentEl = document.getElementById("intent-input");
-    if (intentEl && intentEl.value) {
-      formData.append("intent_enabled", intentEl.value);  // test-only per-request override
+    if (intentEl) {
+      formData.append("intent_enabled", intentEl.checked ? "on" : "off");  // test-only per-request override
     }
     formData.append("post_id", `post_${Date.now()}`);
 
@@ -444,55 +439,64 @@
     }
   });
 
+  // ── Result view helpers ──────────────────────────────────────────────
+  const fmt = (v, d = 2) => (typeof v === "number" && isFinite(v) ? v.toFixed(d) : "—");
+  const fmtPct = (v) => (typeof v === "number" && isFinite(v) ? `${(v * 100).toFixed(1)}%` : "—");
+  const fmtRank = (v) => (typeof v === "number" && isFinite(v) ? `#${Math.round(v)}` : "—");
+
+  function el(tag, text, cls) {
+    const e = document.createElement(tag);
+    if (text != null) e.textContent = text;
+    if (cls) e.className = cls;
+    return e;
+  }
+
+  function addDetail(label, value, cls) {
+    const tr = document.createElement("tr");
+    tr.appendChild(el("th", label));
+    const td = el("td", value, cls);
+    tr.appendChild(td);
+    els.decisionDetails.appendChild(tr);
+    return td;
+  }
+
+  function passFail(value, min, label) {
+    if (typeof value !== "number") return ["—", "muted"];
+    const ok = value >= min;
+    return [`${fmt(value, 3)} (${ok ? "≥" : "<"} ${min} ${label})`, ok ? "ok" : "bad"];
+  }
+
   // Render Screen 2 (Result View)
   function renderResultScreen(decision) {
     clearResultError();
-    state.selectedServiceId = null;
-    els.confirmBtn.disabled = true;
-    els.confirmBtn.style.display = "inline-flex";
-    els.nextPostBtn.style.display = "none";
 
-    // 1. Action Badge & Shadow Mode Note
+    // 1. Action badge + "would be" note
     els.actionBadge.className = "action-badge";
-    if (decision.action === "auto_create") {
-      els.actionBadge.textContent = "Auto-create";
-      els.actionBadge.classList.add("badge-auto-create");
-      els.shadowNote.style.display = "none";
-    } else if (decision.action === "no_action") {
-      els.actionBadge.textContent = "No action";
-      els.actionBadge.classList.add("badge-no-action");
-      els.shadowNote.style.display = "none";
+    const labels = { auto_create: "Auto-create", no_action: "No action", draft: "Draft" };
+    els.actionBadge.textContent = labels[decision.action] || decision.action;
+    els.actionBadge.classList.add(
+      decision.action === "auto_create" ? "badge-auto-create" : decision.action === "no_action" ? "badge-no-action" : "badge-draft"
+    );
+    if (decision.would_be_action && decision.would_be_action !== decision.action) {
+      els.shadowNote.textContent = `would be: ${labels[decision.would_be_action] || decision.would_be_action}${decision.shadow ? " (shadow mode)" : ""}`;
+      els.shadowNote.style.display = "inline";
     } else {
-      els.actionBadge.textContent = "Draft";
-      els.actionBadge.classList.add("badge-draft");
-      if (decision.would_be_action === "auto_create" || decision.would_auto || decision.shadow) {
-        els.shadowNote.textContent = "Would be: Auto-create (Shadow Mode)";
-        els.shadowNote.style.display = "inline";
-      } else {
-        els.shadowNote.style.display = "none";
-      }
+      els.shadowNote.style.display = "none";
     }
 
-    // 2. Agree Indicator
-    if (decision.agree === true) {
+    // 2. Agreement badge
+    if (decision.agree === true || decision.agree === false) {
       els.agreeBadge.style.display = "inline-flex";
-      els.agreeBadge.className = "agree-badge agree-true";
-      els.agreeBadge.textContent = "✓ Text and photo agree";
-    } else if (decision.agree === false) {
-      els.agreeBadge.style.display = "inline-flex";
-      els.agreeBadge.className = "agree-badge agree-false";
-      els.agreeBadge.textContent = "⚠ Text and photo differ";
-      if (decision.agree_mode && decision.agree_mode !== "strict") {
-        els.agreeBadge.textContent += ` (strictness: ${decision.agree_mode})`;
-      }
+      els.agreeBadge.className = `agree-badge ${decision.agree ? "agree-true" : "agree-false"}`;
+      els.agreeBadge.textContent = decision.agree ? "✓ Text and photo agree" : "⚠ Text and photo differ";
     } else {
       els.agreeBadge.style.display = "none";
     }
 
-    // 3. Reason in Plain Words
+    // 3. Reason
     els.reasonText.textContent = formatReason(decision.reason);
 
-    // 4. Left Column: Submitted Input
+    // 4. Submitted input
     if (state.selectedFileUrl) {
       els.submittedImg.src = state.selectedFileUrl;
       els.submittedImgWrapper.style.display = "block";
@@ -502,252 +506,84 @@
       els.submittedNoPhoto.style.display = "block";
     }
     els.submittedDescText.textContent = state.submittedDesc || "(No description provided)";
+    const hasLoc = !!state.submittedLoc;
+    els.submittedLocTitle.style.display = hasLoc ? "block" : "none";
+    els.submittedLocText.style.display = hasLoc ? "block" : "none";
+    els.submittedLocText.textContent = state.submittedLoc || "";
 
-    if (state.submittedLoc) {
-      els.submittedLocTitle.style.display = "block";
-      els.submittedLocText.style.display = "block";
-      els.submittedLocText.textContent = state.submittedLoc;
+    // 5. Decision details (key / value)
+    els.decisionDetails.replaceChildren();
+    const top = (decision.top_candidates || [])[0];
+    addDetail("Decision ID", decision.decision_id != null ? `#${decision.decision_id}` : "—");
+    addDetail("Top service", top ? top.title : "—");
+    const [cTxt, cCls] = passFail(decision.confidence, 0.4, "auto threshold");
+    addDetail("Confidence", cTxt, cCls);
+    const [gTxt, gCls] = passFail(decision.gap, 0.1, "gap threshold");
+    addDetail("Gap to #2", gTxt, gCls);
+    const tg = decision.text_guard;
+    if (tg && typeof tg.score === "number") {
+      const [tTxt, tCls] = passFail(tg.score, tg.auto_min, `auto min, floor ${tg.no_action_floor}`);
+      addDetail("Text match score", tTxt, tCls);
     } else {
-      els.submittedLocTitle.style.display = "none";
-      els.submittedLocText.style.display = "none";
+      addDetail("Text match score", "— (no description)", "muted");
     }
-
-    // 5. Right Column: Candidate Cards
-    while (els.candidateCards.firstChild) {
-      els.candidateCards.removeChild(els.candidateCards.firstChild);
+    addDetail("Text #1", decision.text_top1 || "—");
+    addDetail("Photo #1", decision.image_top1 || "—");
+    const agreeTxt = decision.agree === true ? "Yes" : decision.agree === false ? "No" : "— (photo or text missing)";
+    addDetail("Agreement", `${agreeTxt} · strictness: ${decision.agree_mode || "strict"}`,
+      decision.agree === true ? "ok" : decision.agree === false ? "bad" : "muted");
+    const it = decision.intent;
+    if (it) {
+      const names = { issue: "Issue report", done: "Work completed", other: "Not maintenance" };
+      addDetail("Message intent", `${names[it.label] || it.label} (${fmtPct(it.prob)})${it.acted ? " · blocked work order" : ""}`,
+        it.acted ? "bad" : "ok");
+    } else {
+      addDetail("Message intent", "— (gate off or no description)", "muted");
     }
+    const t = decision.timings || {};
+    addDetail("Latency", `${fmt((t.total_ms || 0) / 1000, 2)} s  (text ${fmt(t.text_ms, 0)} ms · photo ${fmt(t.image_ms, 0)} ms)`);
+    if (decision.idempotent_replay) addDetail("Replay", "Same post seen before: stored result returned", "muted");
 
-    const candidates = decision.top_candidates || [];
-    candidates.slice(0, 3).forEach((cand, idx) => {
-      const card = document.createElement("div");
-      card.className = "candidate-card";
-      card.tabIndex = 0;
-      card.setAttribute("role", "radio");
-      card.setAttribute("aria-checked", "false");
-
-      const sId = cand.service_id != null ? cand.service_id : cand.id;
-      const sTitle = cand.title || cand.service || `Service #${sId}`;
-      card.dataset.serviceId = String(sId);
-      card.dataset.rank = String(idx + 1);
-
-      // Top Row (Rank badge + Emergency warning)
-      const topRow = document.createElement("div");
-      topRow.className = "card-top-row";
-
-      const rankBadge = document.createElement("span");
-      rankBadge.className = "card-rank-badge";
-      rankBadge.textContent = `#${idx + 1}`;
-      topRow.appendChild(rankBadge);
-
-      const isEmergency =
-        EMERGENCY_SERVICES.includes(sTitle) ||
-        sTitle.toLowerCase().startsWith("emergency") ||
-        (decision.reason && decision.reason.includes("always_draft_services"));
-
-      if (isEmergency) {
-        const emergencyBadge = document.createElement("span");
-        emergencyBadge.className = "emergency-badge";
-        emergencyBadge.textContent = "Needs human sign-off";
-        topRow.appendChild(emergencyBadge);
-      }
-
-      card.appendChild(topRow);
-
-      // Service Title
-      const titleEl = document.createElement("div");
-      titleEl.className = "card-title";
-      titleEl.textContent = sTitle;
-      card.appendChild(titleEl);
-
-      // Score Row
-      const scoreRow = document.createElement("div");
-      scoreRow.className = "card-score-row";
-
-      const barBg = document.createElement("div");
-      barBg.className = "score-bar-bg";
-
-      const barFill = document.createElement("div");
-      barFill.className = "score-bar-fill";
-      const scoreVal = typeof cand.confidence === "number" ? cand.confidence : (typeof cand.score === "number" ? cand.score : 0);
-      const pct = Math.max(0, Math.min(100, Math.round(scoreVal * 1000) / 10));
-      barFill.style.width = `${pct}%`;
-      barBg.appendChild(barFill);
-      scoreRow.appendChild(barBg);
-
-      const pctLabel = document.createElement("span");
-      pctLabel.className = "score-pct-label";
-      pctLabel.textContent = cand.confidence_pct || (typeof cand.confidence === "number" ? `${pct.toFixed(1)}%` : "N/A");
-      scoreRow.appendChild(pctLabel);
-
-      card.appendChild(scoreRow);
-
-      // Per-stage ranks metadata if available
-      const metaRow = document.createElement("div");
-      metaRow.className = "card-meta-row";
-      const metaParts = [];
-      if (cand.text_rank != null) metaParts.push(`Text rank: #${cand.text_rank}`);
-      if (cand.image_rank != null) metaParts.push(`Image rank: #${cand.image_rank}`);
-      if (cand.pool_rank != null) metaParts.push(`Pool rank: #${cand.pool_rank}`);
-      if (metaParts.length > 0) {
-        metaRow.textContent = metaParts.join(" • ");
-        card.appendChild(metaRow);
-      }
-
-      // Selection Handlers
-      card.addEventListener("click", () => {
-        selectService(sId, card);
-      });
-
-      card.addEventListener("keydown", (e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          selectService(sId, card);
-        }
-      });
-
-      els.candidateCards.appendChild(card);
+    // 6. Candidate scores table (whole pool, sorted by confidence)
+    els.candidateTbody.replaceChildren();
+    const cands = (decision.all_candidates && decision.all_candidates.length ? decision.all_candidates : decision.top_candidates || [])
+      .slice()
+      .sort((x, y) => (y.confidence || 0) - (x.confidence || 0));
+    cands.forEach((c, idx) => {
+      const tr = document.createElement("tr");
+      if (idx === 0) tr.className = "top-row";
+      tr.appendChild(el("td", String(idx + 1), "num"));
+      const tdName = el("td", c.title || `Service #${c.service_id}`);
+      if (c.title === decision.text_top1) tdName.appendChild(el("span", "text #1", "tag"));
+      if (c.title === decision.image_top1) tdName.appendChild(el("span", "photo #1", "tag"));
+      tr.appendChild(tdName);
+      const tdConf = document.createElement("td");
+      const wrap = el("div", null, "conf-cell");
+      const bar = el("div", null, "conf-bar");
+      const fill = document.createElement("span");
+      fill.style.width = `${Math.max(0, Math.min(100, (c.confidence || 0) * 100))}%`;
+      bar.appendChild(fill);
+      wrap.appendChild(bar);
+      wrap.appendChild(el("span", fmtPct(c.confidence)));
+      tdConf.appendChild(wrap);
+      tr.appendChild(tdConf);
+      tr.appendChild(el("td", fmt(c.text_score, 3), "num"));
+      tr.appendChild(el("td", fmtRank(c.text_rank), "num"));
+      tr.appendChild(el("td", fmtRank(c.image_rank), "num"));
+      els.candidateTbody.appendChild(tr);
     });
+    if (!cands.length) {
+      const tr = document.createElement("tr");
+      const td = el("td", "No candidates", "muted");
+      td.colSpan = 6;
+      tr.appendChild(td);
+      els.candidateTbody.appendChild(tr);
+    }
 
-    // Reset Dropdown
-    els.anotherServiceDropdown.value = "";
-    els.serviceSearchFilter.value = "";
-    filterCatalogOptions("");
-
-    // Toggle Screen Views
     els.screenNewPost.style.display = "none";
     els.screenResult.style.display = "block";
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
-
-  function selectService(serviceId, activeCardEl) {
-    state.selectedServiceId = Number(serviceId);
-    clearResultError();
-
-    const allCards = els.candidateCards.querySelectorAll(".candidate-card");
-    allCards.forEach((c) => {
-      if (Number(c.dataset.serviceId) === state.selectedServiceId) {
-        c.classList.add("selected");
-        c.setAttribute("aria-checked", "true");
-      } else {
-        c.classList.remove("selected");
-        c.setAttribute("aria-checked", "false");
-      }
-    });
-
-    if (activeCardEl) {
-      els.anotherServiceDropdown.value = "";
-    } else {
-      els.anotherServiceDropdown.value = String(serviceId);
-    }
-
-    els.confirmBtn.disabled = false;
-  }
-
-  // Keyboard shortcut listener (1, 2, 3) for candidate cards
-  window.addEventListener("keydown", (e) => {
-    if (els.screenResult.style.display !== "block") return;
-
-    const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : "";
-    if (tag === "input" || tag === "textarea" || tag === "select") return;
-
-    if (e.key === "1" || e.key === "2" || e.key === "3") {
-      const rankIdx = parseInt(e.key, 10);
-      const targetCard = els.candidateCards.querySelector(`.candidate-card[data-rank="${rankIdx}"]`);
-      if (targetCard) {
-        e.preventDefault();
-        targetCard.click();
-      }
-    }
-  });
-
-  // Dropdown filter and selection
-  function filterCatalogOptions(filterText) {
-    const term = filterText.toLowerCase().trim();
-    while (els.anotherServiceDropdown.firstChild) {
-      els.anotherServiceDropdown.removeChild(els.anotherServiceDropdown.firstChild);
-    }
-
-    const defaultOpt = document.createElement("option");
-    defaultOpt.value = "";
-    defaultOpt.textContent = "-- Choose catalog service --";
-    els.anotherServiceDropdown.appendChild(defaultOpt);
-
-    state.catalogServices.forEach((svc) => {
-      if (!term || svc.title.toLowerCase().includes(term)) {
-        const opt = document.createElement("option");
-        opt.value = String(svc.id);
-        opt.textContent = svc.title;
-        els.anotherServiceDropdown.appendChild(opt);
-      }
-    });
-
-    if (state.selectedServiceId) {
-      els.anotherServiceDropdown.value = String(state.selectedServiceId);
-    }
-  }
-
-  els.serviceSearchFilter.addEventListener("input", (e) => {
-    filterCatalogOptions(e.target.value);
-  });
-
-  els.anotherServiceDropdown.addEventListener("change", (e) => {
-    const val = e.target.value;
-    if (val) {
-      selectService(Number(val), null);
-    } else {
-      state.selectedServiceId = null;
-      els.confirmBtn.disabled = true;
-      const allCards = els.candidateCards.querySelectorAll(".candidate-card");
-      allCards.forEach((c) => {
-        c.classList.remove("selected");
-        c.setAttribute("aria-checked", "false");
-      });
-    }
-  });
-
-  // Confirm Final Service -> POST /v1/decisions/{decision_id}/feedback
-  els.confirmBtn.addEventListener("click", async () => {
-    if (!state.currentDecision || !state.currentDecision.decision_id || !state.selectedServiceId) {
-      return;
-    }
-
-    clearResultError();
-    els.confirmBtn.disabled = true;
-    els.confirmSpinner.style.display = "inline-block";
-    els.confirmBtnText.textContent = "Saving...";
-
-    const decId = state.currentDecision.decision_id;
-    const payload = { service_id: state.selectedServiceId };
-
-    try {
-      const resp = await fetch(`/v1/decisions/${decId}/feedback`, {
-        method: "POST",
-        headers: getHeaders({ "Content-Type": "application/json" }),
-        body: JSON.stringify(payload),
-      });
-
-      if (!resp.ok) {
-        let errMessage = `Error saving decision (${resp.status})`;
-        try {
-          const errData = await resp.json();
-          errMessage = formatErrorMessage(errData, errMessage);
-        } catch (_) {}
-        throw new Error(errMessage);
-      }
-
-      showToast("Saved");
-      els.confirmBtn.style.display = "none";
-      els.nextPostBtn.style.display = "inline-flex";
-
-      fetchHistory();
-    } catch (err) {
-      showResultError(err.message || "Failed to confirm service. Please try again.");
-      els.confirmBtn.disabled = false;
-    } finally {
-      els.confirmSpinner.style.display = "none";
-      els.confirmBtnText.textContent = "Confirm Final Service";
-    }
-  });
 
   // Reset & Next Post
   function resetFormAndGoToScreen1() {
@@ -757,7 +593,6 @@
     state.submittedDesc = "";
     state.submittedLoc = "";
     state.currentDecision = null;
-    state.selectedServiceId = null;
     clearFormError();
     clearResultError();
 
@@ -767,7 +602,6 @@
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  els.nextPostBtn.addEventListener("click", resetFormAndGoToScreen1);
   els.restartTopBtn.addEventListener("click", resetFormAndGoToScreen1);
 
   // Screen 3: History Table (GET /v1/decisions?limit=20)
@@ -838,38 +672,8 @@
       tdSuggested.textContent = topTitle || (topId ? `Service #${topId}` : "-");
       tr.appendChild(tdSuggested);
 
-      // 4. Final Service
-      const tdFinal = document.createElement("td");
-      const finalTitle = row.final_service_title || row.finalServiceTitle;
-      const finalId = row.final_service_id != null ? row.final_service_id : row.finalServiceId;
-      if (finalTitle) {
-        tdFinal.textContent = finalTitle;
-      } else if (finalId) {
-        tdFinal.textContent = `Service #${finalId}`;
-      } else {
-        tdFinal.className = "pending-label";
-        tdFinal.textContent = "Pending";
-      }
-      tr.appendChild(tdFinal);
-
-      // 5. Match / Mismatch Icon
-      const tdMatch = document.createElement("td");
-      if (finalId != null) {
-        const iconSpan = document.createElement("span");
-        if (finalId === topId) {
-          iconSpan.className = "match-icon match-yes";
-          iconSpan.textContent = "✓";
-          iconSpan.title = "Match: final selection matches suggestion";
-        } else {
-          iconSpan.className = "match-icon match-no";
-          iconSpan.textContent = "≠";
-          iconSpan.title = "Mismatch: operator chose different service";
-        }
-        tdMatch.appendChild(iconSpan);
-      } else {
-        tdMatch.textContent = "-";
-      }
-      tr.appendChild(tdMatch);
+      // 4. Confidence
+      tr.appendChild(el("td", fmtPct(row.confidence)));
 
       // 6. Action Badge
       const tdAction = document.createElement("td");
@@ -916,7 +720,6 @@
 
       const services = await resp.json();
       state.catalogServices = services || [];
-      filterCatalogOptions("");
     } catch (err) {
       console.warn("Could not fetch catalog services:", err);
     }
@@ -1397,7 +1200,20 @@
   }
 
   // App Initialization
+  function initAddServiceToggle() {
+    const panel = document.getElementById("screen-add-service");
+    if (!els.toggleAddServiceBtn || !panel) return;
+    els.toggleAddServiceBtn.addEventListener("click", () => {
+      const open = panel.style.display === "none";
+      panel.style.display = open ? "block" : "none";
+      els.toggleAddServiceBtn.setAttribute("aria-expanded", String(open));
+      els.toggleAddServiceBtn.textContent = open ? "Close Form" : "+ Add Demo Service";
+      if (open && els.svcTitle) els.svcTitle.focus();
+    });
+  }
+
   function init() {
+    initAddServiceToggle();
     initAuth();
     initAddService();
     updateSubmitButtonState();

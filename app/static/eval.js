@@ -84,7 +84,7 @@
   if (agreeModeInput) agreeModeInput.addEventListener("change", updateAgreeModeDisplay);
   const intentInput = document.getElementById("intentInput");
   const intentVal = document.getElementById("intentVal");
-  function updateIntentDisplay() { if (intentInput && intentVal) intentVal.textContent = intentInput.value.toUpperCase(); }
+  function updateIntentDisplay() { if (intentInput && intentVal) intentVal.textContent = intentInput.checked ? "ON" : "OFF"; }
   if (intentInput) intentInput.addEventListener("change", updateIntentDisplay);
   const startRunBtn = document.getElementById("startRunBtn");
   const stopRunBtn = document.getElementById("stopRunBtn");
@@ -734,7 +734,7 @@
       agreeModeInput.value = "strict";
       updateAgreeModeDisplay();
     }
-    if (intentInput) { intentInput.value = "off"; updateIntentDisplay(); }
+    if (intentInput) { intentInput.checked = false; updateIntentDisplay(); }
     if (enableRerankerInput) {
       enableRerankerInput.checked = false;
       updateRerankerToggleDisplay();
@@ -763,7 +763,7 @@
       no_action_floor: parseFloat(floorThreshInput.value),
       enable_reranker: enableRerankerInput ? enableRerankerInput.checked : false,
       agree_mode: agreeModeInput ? agreeModeInput.value : "strict",
-      intent_enabled: intentInput ? intentInput.value === "on" : false,
+      intent_enabled: intentInput ? intentInput.checked : false,
     };
 
     try {
@@ -913,7 +913,7 @@
           updateRerankerToggleDisplay();
         }
         if (intentInput && typeof data.effective_settings.intent_enabled === "boolean") {
-          intentInput.value = data.effective_settings.intent_enabled ? "on" : "off";
+          intentInput.checked = data.effective_settings.intent_enabled;
           updateIntentDisplay();
         }
         if (agreeModeInput && data.effective_settings.agree_mode) {

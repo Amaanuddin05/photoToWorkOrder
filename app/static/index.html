@@ -48,6 +48,28 @@
       color: var(--text-secondary);
       margin-top: 4px;
     }
+    /* Rework: plain, functional result + test option styles */
+    .header-nav-btn { text-decoration: none; }
+    .test-options { border: 1px solid var(--border-color); border-radius: 6px; padding: 10px 12px; }
+    .test-options legend { padding: 0 4px; }
+    .test-options .sub-label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin: 4px 0; }
+    .check-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 0.85rem; cursor: pointer; }
+    .check-row input { width: auto; margin: 0; }
+    .kv-table, .scores-table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .kv-table th, .kv-table td, .scores-table th, .scores-table td {
+      text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
+    .kv-table th { width: 38%; color: var(--text-secondary); font-weight: 500; }
+    .scores-table th { color: var(--text-secondary); font-weight: 500; white-space: nowrap; }
+    .scores-table td.num, .scores-table th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .scores-table tr.top-row td { font-weight: 600; }
+    .conf-cell { display: flex; align-items: center; gap: 8px; min-width: 140px; }
+    .conf-bar { flex: 1; height: 6px; background: var(--bg-subtle); border-radius: 3px; overflow: hidden; }
+    .conf-bar > span { display: block; height: 100%; background: var(--border-focus); }
+    .muted { color: var(--text-muted); }
+    .ok { color: #1a7f37; } .bad { color: #cf222e; }
+    .tag { display: inline-block; font-size: 0.7rem; padding: 1px 6px; border-radius: 10px;
+           border: 1px solid var(--border-color); margin-left: 6px; color: var(--text-secondary); }
+    .section-gap { margin-top: 16px; }
   </style>
 </head>
 <body>
@@ -61,6 +83,7 @@
       <div style="display: flex; align-items: center; gap: 8px;">
         <input type="password" id="api-key-input" class="header-api-key" placeholder="API Key (optional)" title="Enter API Key if required by server">
         <button type="button" id="save-key-btn" class="auth-btn">Save Key</button>
+        <a href="/ui/eval" class="auth-btn header-nav-btn" title="Open the evaluation page">Evaluation &rarr;</a>
         <div class="status-badge" id="system-status">
           <span class="status-dot"></span>
           <span id="status-text">Connected</span>
@@ -111,26 +134,21 @@
           <input type="text" id="location-input" placeholder="e.g. Building A, Room 101 (optional)">
         </div>
 
-        <!-- Agreement strictness (test only: applies to posts submitted from this console) -->
-        <div class="form-group">
-          <label class="form-label" for="agree-mode-input">Text / photo strictness <span class="field-badge">test only</span></label>
+        <!-- Test-only options (applied to posts submitted from this console) -->
+        <fieldset class="form-group test-options">
+          <legend class="form-label">Test options <span class="field-badge">this console only</span></legend>
+          <label class="sub-label" for="agree-mode-input">Text / photo strictness</label>
           <select id="agree-mode-input">
             <option value="" selected>Server default</option>
             <option value="strict">Strict: photo #1 must equal text #1</option>
             <option value="balanced">Balanced: or text #1 in photo top-3 and text leads by &ge; 0.05</option>
             <option value="relaxed">Relaxed: text #1 in photo top-3</option>
           </select>
-        </div>
-
-        <!-- Message-intent gate (test only) -->
-        <div class="form-group">
-          <label class="form-label" for="intent-input">Message-intent gate <span class="field-badge">test only</span></label>
-          <select id="intent-input">
-            <option value="" selected>Server default (off unless INTENT_ENABLED=true)</option>
-            <option value="on">On: completion / irrelevant posts become no_action</option>
-            <option value="off">Off</option>
-          </select>
-        </div>
+          <label class="check-row" for="intent-input">
+            <input type="checkbox" id="intent-input" checked>
+            Message-intent gate: completion notes / irrelevant posts become &ldquo;No action&rdquo;
+          </label>
+        </fieldset>
 
         <!-- Submit Button with Spinner -->
         <div class="form-group" style="margin-bottom: 0;">
@@ -144,12 +162,12 @@
       </form>
     </section>
 
-    <!-- SCREEN 2: Result View (Replaces Form after submit) -->
+    <!-- SCREEN 2: Result View (replaces the form after submit) -->
     <section id="screen-result" class="card" style="display: none;">
       <div class="result-header">
         <div class="badge-group">
           <span class="action-badge" id="action-badge">Draft</span>
-          <span class="shadow-note" id="shadow-note" style="display: none;">would auto-create (off)</span>
+          <span class="shadow-note" id="shadow-note" style="display: none;"></span>
           <span class="agree-badge" id="agree-badge" style="display: none;"></span>
         </div>
         <button type="button" class="btn btn-secondary" id="restart-top-btn" style="padding: 6px 12px; font-size: 0.8rem;">
@@ -157,65 +175,52 @@
         </button>
       </div>
 
-      <!-- Plain Language Reason -->
       <div class="reason-box" id="reason-text"></div>
 
-      <!-- Main Result Grid -->
       <div class="result-grid">
-        <!-- Left: Submitted Photo & Description -->
+        <!-- Left: what was submitted -->
         <div class="submitted-panel">
           <div class="submitted-title">Submitted Input</div>
           <div class="submitted-img-wrapper" id="submitted-img-wrapper" style="display: none;">
             <img id="submitted-img" class="submitted-img" alt="Submitted work order photo">
           </div>
-          <div class="submitted-no-photo" id="submitted-no-photo" style="display: none;">
-            No photo attached
-          </div>
+          <div class="submitted-no-photo" id="submitted-no-photo" style="display: none;">No photo attached</div>
           <div class="submitted-title" style="margin-top: 14px;">Description</div>
           <div class="submitted-desc-text" id="submitted-desc-text"></div>
           <div class="submitted-title" id="submitted-loc-title" style="margin-top: 14px; display: none;">Location</div>
           <div class="submitted-desc-text" id="submitted-loc-text" style="display: none;"></div>
         </div>
 
-        <!-- Right: Candidate Selection -->
-        <div class="selection-panel">
-          <div class="candidates-header">
-            <span class="candidates-title">Top 3 Suggested Services</span>
-            <span class="score-tooltip-wrap" title="A ranking score, not the probability of being correct.">
-              Match score <span class="tooltip-icon">&#9432;</span>
-            </span>
-          </div>
-
-          <!-- Top 3 Candidate Cards -->
-          <div class="cards-list" id="candidate-cards" role="radiogroup" aria-label="Suggested services">
-            <!-- Populated via app.js -->
-          </div>
-
-          <!-- Searchable "Another service" Dropdown -->
-          <div class="another-service-box">
-            <div class="another-service-label">Or choose another service from catalog:</div>
-            <div class="searchable-select-row">
-              <input type="text" id="service-search-filter" placeholder="Filter catalog services..." aria-label="Filter catalog services">
-              <select id="another-service-dropdown" aria-label="Select catalog service">
-                <option value="">-- Choose catalog service --</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- Selection Confirmation Row -->
-          <div class="confirm-actions">
-            <button type="button" class="btn btn-primary" id="confirm-btn" disabled>
-              <span class="spinner" id="confirm-spinner" style="display: none;" aria-hidden="true"></span>
-              <span id="confirm-btn-text">Confirm Final Service</span>
-            </button>
-            <button type="button" class="btn btn-secondary" id="next-post-btn" style="display: none;">
-              Next post &rarr;
-            </button>
-          </div>
-
-          <div class="alert-error" id="result-error" role="alert"></div>
+        <!-- Right: decision details -->
+        <div>
+          <div class="submitted-title">Decision Details</div>
+          <table class="kv-table"><tbody id="decision-details"></tbody></table>
         </div>
       </div>
+
+      <div class="submitted-title section-gap">Candidate Scores</div>
+      <p class="form-help-text" style="margin: 4px 0 8px;">
+        <b>Confidence</b>: final pooled score the decision uses (shares sum to 100% across the pool).
+        <b>Text score</b>: cosine similarity between the description and the service text.
+        <b>Text / Photo rank</b>: position in each ranking (&mdash; = not ranked there).
+      </p>
+      <div class="table-responsive">
+        <table class="scores-table">
+          <thead>
+            <tr>
+              <th class="num">#</th>
+              <th>Service</th>
+              <th>Confidence</th>
+              <th class="num">Text score</th>
+              <th class="num">Text rank</th>
+              <th class="num">Photo rank</th>
+            </tr>
+          </thead>
+          <tbody id="candidate-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="alert-error" id="result-error" role="alert"></div>
     </section>
 
     <!-- SCREEN 3: History (Below) -->
@@ -234,8 +239,7 @@
               <th>Time</th>
               <th>Description</th>
               <th>Suggested</th>
-              <th>Final Service</th>
-              <th>Match</th>
+              <th>Confidence</th>
               <th>Action</th>
               <th>Latency</th>
             </tr>
@@ -250,91 +254,6 @@
       </div>
     </section>
 
-    <!-- SCREEN 4: Add Demo Service -->
-    <section id="screen-add-service" class="card">
-      <div class="form-section-title">
-        <span>Add Service (Demo)</span>
-      </div>
-      <p class="form-help-text" style="margin-bottom: 16px;">
-        Create a new service with text embeddings (TEI) and optional visual embeddings (SigLIP). Services added here are registered as demo services.
-      </p>
-
-      <form id="add-service-form" novalidate>
-        <!-- Title -->
-        <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: baseline;">
-            <label class="form-label" for="svc-title">Service Name <span style="color: var(--accent-primary);">*</span></label>
-            <span class="char-counter" id="title-char-counter">0 / 200</span>
-          </div>
-          <input type="text" id="svc-title" placeholder="e.g. Wall-Mounted AC Repair & Filter Cleaning" maxlength="200" required>
-        </div>
-
-        <!-- Description -->
-        <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: baseline;">
-            <label class="form-label" for="svc-desc">Description <span style="color: var(--accent-primary);">*</span></label>
-            <span class="char-counter" id="desc-char-counter">0 / 1000</span>
-          </div>
-          <textarea id="svc-desc" placeholder="Comprehensive description of the service and typical issues addressed..." maxlength="1000" rows="3" required></textarea>
-        </div>
-
-        <!-- Keywords -->
-        <div class="form-group">
-          <label class="form-label" for="svc-keywords">Keywords <span class="field-badge">optional</span></label>
-          <input type="text" id="svc-keywords" placeholder="Comma-separated, e.g. hvac, air conditioning, filter, cooling">
-          <p class="form-help-text">Optional comma-separated keywords for catalog lookup.</p>
-        </div>
-
-        <!-- Visual Description -->
-        <div class="form-group">
-          <div style="display: flex; justify-content: space-between; align-items: baseline;">
-            <label class="form-label" for="svc-visual">Visual Description <span class="field-badge">optional</span></label>
-            <span class="char-counter" id="visual-char-counter">0 / 500</span>
-          </div>
-          <textarea id="svc-visual" placeholder="Describe what a photo looks like, e.g. technician servicing a wall-mounted air conditioner with a ladder" maxlength="500" rows="2"></textarea>
-          <div class="alert-warning" id="no-visual-warning" style="display: none; margin-top: 6px;">
-            &#9888; Without a visual description, no image profile will be created. The service will <strong>not be matched from photos</strong> until a visual description is added.
-          </div>
-        </div>
-
-        <!-- Non-blocking Similarity Check Box -->
-        <div class="sim-box" id="svc-sim-box">
-          <div class="sim-title">
-            <span>Catalog Similarity Check</span>
-            <span id="svc-sim-status" style="font-size: 0.75rem; color: var(--text-muted);"></span>
-          </div>
-          <div class="sim-list" id="svc-sim-list"></div>
-        </div>
-
-        <!-- Reactivation Banner (for 409 inactive conflict) -->
-        <div class="alert-warning" id="svc-reactivate-box" style="display: none; margin-top: 12px;">
-          <div id="svc-reactivate-msg"></div>
-          <button type="button" class="btn btn-secondary" id="svc-reactivate-btn" style="margin-top: 8px; font-size: 0.82rem; padding: 6px 12px;">
-            Reactivate and Overwrite
-          </button>
-        </div>
-
-        <!-- Status Alerts -->
-        <div class="alert-error" id="svc-error-alert" style="display: none; margin-top: 12px;" role="alert"></div>
-        <div class="alert-success" id="svc-success-alert" style="display: none; margin-top: 12px;" role="status"></div>
-
-        <!-- Buttons Row -->
-        <div style="display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap;">
-          <button type="submit" class="btn btn-primary" id="save-svc-btn">
-            <span class="spinner" id="save-svc-spinner" style="display: none;" aria-hidden="true"></span>
-            <span id="save-svc-btn-text">Save Demo Service</span>
-          </button>
-          <button type="button" class="btn btn-secondary" id="check-sim-btn">
-            <span class="spinner" id="check-sim-spinner" style="display: none;" aria-hidden="true"></span>
-            Check Similar Services
-          </button>
-          <button type="button" class="btn btn-secondary" id="clear-svc-btn">
-            Clear Form
-          </button>
-        </div>
-      </form>
-    </section>
-
     <!-- SCREEN 5: Demo Services List -->
     <section id="screen-demo-services" class="card">
       <div class="history-header">
@@ -343,6 +262,9 @@
           <span class="badge-demo" id="demo-count-badge">0 Demo</span>
         </div>
         <div class="demo-actions">
+          <button type="button" class="btn btn-primary" id="toggle-add-service-btn" style="padding: 6px 12px; font-size: 0.8rem;" aria-expanded="false" aria-controls="screen-add-service">
+            + Add Demo Service
+          </button>
           <button type="button" class="btn btn-secondary" id="refresh-demos-btn" style="padding: 6px 12px; font-size: 0.8rem;">
             &#8635; Refresh
           </button>
@@ -350,6 +272,89 @@
             Delete All Demo Services
           </button>
         </div>
+      </div>
+
+      <!-- Add Demo Service (hidden until "+ Add Demo Service") -->
+      <div id="screen-add-service" class="test-options section-gap" style="display: none;">
+        <div class="form-section-title"><span>Add Demo Service</span></div>
+      <p class="form-help-text" style="margin-bottom: 16px;">
+          Create a new service with text embeddings (TEI) and optional visual embeddings (SigLIP). Services added here are registered as demo services.
+        </p>
+
+        <form id="add-service-form" novalidate>
+          <!-- Title -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <label class="form-label" for="svc-title">Service Name <span style="color: var(--accent-primary);">*</span></label>
+              <span class="char-counter" id="title-char-counter">0 / 200</span>
+            </div>
+            <input type="text" id="svc-title" placeholder="e.g. Wall-Mounted AC Repair & Filter Cleaning" maxlength="200" required>
+          </div>
+
+          <!-- Description -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <label class="form-label" for="svc-desc">Description <span style="color: var(--accent-primary);">*</span></label>
+              <span class="char-counter" id="desc-char-counter">0 / 1000</span>
+            </div>
+            <textarea id="svc-desc" placeholder="Comprehensive description of the service and typical issues addressed..." maxlength="1000" rows="3" required></textarea>
+          </div>
+
+          <!-- Keywords -->
+          <div class="form-group">
+            <label class="form-label" for="svc-keywords">Keywords <span class="field-badge">optional</span></label>
+            <input type="text" id="svc-keywords" placeholder="Comma-separated, e.g. hvac, air conditioning, filter, cooling">
+            <p class="form-help-text">Optional comma-separated keywords for catalog lookup.</p>
+          </div>
+
+          <!-- Visual Description -->
+          <div class="form-group">
+            <div style="display: flex; justify-content: space-between; align-items: baseline;">
+              <label class="form-label" for="svc-visual">Visual Description <span class="field-badge">optional</span></label>
+              <span class="char-counter" id="visual-char-counter">0 / 500</span>
+            </div>
+            <textarea id="svc-visual" placeholder="Describe what a photo looks like, e.g. technician servicing a wall-mounted air conditioner with a ladder" maxlength="500" rows="2"></textarea>
+            <div class="alert-warning" id="no-visual-warning" style="display: none; margin-top: 6px;">
+              &#9888; Without a visual description, no image profile will be created. The service will <strong>not be matched from photos</strong> until a visual description is added.
+            </div>
+          </div>
+
+          <!-- Non-blocking Similarity Check Box -->
+          <div class="sim-box" id="svc-sim-box">
+            <div class="sim-title">
+              <span>Catalog Similarity Check</span>
+              <span id="svc-sim-status" style="font-size: 0.75rem; color: var(--text-muted);"></span>
+            </div>
+            <div class="sim-list" id="svc-sim-list"></div>
+          </div>
+
+          <!-- Reactivation Banner (for 409 inactive conflict) -->
+          <div class="alert-warning" id="svc-reactivate-box" style="display: none; margin-top: 12px;">
+            <div id="svc-reactivate-msg"></div>
+            <button type="button" class="btn btn-secondary" id="svc-reactivate-btn" style="margin-top: 8px; font-size: 0.82rem; padding: 6px 12px;">
+              Reactivate and Overwrite
+            </button>
+          </div>
+
+          <!-- Status Alerts -->
+          <div class="alert-error" id="svc-error-alert" style="display: none; margin-top: 12px;" role="alert"></div>
+          <div class="alert-success" id="svc-success-alert" style="display: none; margin-top: 12px;" role="status"></div>
+
+          <!-- Buttons Row -->
+          <div style="display: flex; gap: 10px; margin-top: 16px; align-items: center; flex-wrap: wrap;">
+            <button type="submit" class="btn btn-primary" id="save-svc-btn">
+              <span class="spinner" id="save-svc-spinner" style="display: none;" aria-hidden="true"></span>
+              <span id="save-svc-btn-text">Save Demo Service</span>
+            </button>
+            <button type="button" class="btn btn-secondary" id="check-sim-btn">
+              <span class="spinner" id="check-sim-spinner" style="display: none;" aria-hidden="true"></span>
+              Check Similar Services
+            </button>
+            <button type="button" class="btn btn-secondary" id="clear-svc-btn">
+              Clear Form
+            </button>
+          </div>
+        </form>
       </div>
 
       <!-- Prominent Notice Banner -->
