@@ -2,7 +2,8 @@ name: Build and Push SigLIP Image to GHCR
 
 on:
   push:
-    branches: [ "main", "master" ]
+    # main -> :latest ; multilingual -> :multilingual (plus a sha- tag for every build)
+    branches: [ "main", "master", "multilingual" ]
   workflow_dispatch:
 
 env:
@@ -40,6 +41,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=multilingual,enable=${{ github.ref == 'refs/heads/multilingual' }}
             type=sha,format=short,prefix=sha-
 
       - name: Build and push Docker image (x86_64 CPU target)
