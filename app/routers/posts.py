@@ -109,6 +109,7 @@ async def process_post(
     post_id: str | None = Form(None),
     location: str | None = Form(None),
     agree_mode: str | None = Form(None),
+    intent_enabled: str | None = Form(None),
     idempotency_key_header: str | None = Header(None, alias="Idempotency-Key"),
     _auth: None = Depends(_require_auth),
 ) -> JSONResponse:
@@ -128,6 +129,9 @@ async def process_post(
     # Honoured only when the UI is enabled; production callers get DECISION_AGREE_MODE.
     if agree_mode and settings.ENABLE_UI and agree_mode in ("strict", "balanced", "relaxed"):
         settings = settings.model_copy(update={"DECISION_AGREE_MODE": agree_mode})
+    # Same for the message-intent gate ("on" / "off"): test-only, honoured only when ENABLE_UI=true.
+    if intent_enabled in ("on", "off") and settings.ENABLE_UI:
+        settings = settings.model_copy(update={"INTENT_ENABLED": intent_enabled == "on"})
 
     # Idempotency key: header takes precedence over post_id form field
     idem_key = idempotency_key_header or post_id

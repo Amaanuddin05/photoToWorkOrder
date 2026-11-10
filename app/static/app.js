@@ -402,6 +402,10 @@
     if (agreeModeEl && agreeModeEl.value) {
       formData.append("agree_mode", agreeModeEl.value);  // test-only per-request override
     }
+    const intentEl = document.getElementById("intent-input");
+    if (intentEl && intentEl.value) {
+      formData.append("intent_enabled", intentEl.value);  // test-only per-request override
+    }
     formData.append("post_id", `post_${Date.now()}`);
 
     try {

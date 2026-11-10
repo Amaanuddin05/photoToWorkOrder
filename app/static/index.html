@@ -122,6 +122,16 @@
           </select>
         </div>
 
+        <!-- Message-intent gate (test only) -->
+        <div class="form-group">
+          <label class="form-label" for="intent-input">Message-intent gate <span class="field-badge">test only</span></label>
+          <select id="intent-input">
+            <option value="" selected>Server default</option>
+            <option value="on">On: completion / irrelevant posts become no_action</option>
+            <option value="off">Off</option>
+          </select>
+        </div>
+
         <!-- Submit Button with Spinner -->
         <div class="form-group" style="margin-bottom: 0;">
           <button type="submit" class="btn btn-primary" id="submit-btn" disabled>
