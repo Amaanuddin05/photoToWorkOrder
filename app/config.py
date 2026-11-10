@@ -103,6 +103,14 @@ class Settings(BaseSettings):
     )
     DECISION_SAFETY_NEAR_TIE_MARGIN: float = 0.02
     DECISION_SAFETY_IMAGE_TOP_K: int = 3
+    # ── Text/photo agreement strictness (used when DECISION_REQUIRE_AGREE=true) ─
+    #   strict   : photo top-1 == text top-1 (default)
+    #   balanced : strict, OR text top-1 is in the photo top-K and leads text #2 by >= margin
+    #   relaxed  : text top-1 is in the photo top-K
+    # Eval runs can override it per run; the operator UI test form per request (ENABLE_UI only).
+    DECISION_AGREE_MODE: str = "strict"
+    DECISION_AGREE_TEXT_MARGIN: float = 0.05
+    DECISION_AGREE_IMAGE_TOP_K: int = 3
 
     # ── Security & Auth ───────────────────────────────────────────────────────
     API_KEYS: str = ""          # comma-separated; empty = no auth required
@@ -189,6 +197,7 @@ class Settings(BaseSettings):
             self.DECISION_GAP_THRESHOLD,
             self.DECISION_NO_ACTION_FLOOR,
             self.DECISION_REQUIRE_AGREE,
+            self.DECISION_AGREE_MODE,
             self.MIN_DESCRIPTION_WORDS,
         ])
         return hashlib.sha256(payload.encode()).hexdigest()[:12]

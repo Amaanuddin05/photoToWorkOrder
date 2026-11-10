@@ -161,6 +161,8 @@ async def insert_decision_log(
                 models_val["idempotency_key"] = idem_key
             if data.get("text_guard"):
                 models_val["text_guard"] = data["text_guard"]
+            if data.get("agree_mode"):
+                models_val["agree_mode"] = data["agree_mode"]
 
             cur = await conn.execute(
                 """

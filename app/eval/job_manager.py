@@ -331,6 +331,10 @@ class EvalJobManager:
             "text_no_action_floor": float(ov.get("text_no_action_floor", prof_floor)),
             "text_auto_min": float(ov.get("text_auto_min", prof_auto_min)),
             "text_guard_source": guard_src,
+            "agree_mode": (ov.get("agree_mode") if ov.get("agree_mode") in ("strict", "balanced", "relaxed")
+                           else getattr(self.settings, "DECISION_AGREE_MODE", "strict")),
+            "agree_text_margin": float(getattr(self.settings, "DECISION_AGREE_TEXT_MARGIN", 0.05)),
+            "agree_image_top_k": int(getattr(self.settings, "DECISION_AGREE_IMAGE_TOP_K", 3)),
             "model_ids": {
                 "text": text_model_id,
                 "text_dim": text_dim,
@@ -434,6 +438,7 @@ class EvalJobManager:
             "DECISION_TEXT_AUTO_MIN": job.effective_settings.get("text_auto_min", getattr(self.settings, "DECISION_TEXT_AUTO_MIN", 0.45)),
             # The values above are already resolved for this run's model (profile or override)
             "TEXT_GUARD_PINNED": True,
+            "DECISION_AGREE_MODE": job.effective_settings.get("agree_mode", getattr(self.settings, "DECISION_AGREE_MODE", "strict")),
         })
 
         valid_rows = [

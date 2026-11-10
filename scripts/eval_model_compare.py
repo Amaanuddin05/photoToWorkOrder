@@ -177,6 +177,8 @@ def cmd_run(args: argparse.Namespace) -> None:
         overrides["text_no_action_floor"] = args.text_floor
     if args.text_auto_min is not None:
         overrides["text_auto_min"] = args.text_auto_min
+    if args.agree_mode is not None:
+        overrides["agree_mode"] = args.agree_mode
     run = run_pipeline_eval(args.base_url, Path(args.zip), args.timeout, overrides)
     run["rows"] = [r for r in run.get("rows", []) if not r.get("is_warmup")]
     csv_path = save_rows_csv(run, args.tag, ts)
@@ -295,6 +297,8 @@ def main() -> None:
     r.add_argument("--timeout", type=float, default=900.0)
     r.add_argument("--text-floor", type=float, default=None, help="per-run override of the text no_action floor")
     r.add_argument("--text-auto-min", type=float, default=None, help="per-run override of the text auto_min")
+    r.add_argument("--agree-mode", choices=["strict", "balanced", "relaxed"], default=None,
+                   help="per-run override of the text/photo agreement strictness")
     c = sub.add_parser("compare")
     c.add_argument("a")
     c.add_argument("b")
