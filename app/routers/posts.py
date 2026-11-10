@@ -96,6 +96,7 @@ def _build_response(result: ProcessedPost, idempotent_replay: bool = False) -> d
         "idempotent_replay": idempotent_replay,
         "shadow": result.shadow,
         "text_guard": getattr(result, "text_guard", None),
+        "agree_mode": getattr(result, "agree_mode", None),
     }
 
 
@@ -106,6 +107,7 @@ async def process_post(
     description: str | None = Form(None),
     post_id: str | None = Form(None),
     location: str | None = Form(None),
+    agree_mode: str | None = Form(None),
     idempotency_key_header: str | None = Header(None, alias="Idempotency-Key"),
     _auth: None = Depends(_require_auth),
 ) -> JSONResponse:
@@ -120,6 +122,11 @@ async def process_post(
 
     settings = get_settings()
     state = request.app.state
+
+    # Per-request agreement strictness: a TEST-ONLY override from the operator UI.
+    # Honoured only when the UI is enabled; production callers get DECISION_AGREE_MODE.
+    if agree_mode and settings.ENABLE_UI and agree_mode in ("strict", "balanced", "relaxed"):
+        settings = settings.model_copy(update={"DECISION_AGREE_MODE": agree_mode})
 
     # Idempotency key: header takes precedence over post_id form field
     idem_key = idempotency_key_header or post_id

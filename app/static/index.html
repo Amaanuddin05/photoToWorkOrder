@@ -111,6 +111,17 @@
           <input type="text" id="location-input" placeholder="e.g. Building A, Room 101 (optional)">
         </div>
 
+        <!-- Agreement strictness (test only: applies to posts submitted from this console) -->
+        <div class="form-group">
+          <label class="form-label" for="agree-mode-input">Text / photo strictness <span class="field-badge">test only</span></label>
+          <select id="agree-mode-input">
+            <option value="" selected>Server default</option>
+            <option value="strict">Strict: photo #1 must equal text #1</option>
+            <option value="balanced">Balanced: or text #1 in photo top-3 and text leads by &ge; 0.05</option>
+            <option value="relaxed">Relaxed: text #1 in photo top-3</option>
+          </select>
+        </div>
+
         <!-- Submit Button with Spinner -->
         <div class="form-group" style="margin-bottom: 0;">
           <button type="submit" class="btn btn-primary" id="submit-btn" disabled>

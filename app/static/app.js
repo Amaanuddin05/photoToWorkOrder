@@ -398,6 +398,10 @@
     if (locText) {
       formData.append("location", locText);
     }
+    const agreeModeEl = document.getElementById("agree-mode-input");
+    if (agreeModeEl && agreeModeEl.value) {
+      formData.append("agree_mode", agreeModeEl.value);  // test-only per-request override
+    }
     formData.append("post_id", `post_${Date.now()}`);
 
     try {
@@ -474,6 +478,9 @@
       els.agreeBadge.style.display = "inline-flex";
       els.agreeBadge.className = "agree-badge agree-false";
       els.agreeBadge.textContent = "⚠ Text and photo differ";
+      if (decision.agree_mode && decision.agree_mode !== "strict") {
+        els.agreeBadge.textContent += ` (strictness: ${decision.agree_mode})`;
+      }
     } else {
       els.agreeBadge.style.display = "none";
     }

@@ -162,6 +162,30 @@ cd c:\Users\Win11\code\shamixo
 .\venv\Scripts\pytest.exe siglip/tests -v
 ```
 
+### Text / Photo Agreement Strictness
+With `DECISION_REQUIRE_AGREE=true`, a post is auto-created only when the description and the photo agree;
+otherwise it becomes a draft. `DECISION_AGREE_MODE` sets how strict that is (all other gates — confidence,
+gap, text guard, safety near-tie, always-draft — still apply):
+
+| Level | Auto-create allowed when |
+| :--- | :--- |
+| `strict` (default) | photo #1 == text #1 |
+| `balanced` | strict, OR text #1 is in the photo top-3 (`DECISION_AGREE_IMAGE_TOP_K`) and leads text #2 by >= 0.05 (`DECISION_AGREE_TEXT_MARGIN`) |
+| `relaxed` | text #1 is in the photo top-3 |
+
+- **Eval page** (`/ui/eval`): "Text / Photo Agreement Strictness" selector — applies to that eval run only and is
+  recorded in the run's effective settings. CLI: `scripts\eval_model_compare.py run --agree-mode balanced`.
+- **Operator console** (`/ui`): "Text / photo strictness (test only)" selector — sent as the `agree_mode` form
+  field and honoured **only when `ENABLE_UI=true`**, for that request only. Production callers get the env default.
+- The level used is returned as `agree_mode` and stored in `DecisionLog.models.agree_mode`.
+
+66-row ground truth (reranker off), auto-created / wrong:
+| Level | EN, bge-base-en-v1.5 | EN, bge-m3 | AR, bge-m3 |
+| :--- | :--- | :--- | :--- |
+| strict | 49 / 0 | 43 / 0 | 32 / 0 |
+| balanced | 55 / 0 | 47 / 2 | 33 / 0 |
+| relaxed | 55 / 0 | 52 / 4 | 41 / 3 |
+
 ---
 
 ## 5. Database Least-Privilege Role Setup

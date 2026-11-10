@@ -68,6 +68,7 @@ class ProcessedPost:
     all_service_image_scores: dict[str, float] = field(default_factory=dict)
     service_scores: dict[str, dict[str, float | None]] = field(default_factory=dict)
     text_guard: dict[str, Any] | None = None
+    agree_mode: str = "strict"   # agreement strictness level used for the auto gate
 
 
 # ── Reranker wrapper (applies softmax to TEI raw logits) ─────────────────────
@@ -96,6 +97,47 @@ def apply_reranker_softmax(
         item["rerank_rank"] = idx
 
     return reranked
+
+
+AGREE_MODES = ("strict", "balanced", "relaxed")
+_UNSET = object()  # make_decision(agree_ok=...) not provided -> use the strict `agree` signal
+
+
+def agreement_ok(
+    mode: str,
+    text_top: list[dict[str, Any]],
+    image_top: list[dict[str, Any]] | None,
+    text_margin: float = 0.05,
+    image_top_k: int = 3,
+) -> tuple[bool | None, str]:
+    """
+    Text/photo agreement for the auto-create gate, by strictness level.
+    Returns (ok, detail); ok is None when there is no photo or no text ranking
+    (the agreement rule then does not apply, same as before).
+      strict   : photo top-1 == text top-1
+      balanced : strict, OR text top-1 in photo top-K and its text score leads text #2 by >= text_margin
+      relaxed  : text top-1 in photo top-K
+    """
+    if not image_top or not text_top:
+        return None, "no photo or no text ranking"
+    mode = mode if mode in AGREE_MODES else "strict"
+    top = text_top[0].get("service")
+    photo_rank = {it.get("service"): int(it.get("rank", 99)) for it in image_top}
+    rank = photo_rank.get(top, 99)
+    if rank == 1:
+        return True, f"photo top-1 matches text top-1 ({mode})"
+    if mode == "strict":
+        return False, f"photo top-1 differs from text top-1 (text top-1 is photo #{rank if rank < 99 else '>' + str(len(image_top))}; mode=strict)"
+    in_top_k = rank <= image_top_k
+    if mode == "relaxed":
+        return in_top_k, f"text top-1 is photo #{rank if rank < 99 else '>' + str(len(image_top))} (relaxed needs <= {image_top_k})"
+    lead = None
+    if len(text_top) > 1 and text_top[0].get("score") is not None and text_top[1].get("score") is not None:
+        lead = float(text_top[0]["score"]) - float(text_top[1]["score"])
+    ok = in_top_k and lead is not None and lead >= text_margin
+    lead_s = f"{lead:.4f}" if lead is not None else "n/a"
+    return ok, (f"text top-1 is photo #{rank if rank < 99 else '>' + str(len(image_top))}, text lead {lead_s} "
+                f"(balanced needs photo <= {image_top_k} and lead >= {text_margin})")
 
 
 def _safety_near_tie(
@@ -157,6 +199,11 @@ def make_decision(
     safety_services: list[str] | None = None,
     safety_near_tie_margin: float | None = None,
     safety_image_top_k: int = 3,
+    # agreement strictness: when agree_ok is given it is used for the auto gate
+    # (agree stays the strict photo top-1 == text top-1 signal for logging/metrics)
+    agree_ok: Any = _UNSET,
+    agree_mode: str = "strict",
+    agree_detail: str | None = None,
 ) -> ProcessedPost:
     """
     Rule-based decision engine — identical business logic to RuleBasedDecider.decide().
@@ -311,7 +358,9 @@ def make_decision(
     # Case 5: Meets auto_create criteria
     meets_conf = (confidence is not None) and (confidence >= confidence_threshold)
     meets_gap = (gap is not None) and (gap >= gap_threshold)
-    meets_agree = (agree is True) or (agree is None) or (not require_agree)
+    # Agreement gate: the level-aware result when the caller computed one, else the strict signal
+    gate_agree = agree if agree_ok is _UNSET else agree_ok
+    meets_agree = (gate_agree is True) or (gate_agree is None) or (not require_agree)
 
     if meets_conf and meets_gap and meets_agree:
         if text_auto_blocked:
@@ -385,6 +434,8 @@ def make_decision(
 
     # Case 6: Default → draft
     default_reason = f"Criteria for auto_create not met (conf={confidence}, gap={gap}, agree={agree})"
+    if require_agree and agree_ok is not _UNSET and gate_agree is False:
+        default_reason += f" | agreement not met (mode={agree_mode}: {agree_detail or ''})"
     if text_auto_blocked:
         s_val = text_guard_info.get("score") if text_guard_info else 0.0
         default_reason = f"text_score_below_auto_min (score={s_val:.4f} < auto_min={text_auto_min:.2f}, floor={text_no_action_floor:.2f})"

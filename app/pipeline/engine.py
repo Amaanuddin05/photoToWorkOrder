@@ -269,6 +269,22 @@ async def process_post(
         elif text_top:
             agree = bool(image_top1_name == text_top1_name)
 
+    # Agreement for the auto gate, by strictness level (bi-encoder path). `agree`
+    # above stays the strict photo top-1 == text top-1 signal for logs/metrics.
+    from app.pipeline.decision import AGREE_MODES, agreement_ok
+    agree_mode = getattr(settings, "DECISION_AGREE_MODE", "strict")
+    agree_mode = agree_mode if agree_mode in AGREE_MODES else "strict"
+    if enable_rerank:
+        agree_ok, agree_detail = agree, "reranker path: strict agreement"
+    elif has_image and image_top:
+        agree_ok, agree_detail = agreement_ok(
+            agree_mode, text_top, image_top,
+            getattr(settings, "DECISION_AGREE_TEXT_MARGIN", 0.05),
+            getattr(settings, "DECISION_AGREE_IMAGE_TOP_K", 3),
+        )
+    else:
+        agree_ok, agree_detail = agree, "no photo"
+
     # ── Stage 6: Decision ──────────────────────────────────────────────────
     t_decide = time.perf_counter()
     result = make_decision(
@@ -295,7 +311,11 @@ async def process_post(
         safety_services=settings.safety_services_list,
         safety_near_tie_margin=getattr(settings, "DECISION_SAFETY_NEAR_TIE_MARGIN", 0.0),
         safety_image_top_k=getattr(settings, "DECISION_SAFETY_IMAGE_TOP_K", 3),
+        agree_ok=agree_ok,
+        agree_mode=agree_mode,
+        agree_detail=agree_detail,
     )
+    result.agree_mode = agree_mode
     timings["decision_ms"] = round((time.perf_counter() - t_decide) * 1000, 2)
     timings["decide_ms"] = timings["decision_ms"]
     timings["total_ms"] = round((time.perf_counter() - t0) * 1000, 2)
@@ -391,6 +411,7 @@ async def process_post(
                 "would_be_action": result.would_be_action,
                 "reason": result.reason,
                 "text_guard": result.text_guard,
+                "agree_mode": agree_mode,
                 "text_model": "BAAI/bge-base-en-v1.5",
                 "image_model": settings.SIGLIP_MODEL_ID,
                 "reranker_model": "BAAI/bge-reranker-base",

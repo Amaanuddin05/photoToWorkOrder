@@ -60,6 +60,7 @@ class StartJobPayload(BaseModel):
     text_guard_enabled: bool | None = None
     text_no_action_floor: float | None = None
     text_auto_min: float | None = None
+    agree_mode: str | None = None   # strict | balanced | relaxed (this run only)
 
 
 class LoadLocalPayload(BaseModel):

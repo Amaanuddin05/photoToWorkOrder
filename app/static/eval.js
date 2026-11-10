@@ -76,6 +76,12 @@
   const enableRerankerInput = document.getElementById("enableRerankerInput");
   const enableRerankerVal = document.getElementById("enableRerankerVal");
   const resetSettingsBtn = document.getElementById("resetSettingsBtn");
+  const agreeModeInput = document.getElementById("agreeModeInput");
+  const agreeModeVal = document.getElementById("agreeModeVal");
+  function updateAgreeModeDisplay() {
+    if (agreeModeInput && agreeModeVal) agreeModeVal.textContent = (agreeModeInput.value || "strict").toUpperCase();
+  }
+  if (agreeModeInput) agreeModeInput.addEventListener("change", updateAgreeModeDisplay);
   const startRunBtn = document.getElementById("startRunBtn");
   const stopRunBtn = document.getElementById("stopRunBtn");
 
@@ -720,6 +726,10 @@
     gapThreshVal.textContent = "0.10";
     floorThreshInput.value = 0.25;
     floorThreshVal.textContent = "0.25";
+    if (agreeModeInput) {
+      agreeModeInput.value = "strict";
+      updateAgreeModeDisplay();
+    }
     if (enableRerankerInput) {
       enableRerankerInput.checked = false;
       updateRerankerToggleDisplay();
@@ -747,6 +757,7 @@
       gap_threshold: parseFloat(gapThreshInput.value),
       no_action_floor: parseFloat(floorThreshInput.value),
       enable_reranker: enableRerankerInput ? enableRerankerInput.checked : false,
+      agree_mode: agreeModeInput ? agreeModeInput.value : "strict",
     };
 
     try {
@@ -894,6 +905,10 @@
         if (enableRerankerInput && data.effective_settings.enable_reranker !== undefined) {
           enableRerankerInput.checked = Boolean(data.effective_settings.enable_reranker);
           updateRerankerToggleDisplay();
+        }
+        if (agreeModeInput && data.effective_settings.agree_mode) {
+          agreeModeInput.value = data.effective_settings.agree_mode;
+          updateAgreeModeDisplay();
         }
       }
 
@@ -1057,6 +1072,11 @@
         label: "Reranker Mode",
         value: eff.enable_reranker ? "🟢 ENABLED (Production)" : "⚪ BYPASSED (Bi-Encoder Only)",
         isHighlighted: !eff.enable_reranker,
+      },
+      {
+        label: "Agreement Strictness",
+        value: eff.agree_mode ? String(eff.agree_mode).toUpperCase() : "STRICT",
+        isHighlighted: !!eff.agree_mode && eff.agree_mode !== "strict",
       },
       {
         label: "Description Weight",
