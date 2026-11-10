@@ -165,7 +165,8 @@ def main() -> None:
         for sid, txt, emb, tr in zip(sids, texts, embs, trunc):
             v = torch.tensor(emb, dtype=torch.float32)
             draft[sid].update(visual_line=txt.split(". ", 1)[1], text_used=txt, vector=v / torch.norm(v))
-            out(f"draft line: {'TRUNCATED ' if tr else ''}{txt}")
+            n_tok = len(siglip.processor.tokenizer(txt, truncation=False)["input_ids"])
+            out(f"draft line [{n_tok:>2}/64 tokens]{' TRUNCATED' if tr else ''}: {txt}")
         variants["draft"] = draft
         # sanity: re-encoding the stored textUsed reproduces the stored vectors
         sid0 = next(iter(profiles))
