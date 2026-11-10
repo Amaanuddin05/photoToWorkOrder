@@ -463,7 +463,7 @@
   function passFail(value, min, label) {
     if (typeof value !== "number") return ["—", "muted"];
     const ok = value >= min;
-    return [`${fmt(value, 3)} (${ok ? "≥" : "<"} ${min} ${label})`, ok ? "ok" : "bad"];
+    return [`${fmt(value, 4)} (${ok ? "≥" : "<"} ${min} ${label})`, ok ? "ok" : "bad"];
   }
 
   // Render Screen 2 (Result View)
@@ -535,7 +535,7 @@
     const it = decision.intent;
     if (it) {
       const names = { issue: "Issue report", done: "Work completed", other: "Not maintenance" };
-      addDetail("Message intent", `${names[it.label] || it.label} (${fmtPct(it.prob)})${it.acted ? " · blocked work order" : ""}`,
+      addDetail("Message intent", `${names[it.label] || it.label} (${fmtPct(it.prob)})${it.acted ? " · blocked work order" : it.label !== "issue" ? " · below gate threshold, not acted on" : ""}`,
         it.acted ? "bad" : "ok");
     } else {
       addDetail("Message intent", "— (gate off or no description)", "muted");
