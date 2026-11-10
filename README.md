@@ -246,13 +246,15 @@ them unchanged and log a warning. `"ServiceImageProfile"` (SigLIP) is never touc
 ```
 
 ### Switching the embedding model
-TEI compose files live in the `tei` folder: `docker-compose.yml` (English: bge-base-en-v1.5 +
-bge-reranker-base) and `docker-compose.multilingual.yml` (bge-m3 + bge-reranker-v2-m3).
-On a ~7.6 GB Docker VM bge-m3 (~5.5 GB resident) cannot run next to a second large model, so stop the
-reranker first (it is disabled in the pipeline by default):
+TEI compose files live in the `tei` folder:
+- `docker-compose.yml` (default, multilingual): `BAAI/bge-m3`; the `bge-reranker-v2-m3` reranker only starts
+  with `--profile reranker` (it is disabled in the pipeline, and bge-m3 (~5.5 GB resident) cannot run next to a
+  second large model on a ~7.6 GB Docker VM).
+- `docker-compose.english.yml`: `BAAI/bge-base-en-v1.5` + `bge-reranker-base` (for the `main` branch).
 ```powershell
-docker compose stop tei-rerank
-docker compose -f docker-compose.multilingual.yml up -d tei-embed   # or: docker compose up -d   (English)
+cd ..\tei
+docker compose up -d                                        # multilingual (bge-m3)
+docker compose -f docker-compose.english.yml up -d          # English (bge-base) instead
 ```
 Nothing else is needed: the running service re-embeds the catalog for the new model. To trigger it
 by hand: `..\venv\Scripts\python.exe scripts\reembed_catalog.py` (`--force` re-embeds everything).
