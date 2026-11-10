@@ -1,44 +1,128 @@
 [
   {
-    "title": "Emergency Response & Area Securing",
-    "current_visual_line": "yellow caution hazard tape, safety cones, or barricaded hazardous area",
-    "proposed_visual_line": "a hazardous emergency scene: flood water on the floor, fire or smoke, a fallen tree or collapsed structure, damaged electrical equipment or shattered glass, area closed off with caution tape or cones",
-    "why": "Old line described only the barrier (tape/cones); worker photos show the hazard itself. Wording follows the service scope and keywords (fire, flooding, hazard, unsafe area, cordon off)."
-  },
-  {
-    "title": "Elevator / Lift Breakdown Response",
-    "current_visual_line": "Elevator doors with metallic panels, exposed control cabinet, electrical wiring, circuit boards, maintenance tools, and a service area with tiled flooring.",
-    "proposed_visual_line": "elevator car or lift doors in a building lobby, lift call buttons and floor indicator, an elevator stuck with doors half open",
-    "why": "Generic terms (electrical wiring, circuit boards, tiled flooring) matched electrical hazards, corridors and doors; now specific to lifts."
+    "title": "AC Services",
+    "current_visual_line": "air conditioner unit on wall or ceiling, cooling vents, thermostat, or AC unit leaking water",
+    "proposed_visual_line": "air conditioner unit on wall or ceiling, cooling vents, thermostat, or AC unit leaking water",
+    "why": "New wording lowered photo top-3 in the ablation; current line kept."
   },
   {
     "title": "BUILDING FACADE CLEANING",
     "current_visual_line": "exterior building wall, architectural facade, or high-rise outer wall",
     "proposed_visual_line": "the outside wall of a multi-storey building seen from the ground, stained, dusty or algae-covered facade and cladding panels",
-    "why": "Clarifies a ground-level view of the building's outer wall surface, distinct from rooftops and windows."
-  },
-  {
-    "title": "External Areas Cleaning",
-    "current_visual_line": "outdoor pavement, walkway, or courtyard with fallen leaves and outdoor debris",
-    "proposed_visual_line": "outdoor ground of a school site, a paved walkway, courtyard, playground or driveway covered with leaves, sand, mud or scattered litter",
-    "why": "Emphasises the open outdoor ground surface rather than bins, to separate it from Waste Management."
-  },
-  {
-    "title": "General Areas Cleaning (Classrooms, Offices, Toilets)",
-    "current_visual_line": "dirty classroom or corridor floor needing sweeping and mopping",
-    "proposed_visual_line": "indoor classroom, corridor or staircase with a dusty, dirty or muddy floor that needs sweeping and mopping",
-    "why": "Adds staircase/indoor context; routine floor cleaning inside the building."
+    "why": "Ground-level view of the outer wall surface, distinct from rooftops and windows."
   },
   {
     "title": "Door / Locker Lock Assistance",
     "current_visual_line": "locked door handle, keyhole, padlock on locker or cabinet",
     "proposed_visual_line": "close-up of a locked door, metal locker or cabinet drawer with a key stuck in the lock or a padlock that will not open",
-    "why": "Focus on the locked state (key in lock, closed padlock) rather than generic door hardware, which also matched handyman repairs."
+    "why": "Focus on the locked state rather than generic door hardware (which also matched repairs)."
+  },
+  {
+    "title": "Emergency Reactive Cleaning (Spills, Vomit, Incidents)",
+    "current_visual_line": "liquid spill, vomit, or wet puddle on indoor floor needing urgent cleaning",
+    "proposed_visual_line": "liquid spill, vomit or body fluids, a wet slippery puddle or mess on an indoor floor that needs urgent cleaning",
+    "why": "Already 4/4; adds body fluids / slippery mess from the keywords."
+  },
+  {
+    "title": "Emergency Response & Area Securing",
+    "current_visual_line": "yellow caution hazard tape, safety cones, or barricaded hazardous area",
+    "proposed_visual_line": "a hazardous emergency scene: flood water on the floor, fire or smoke, a fallen tree or collapsed structure, damaged electrical equipment or shattered glass, area closed off with caution tape or cones",
+    "why": "Worker photos show the hazard itself, not only the barrier; wording from scope keywords (fire, flooding, hazard, cordon off)."
+  },
+  {
+    "title": "External Areas Cleaning",
+    "current_visual_line": "outdoor pavement, walkway, or courtyard with fallen leaves and outdoor debris",
+    "proposed_visual_line": "outdoor ground of a school site, a paved walkway, courtyard, playground or driveway covered with leaves, sand, mud or scattered litter",
+    "why": "Emphasises the open outdoor ground surface (walkway, courtyard, playground, driveway), separate from bins and building surfaces."
   },
   {
     "title": "Furniture Moving Service",
     "current_visual_line": "office desks, chairs, or tables stacked and prepared for relocation",
     "proposed_visual_line": "desks, chairs, sofas or shelves being carried or moved between rooms, furniture pushed together ready for relocation",
-    "why": "Adds the act of moving and more furniture types (sofas, shelves) from the service keywords."
+    "why": "Adds the act of moving and more furniture types from the keywords."
+  },
+  {
+    "title": "General Areas Cleaning (Classrooms, Offices, Toilets)",
+    "current_visual_line": "dirty classroom or corridor floor needing sweeping and mopping",
+    "proposed_visual_line": "indoor classroom, corridor or staircase with a dusty, dirty or muddy floor that needs sweeping and mopping",
+    "why": "Adds staircase / indoor context for routine floor cleaning."
+  },
+  {
+    "title": "Handyman Service (Minor / Urgent Repairs)",
+    "current_visual_line": "broken door hinge, damaged wall fixture, loose handle, or minor physical repair",
+    "proposed_visual_line": "a small broken fixture needing repair: loose door handle, broken hinge, damaged furniture part, loose screw, hole in a wall or a loose shelf",
+    "why": "Broader set of minor repairs from the keywords (loose screw, wall hole, broken handle)."
+  },
+  {
+    "title": "Key Duplication",
+    "current_visual_line": "Several metal keys on a key ring, or a blank key being cut on a key-cutting machine, shown in close-up",
+    "proposed_visual_line": "Several metal keys on a key ring, or a blank key being cut on a key-cutting machine, shown in close-up",
+    "why": "Current line already 4/4; a casing-only change lost a photo, so the current line is kept exactly."
+  },
+  {
+    "title": "Office / Administration Areas Cleaning",
+    "current_visual_line": "office desk workstation with dust, paper trash, or dirty carpet",
+    "proposed_visual_line": "an office workspace with desks, computer monitors, office chairs and carpet, dusty surfaces, paper waste or a full office bin",
+    "why": "Describes the office setting more fully (monitors, chairs, carpet) to separate it from classrooms."
+  },
+  {
+    "title": "ROOF CLEANING",
+    "current_visual_line": "building rooftop or terrace with accumulated leaves, dirt, or gutter debris",
+    "proposed_visual_line": "flat rooftop or roof terrace of a building with leaves, dirt, debris, standing water or a clogged roof gutter",
+    "why": "Adds standing water and clogged gutters (keywords)."
+  },
+  {
+    "title": "School Building & Asset Security Patrol Issue",
+    "current_visual_line": "Security guard post or gate at night, an empty guard booth, an open unattended gate, or a patrol checkpoint log sheet",
+    "proposed_visual_line": "Security guard post or gate at night, an empty guard booth, an open unattended gate, or a patrol checkpoint log sheet",
+    "why": "New 'patrol / camera' wording pulled a school-event photo in the ablation; current line kept."
+  },
+  {
+    "title": "School Event Setup",
+    "current_visual_line": "rows of chairs, presentation stage, or tables set up for a school event",
+    "proposed_visual_line": "rows of chairs, presentation stage, or tables set up for a school event",
+    "why": "Already 3/3; current line kept."
+  },
+  {
+    "title": "Volleyball Setup",
+    "current_visual_line": "volleyball court net and poles installed on a sports court",
+    "proposed_visual_line": "a volleyball net stretched between two poles on an indoor or outdoor sports court with court lines",
+    "why": "Already 2/2; adds court lines (keywords: court marking)."
+  },
+  {
+    "title": "WATER BOTTLE REPLACEMENT FOR DRINKING STATIONS",
+    "current_visual_line": "empty 19-liter water bottle on an office drinking water dispenser",
+    "proposed_visual_line": "a large 19-liter water bottle on a drinking water dispenser or cooler, empty or being replaced",
+    "why": "Already 2/2; adds cooler and the replacement action."
+  },
+  {
+    "title": "Washroom Deep Cleaning",
+    "current_visual_line": "dirty toilet bowl, stained urinal, or washroom sink fixtures needing scrubbing",
+    "proposed_visual_line": "close-up of washroom fixtures: stained toilet bowl, urinal, sink or taps with scale deposits and stained tiles needing deep scrubbing",
+    "why": "Adds scale deposits and stained tiles (keywords: descaling, stained tiles) to separate deep cleaning from routine cleaning."
+  },
+  {
+    "title": "Waste Management Service",
+    "current_visual_line": "overflowing garbage dumpster, trash bins, or waste collection area",
+    "proposed_visual_line": "overflowing garbage bins, piled-up trash bags, a full dumpster or a rubbish collection area",
+    "why": "Already 3/3; adds piled-up trash bags."
+  },
+  {
+    "title": "Window Cleaning Service (Interior & Exterior)",
+    "current_visual_line": "dirty window glass panes with smudges, streaks, or water stains",
+    "proposed_visual_line": "dirty glass window panes with smudges, streaks, dust or water stains, seen from inside or outside",
+    "why": "Already 4/4; adds interior/exterior view."
+  },
+  {
+    "title": "Fire Extinguisher Inspection & Refill",
+    "current_visual_line": "red fire extinguisher mounted on a wall bracket or standing on the floor, with a hose, pressure gauge and safety pin, sometimes a technician checking the tag",
+    "proposed_visual_line": "red fire extinguisher on a wall bracket or on the floor, with hose, pressure gauge, safety pin and inspection tag",
+    "why": "Shortened to stay well under the token limit (old line was long); same content."
+  },
+  {
+    "title": "Elevator / Lift Breakdown Response",
+    "current_visual_line": "Elevator doors with metallic panels, exposed control cabinet, electrical wiring, circuit boards, maintenance tools, and a service area with tiled flooring.",
+    "proposed_visual_line": "elevator car or lift doors in a building lobby, lift call buttons and floor indicator, an elevator stuck with doors half open",
+    "why": "Generic terms (wiring, circuit boards, tiled flooring) matched other photos; now specific to lifts."
   }
 ]
