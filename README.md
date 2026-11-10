@@ -208,6 +208,13 @@ It only runs when the live TEI model equals the one it was trained on (`app/inte
   61.6% (72.5% calibrated, ~25 ms), mDeBERTa-v3 78.8% (85.4% calibrated, 1-3 s/post). The embedding classifier won on both.
 - Caveat: training data is generated; accuracy on real radio traffic is unverified until real messages are added.
 
+### On-demand SigLIP (RAM saving)
+SigLIP 2 is loaded at startup (`SIGLIP_PRELOAD=true`, fails fast if the model is broken) and dropped from RAM after
+`SIGLIP_IDLE_UNLOAD_SECONDS` (default 600) without photo requests; the next photo post reloads it (~4 s once).
+Measured: process working set 2.1 GB loaded -> 0.49 GB unloaded. `/health/ready` stays ready while unloaded and
+reports `siglip_model.state` / `idle_s` / `load_count`. Set `SIGLIP_IDLE_UNLOAD_SECONDS=0` to keep it loaded.
+TEI (bge-m3, ~5.4 GB) is not affected.
+
 ## 5. Database Least-Privilege Role Setup
 
 For production deployment, grant the service user minimal required privileges:

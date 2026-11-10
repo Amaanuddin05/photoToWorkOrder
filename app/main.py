@@ -156,10 +156,11 @@ async def lifespan(app: FastAPI):
             model_id=settings.SIGLIP_MODEL_ID,
             torch_threads=settings.SIGLIP_TORCH_THREADS,
             cache_size=settings.SIGLIP_LRU_CACHE_SIZE,
-            load_now=True,
+            load_now=getattr(settings, "SIGLIP_PRELOAD", True),
         )
         app.state.siglip_service = siglip
-        logger.info("SigLIP model loaded: dim=%d", siglip.embedding_dim)
+        logger.info("SigLIP service ready (state=%s, idle unload after %ss)", siglip.state,
+                    getattr(settings, "SIGLIP_IDLE_UNLOAD_SECONDS", 0) or "never")
     except Exception as exc:
         logger.error("Failed to load SigLIP model: %s", exc)
         # Not fatal — service starts but is not ready
@@ -235,12 +236,27 @@ async def lifespan(app: FastAPI):
         except Exception as exc:
             logger.warning("Could not load service profiles at startup: %s", exc)
 
+    # ── 6. Idle reaper: drop SigLIP weights after SIGLIP_IDLE_UNLOAD_SECONDS ──
+    reaper_task = None
+    idle_s = getattr(settings, "SIGLIP_IDLE_UNLOAD_SECONDS", 0)
+    if idle_s and getattr(app.state, "siglip_service", None) is not None:
+        async def _siglip_reaper(svc, idle):
+            while True:
+                await asyncio.sleep(min(30, max(5, idle / 4)))
+                try:
+                    await asyncio.to_thread(svc.unload_if_idle, idle)
+                except Exception as exc:  # never let the reaper die
+                    logger.warning("SigLIP idle unload failed: %s", exc)
+        reaper_task = asyncio.create_task(_siglip_reaper(app.state.siglip_service, idle_s))
+
     logger.info("siglip service startup complete")
 
     yield  # ── Running ──────────────────────────────────────────────────────
 
     # Shutdown
     logger.info("siglip service shutting down")
+    if reaper_task:
+        reaper_task.cancel()
     if tei:
         await tei.close()
     if pool:

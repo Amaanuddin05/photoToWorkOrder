@@ -50,6 +50,10 @@ class Settings(BaseSettings):
     SIGLIP_TORCH_THREADS: int | None = None
     SIGLIP_MAX_CONCURRENCY: int = 2
     SIGLIP_LRU_CACHE_SIZE: int = 256
+    # On-demand SigLIP: weights are dropped after this many idle seconds and reloaded (~5 s)
+    # by the next photo request. 0 = keep loaded forever. PRELOAD loads once at startup to fail fast.
+    SIGLIP_IDLE_UNLOAD_SECONDS: int = 600
+    SIGLIP_PRELOAD: bool = True
     SIGLIP_API_KEY: str | None = None
     SIGLIP_MAX_UPLOAD_BYTES: int | None = None
     SIGLIP_MAX_IMAGES_PER_REQUEST: int = 16

@@ -4,8 +4,11 @@ Uses transformers AutoModel and AutoProcessor on CPU in inference mode.
 """
 
 from collections import OrderedDict
+from contextlib import contextmanager
+import gc
 import logging
 import threading
+import time
 from typing import Any, Dict, List, Optional, Tuple
 import numpy as np
 from PIL import Image
@@ -66,6 +69,15 @@ class SigLIPService:
         self.processor = None
         self.embedding_dim: Optional[int] = None
         self._is_loaded = False
+        # On-demand loading: the weights are (re)loaded by the first call that needs them and
+        # dropped by unload_if_idle(). The RLock serialises load/unload; _inflight blocks an
+        # unload while any encode/rank call is running.
+        self._lock = threading.RLock()
+        self._inflight = 0
+        self._last_used = time.monotonic()
+        self._loading = False
+        self.last_load_error: Optional[str] = None
+        self.load_count = 0
 
         if torch_threads is not None and torch_threads > 0:
             torch.set_num_threads(torch_threads)
@@ -75,10 +87,77 @@ class SigLIPService:
             self.load()
 
     def load(self) -> None:
-        """Loads model and processor once on CPU."""
-        if self._is_loaded:
-            return
+        """Loads model and processor on CPU (no-op when already loaded)."""
+        with self._lock:
+            if self._is_loaded:
+                return
+            self._loading = True
+            t0 = time.perf_counter()
+            try:
+                self._load_weights()
+                self.last_load_error = None
+            except Exception as exc:
+                self.last_load_error = str(exc)
+                raise
+            finally:
+                self._loading = False
+            self.load_count += 1
+            self._last_used = time.monotonic()
+            logger.info("SigLIP model loaded in %.1fs (load #%d)", time.perf_counter() - t0, self.load_count)
 
+    def unload(self) -> bool:
+        """Drop the weights from RAM. Refuses (returns False) while a call is running."""
+        with self._lock:
+            if not self._is_loaded or self._inflight > 0:
+                return False
+            self.model = None
+            self.processor = None
+            self.lru_cache.clear()
+            self._is_loaded = False
+        gc.collect()
+        logger.info("SigLIP model unloaded (idle)")
+        return True
+
+    def unload_if_idle(self, idle_seconds: float) -> bool:
+        """Unload when no call has used the model for idle_seconds (0 or less = never)."""
+        if idle_seconds <= 0:
+            return False
+        with self._lock:
+            if not self._is_loaded or self._inflight > 0:
+                return False
+            if time.monotonic() - self._last_used < idle_seconds:
+                return False
+        return self.unload()
+
+    @property
+    def state(self) -> str:
+        if self._loading:
+            return "loading"
+        return "loaded" if self._is_loaded else "unloaded"
+
+    @property
+    def idle_seconds(self) -> float:
+        return round(time.monotonic() - self._last_used, 1)
+
+    @contextmanager
+    def _use(self):
+        """Mark a call in flight and make sure the weights are loaded for it."""
+        with self._lock:
+            self._inflight += 1
+            try:
+                if not self._is_loaded:
+                    self.load()
+            except Exception:
+                self._inflight -= 1
+                raise
+        try:
+            yield
+        finally:
+            with self._lock:
+                self._inflight -= 1
+                self._last_used = time.monotonic()
+
+    def _load_weights(self) -> None:
         logger.info("Loading SigLIP model from %s on CPU...", self.model_id)
         self.processor = AutoProcessor.from_pretrained(self.model_id)
         self.model = AutoModel.from_pretrained(self.model_id).to("cpu").eval()
@@ -92,7 +171,6 @@ class SigLIPService:
             self.embedding_dim = 768
 
         self._is_loaded = True
-        logger.info("SigLIP model loaded successfully (dim=%d)", self.embedding_dim)
 
     @property
     def is_loaded(self) -> bool:
@@ -103,9 +181,10 @@ class SigLIPService:
         Encodes list of texts into L2-normalized float embeddings with max 64 tokens.
         Returns: (embeddings, truncated_flags)
         """
-        if not self._is_loaded:
-            raise RuntimeError("Model is not loaded.")
+        with self._use():
+            return self._encode_texts(texts)
 
+    def _encode_texts(self, texts: List[str]) -> Tuple[List[List[float]], List[bool]]:
         if not texts:
             return [], []
 
@@ -133,9 +212,10 @@ class SigLIPService:
 
     def encode_images(self, images: List[Image.Image]) -> List[List[float]]:
         """Encodes list of PIL images into L2-normalized float embeddings."""
-        if not self._is_loaded:
-            raise RuntimeError("Model is not loaded.")
+        with self._use():
+            return self._encode_images(images)
 
+    def _encode_images(self, images: List[Image.Image]) -> List[List[float]]:
         if not images:
             return []
 
@@ -155,6 +235,10 @@ class SigLIPService:
         Uses LRU cache for candidate text embeddings.
         Returns candidates sorted by score descending: [{"id": id, "score": float, "rank": int}]
         """
+        with self._use():
+            return self._rank(image, candidates)
+
+    def _rank(self, image: Image.Image, candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if not candidates:
             return []
 

@@ -53,14 +53,19 @@ async def readiness(request: Request) -> JSONResponse:
 
     # SigLIP model
     siglip = getattr(state, "siglip_service", None)
-    if siglip and getattr(siglip, "_is_loaded", False):
+    # Ready while the weights are unloaded (on-demand); not ready only if the last load failed.
+    if siglip and (getattr(siglip, "_is_loaded", False) or not getattr(siglip, "last_load_error", "never loaded")):
         checks["siglip_model"] = {
-            "loaded": True,
+            "loaded": bool(getattr(siglip, "_is_loaded", False)),
+            "state": getattr(siglip, "state", "loaded"),
             "model_id": siglip.model_id,
             "dim": siglip.embedding_dim,
+            "idle_s": getattr(siglip, "idle_seconds", None),
+            "idle_unload_s": getattr(settings, "SIGLIP_IDLE_UNLOAD_SECONDS", None) if (settings := getattr(state, "settings", None)) else None,
+            "load_count": getattr(siglip, "load_count", None),
         }
     else:
-        checks["siglip_model"] = {"loaded": False}
+        checks["siglip_model"] = {"loaded": False, "error": getattr(siglip, "last_load_error", None) if siglip else "not created"}
         all_ok = False
 
     # TEI dependencies
