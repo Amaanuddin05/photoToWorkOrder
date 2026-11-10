@@ -192,6 +192,22 @@ gap, text guard, safety near-tie, always-draft — still apply):
 
 ---
 
+### Message-Intent Gate (multilingual branch)
+Radio channels also carry completion notes ("fixed the AC, all good") and chatter. With `INTENT_ENABLED=true`
+the description is classified as `issue` / `done` / `other` by a logistic regression on its bge-m3 embedding
+(already computed for text search, so ~0 ms extra). `done` / `other` with probability >= `INTENT_MIN_PROB`
+(default 0.85) become `no_action` (reason `intent=done (p=...)`); anything uncertain continues unchanged.
+It only runs when the live TEI model equals the one it was trained on (`app/intent/intent_bge_m3.json`).
+
+- Retrain: `scripts\gen_intent_train.py` (regenerates `eval/intent_train.csv`, ~1,080 EN+AR rows split by topic),
+  then `scripts	rain_intent_classifier.py --save`. Add real radio messages to the CSV when you have them.
+- Eval page: "Message-intent gate" selector (per run). Response/DecisionLog carry `intent`.
+- Measured on 302 independent EN+AR posts (real catalog descriptions as `issue`): 96.7% (EN 98.0, AR 95.4);
+  at 0.85-0.90, 0-1 of 182 real issues dropped. 66-row evals with it ON are unchanged (EN 43/0, AR 32/0).
+- Compared first (`scripts\eval_nli_intent.py`): zero-shot NLI, CPU, same 302 posts - multilingual-MiniLMv2
+  61.6% (72.5% calibrated, ~25 ms), mDeBERTa-v3 78.8% (85.4% calibrated, 1-3 s/post). The embedding classifier won on both.
+- Caveat: training data is generated; accuracy on real radio traffic is unverified until real messages are added.
+
 ## 5. Database Least-Privilege Role Setup
 
 For production deployment, grant the service user minimal required privileges:

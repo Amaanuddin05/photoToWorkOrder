@@ -87,6 +87,7 @@ async def process_post(
     all_text_results: list[dict[str, Any]] = []
 
     text_model_used: str | None = None
+    query_vec: list[float] | None = None
     if has_desc and description:
         try:
             # The live TEI model; the catalog must already be embedded for it
@@ -331,6 +332,18 @@ async def process_post(
         agree_detail=agree_detail,
     )
     result.agree_mode = agree_mode
+
+    # ── Message-intent gate: completion notes / chatter must not create work orders ──
+    from app.intent_gate import classify as classify_intent
+    intent = classify_intent(settings, text_model_used, query_vec)
+    if intent is not None:
+        result.intent = intent
+        if intent["acted"] and result.action != "no_action":
+            result.reason = (f"intent={intent['label']} (p={intent['prob']:.2f}) - not a new issue report"
+                             f" | was: {result.reason}")
+            result.would_be_action = "no_action"
+            result.action = "no_action"
+            result.shadow = False
     timings["decision_ms"] = round((time.perf_counter() - t_decide) * 1000, 2)
     timings["decide_ms"] = timings["decision_ms"]
     timings["total_ms"] = round((time.perf_counter() - t0) * 1000, 2)
@@ -439,6 +452,7 @@ async def process_post(
                 "reason": result.reason,
                 "text_guard": result.text_guard,
                 "agree_mode": agree_mode,
+                "intent": result.intent,
                 "text_model": text_model_used,
                 "image_model": settings.SIGLIP_MODEL_ID,
                 # Only recorded when the cross-encoder reranker was actually used.

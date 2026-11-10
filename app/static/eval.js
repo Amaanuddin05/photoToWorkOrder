@@ -82,6 +82,10 @@
     if (agreeModeInput && agreeModeVal) agreeModeVal.textContent = (agreeModeInput.value || "strict").toUpperCase();
   }
   if (agreeModeInput) agreeModeInput.addEventListener("change", updateAgreeModeDisplay);
+  const intentInput = document.getElementById("intentInput");
+  const intentVal = document.getElementById("intentVal");
+  function updateIntentDisplay() { if (intentInput && intentVal) intentVal.textContent = intentInput.value.toUpperCase(); }
+  if (intentInput) intentInput.addEventListener("change", updateIntentDisplay);
   const startRunBtn = document.getElementById("startRunBtn");
   const stopRunBtn = document.getElementById("stopRunBtn");
 
@@ -730,6 +734,7 @@
       agreeModeInput.value = "strict";
       updateAgreeModeDisplay();
     }
+    if (intentInput) { intentInput.value = "off"; updateIntentDisplay(); }
     if (enableRerankerInput) {
       enableRerankerInput.checked = false;
       updateRerankerToggleDisplay();
@@ -758,6 +763,7 @@
       no_action_floor: parseFloat(floorThreshInput.value),
       enable_reranker: enableRerankerInput ? enableRerankerInput.checked : false,
       agree_mode: agreeModeInput ? agreeModeInput.value : "strict",
+      intent_enabled: intentInput ? intentInput.value === "on" : false,
     };
 
     try {
@@ -905,6 +911,10 @@
         if (enableRerankerInput && data.effective_settings.enable_reranker !== undefined) {
           enableRerankerInput.checked = Boolean(data.effective_settings.enable_reranker);
           updateRerankerToggleDisplay();
+        }
+        if (intentInput && typeof data.effective_settings.intent_enabled === "boolean") {
+          intentInput.value = data.effective_settings.intent_enabled ? "on" : "off";
+          updateIntentDisplay();
         }
         if (agreeModeInput && data.effective_settings.agree_mode) {
           agreeModeInput.value = data.effective_settings.agree_mode;

@@ -1,0 +1,181 @@
+id,lang,label,text
+e01,en,issue,The tap in the 2nd floor washroom keeps leaking
+e02,en,issue,Lights are flickering in the main corridor
+e03,en,issue,Lift 3 is stuck between floors
+e04,en,issue,There is a bad smell coming from the drain near the canteen
+e05,en,issue,Door lock in room 112 is broken and won't close
+e06,en,issue,Power socket sparking in the workshop please check urgently
+e07,en,issue,Ceiling tile fell down in reception
+e08,en,issue,AC not cooling in the meeting room
+e09,en,issue,Water overflowing from the toilet in block B
+e10,en,issue,Fire alarm panel showing a fault light
+e11,en,issue,Generator not starting this morning
+e12,en,issue,Window glass cracked in the library
+e13,en,issue,Gate motor is not working car park entrance
+e14,en,issue,Pipe burst near the pump room water everywhere
+e15,en,issue,Two tube lights are out in the store
+e16,en,issue,Fan in the staff room making a loud noise
+e17,en,issue,Wall paint peeling and damp patch in classroom 5
+e18,en,issue,CCTV camera at the back gate is offline
+e19,en,issue,Water cooler near the gym is not working
+e20,en,issue,Smell of gas in the kitchen area
+e21,en,issue,Blocked sink in pantry
+e22,en,issue,Handrail on the stairs is loose
+e23,en,issue,No hot water in the showers
+e24,en,issue,Sprinkler head is leaking in the corridor
+e25,en,issue,Emergency exit light is not working on level 2
+e26,en,issue,Garbage bins overflowing behind the building needs pest control
+e27,en,issue,Floor tiles broken in the entrance people may trip
+e28,en,issue,Broken chair and table in room 8
+e29,en,issue,Roof is leaking when it rains in the hall
+e30,en,issue,Intercom at the front desk is dead
+e31,en,done,Fixed the leaking tap in washroom 2 all good now
+e32,en,done,Replaced the tube lights in the corridor work completed
+e33,en,done,Lift 3 is back in service technician finished
+e34,en,done,Drain cleaned and the smell is gone job done
+e35,en,done,Door lock changed in room 112 completed
+e36,en,done,Socket replaced and tested all working
+e37,en,done,Ceiling tile has been put back in reception
+e38,en,done,AC gas refilled and the meeting room is cooling fine now
+e39,en,done,Toilet blockage cleared in block B
+e40,en,done,Fire alarm panel reset and fault cleared
+e41,en,done,Generator serviced and running normally
+e42,en,done,New window glass installed in the library
+e43,en,done,Gate motor repaired
+e44,en,done,Burst pipe isolated and repaired pump room is dry
+e45,en,done,Changed the two bulbs in the store done
+e46,en,done,Cleaned the 3rd floor corridor all done
+e47,en,done,Painting finished in classroom 5
+e48,en,done,CCTV camera back online after reset
+e49,en,done,Water cooler fixed
+e50,en,done,Gas leak sealed and checked area is safe
+e51,en,done,Sink unblocked
+e52,en,done,Handrail tightened and secured
+e53,en,done,Heater repaired hot water is available again
+e54,en,done,Sprinkler head replaced task complete
+e55,en,done,Emergency exit light replaced
+e56,en,done,Bins emptied and area cleaned
+e57,en,done,Tiles replaced in the entrance
+e58,en,done,Chair and table repaired and returned to room 8
+e59,en,done,Roof leak patched
+e60,en,done,Intercom working again
+e61,en,other,Good morning everyone
+e62,en,other,Lunch is ready in the canteen
+e63,en,other,Meeting at 3 pm in the conference room
+e64,en,other,Who has the keys to the van
+e65,en,other,Happy birthday to Ahmed
+e66,en,other,Please send me the attendance sheet
+e67,en,other,Traffic is very bad on the highway today
+e68,en,other,The match last night was amazing
+e69,en,other,Check my new phone
+e70,en,other,Shift change at 6 can anyone cover for me
+e71,en,other,Visitors are arriving at 10 please arrange parking
+e72,en,other,Reminder to submit the timesheets by Friday
+e73,en,other,Thanks team great work today
+e74,en,other,Where is the supervisor
+e75,en,other,Does anyone know the wifi password
+e76,en,other,Delivery truck has arrived at the dock
+e77,en,other,Tomorrow is a public holiday
+e78,en,other,Look at this beautiful sunset
+e79,en,other,I will be late today
+e80,en,other,Can someone bring tea to the office
+e81,en,other,New uniforms will be distributed next week
+e82,en,other,Training session starts at 9 tomorrow
+e83,en,other,Package for the finance department is at reception
+e84,en,other,Our team won the cricket game
+e85,en,other,Please keep the radio channel clear
+e86,en,other,Ok copy that
+e87,en,other,Cat sitting on the car roof
+e88,en,other,Is the cafeteria open on Saturday
+e89,en,other,Security patrol completed no incidents
+e90,en,other,Please welcome our new colleague Sara
+a01,ar,issue,الصنبور في دورة المياه بالطابق الثاني يسرب الماء باستمرار
+a02,ar,issue,الإضاءة تومض في الممر الرئيسي
+a03,ar,issue,المصعد رقم 3 عالق بين الطوابق
+a04,ar,issue,رائحة كريهة تخرج من المجاري بالقرب من المقصف
+a05,ar,issue,قفل الباب في الغرفة 112 مكسور ولا يغلق
+a06,ar,issue,مقبس الكهرباء يطلق شرارة في الورشة يرجى الفحص العاجل
+a07,ar,issue,سقطت قطعة من السقف المستعار في الاستقبال
+a08,ar,issue,المكيف لا يبرد في غرفة الاجتماعات
+a09,ar,issue,المياه تفيض من المرحاض في المبنى ب
+a10,ar,issue,لوحة إنذار الحريق تظهر إشارة عطل
+a11,ar,issue,المولد لا يعمل هذا الصباح
+a12,ar,issue,زجاج النافذة مكسور في المكتبة
+a13,ar,issue,محرك البوابة لا يعمل عند مدخل المواقف
+a14,ar,issue,انفجر أنبوب بالقرب من غرفة المضخات والمياه في كل مكان
+a15,ar,issue,مصباحان لا يعملان في المخزن
+a16,ar,issue,المروحة في غرفة الموظفين تصدر ضجيجًا عاليًا
+a17,ar,issue,الطلاء يتقشر وهناك رطوبة في الفصل 5
+a18,ar,issue,كاميرا المراقبة عند البوابة الخلفية متوقفة
+a19,ar,issue,برادة المياه قرب النادي لا تعمل
+a20,ar,issue,رائحة غاز في منطقة المطبخ
+a21,ar,issue,المغسلة مسدودة في المطبخ الصغير
+a22,ar,issue,الدرابزين على الدرج مرتخٍ
+a23,ar,issue,لا يوجد ماء ساخن في الدشات
+a24,ar,issue,رأس الرشاش يتسرب في الممر
+a25,ar,issue,إضاءة مخرج الطوارئ لا تعمل في الطابق الثاني
+a26,ar,issue,حاويات القمامة ممتلئة خلف المبنى وتحتاج مكافحة آفات
+a27,ar,issue,بلاط مكسور عند المدخل وقد يتعثر الناس
+a28,ar,issue,كرسي وطاولة مكسورة في الغرفة 8
+a29,ar,issue,السقف يتسرب عند المطر في القاعة
+a30,ar,issue,جهاز الاتصال الداخلي في مكتب الاستقبال لا يعمل
+a31,ar,done,تم إصلاح الصنبور المسرب في دورة المياه 2 وكل شيء تمام
+a32,ar,done,تم تغيير الإضاءة في الممر وانتهى العمل
+a33,ar,done,المصعد 3 عاد للخدمة وانتهى الفني
+a34,ar,done,تم تنظيف المجاري وزالت الرائحة تم الانتهاء
+a35,ar,done,تم تغيير قفل الباب في الغرفة 112 تم الانتهاء
+a36,ar,done,تم استبدال المقبس واختباره ويعمل بشكل سليم
+a37,ar,done,تمت إعادة تركيب قطعة السقف في الاستقبال
+a38,ar,done,تمت تعبئة غاز المكيف وغرفة الاجتماعات تبرد الآن
+a39,ar,done,تم فتح انسداد المرحاض في المبنى ب
+a40,ar,done,تمت إعادة ضبط لوحة الإنذار وزال العطل
+a41,ar,done,تمت صيانة المولد ويعمل بشكل طبيعي
+a42,ar,done,تم تركيب زجاج جديد للنافذة في المكتبة
+a43,ar,done,تم إصلاح محرك البوابة
+a44,ar,done,تم عزل الأنبوب المنفجر وإصلاحه وغرفة المضخات جافة
+a45,ar,done,تم تغيير المصباحين في المخزن تم
+a46,ar,done,تم تنظيف ممر الطابق الثالث وانتهينا
+a47,ar,done,انتهى الدهان في الفصل 5
+a48,ar,done,كاميرا المراقبة عادت للعمل بعد إعادة التشغيل
+a49,ar,done,تم إصلاح برادة المياه
+a50,ar,done,تم إغلاق تسرب الغاز والمنطقة آمنة بعد الفحص
+a51,ar,done,تم فتح انسداد المغسلة
+a52,ar,done,تم شد الدرابزين وتثبيته
+a53,ar,done,تم إصلاح السخان والماء الساخن متوفر مرة أخرى
+a54,ar,done,تم استبدال رأس الرشاش والمهمة مكتملة
+a55,ar,done,تم تبديل إضاءة مخرج الطوارئ
+a56,ar,done,تم تفريغ الحاويات وتنظيف المكان
+a57,ar,done,تم استبدال البلاط عند المدخل
+a58,ar,done,تم إصلاح الكرسي والطاولة وإعادتهما إلى الغرفة 8
+a59,ar,done,تم ترقيع تسرب السقف
+a60,ar,done,جهاز الاتصال الداخلي يعمل من جديد
+a61,ar,other,صباح الخير جميعًا
+a62,ar,other,الغداء جاهز في المقصف
+a63,ar,other,اجتماع الساعة الثالثة في قاعة المؤتمرات
+a64,ar,other,من لديه مفاتيح الحافلة
+a65,ar,other,عيد ميلاد سعيد لأحمد
+a66,ar,other,أرسل لي ورقة الحضور من فضلك
+a67,ar,other,الزحام شديد على الطريق السريع اليوم
+a68,ar,other,المباراة البارحة كانت رائعة
+a69,ar,other,شاهدوا هاتفي الجديد
+a70,ar,other,تبديل الوردية الساعة السادسة هل يستطيع أحد أن يغطي مكاني
+a71,ar,other,الزوار سيصلون الساعة العاشرة يرجى تجهيز المواقف
+a72,ar,other,تذكير بتسليم كشوف الدوام قبل يوم الجمعة
+a73,ar,other,شكرًا للفريق عمل رائع اليوم
+a74,ar,other,أين المشرف
+a75,ar,other,هل يعرف أحد كلمة سر الواي فاي
+a76,ar,other,وصلت شاحنة التوصيل إلى الرصيف
+a77,ar,other,غدًا إجازة رسمية
+a78,ar,other,انظروا إلى هذا الغروب الجميل
+a79,ar,other,سأتأخر اليوم
+a80,ar,other,هل يستطيع أحد إحضار الشاي إلى المكتب
+a81,ar,other,سيتم توزيع الزي الجديد الأسبوع القادم
+a82,ar,other,الدورة التدريبية تبدأ غدًا الساعة التاسعة
+a83,ar,other,طرد لقسم المالية عند الاستقبال
+a84,ar,other,فريقنا فاز في مباراة الكريكيت
+a85,ar,other,يرجى إبقاء قناة الراديو خالية
+a86,ar,other,حسنًا مفهوم
+a87,ar,other,قطة تجلس على سقف السيارة
+a88,ar,other,هل الكافتيريا مفتوحة يوم السبت
+a89,ar,other,انتهت جولة الأمن ولا حوادث
+a90,ar,other,نرحب بزميلتنا الجديدة سارة

@@ -97,6 +97,7 @@ def _build_response(result: ProcessedPost, idempotent_replay: bool = False) -> d
         "shadow": result.shadow,
         "text_guard": getattr(result, "text_guard", None),
         "agree_mode": getattr(result, "agree_mode", None),
+        "intent": getattr(result, "intent", None),
     }
 
 

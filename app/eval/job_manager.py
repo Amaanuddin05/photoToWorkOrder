@@ -333,6 +333,8 @@ class EvalJobManager:
             "text_guard_source": guard_src,
             "agree_mode": (ov.get("agree_mode") if ov.get("agree_mode") in ("strict", "balanced", "relaxed")
                            else getattr(self.settings, "DECISION_AGREE_MODE", "strict")),
+            "intent_enabled": bool(ov.get("intent_enabled", getattr(self.settings, "INTENT_ENABLED", False))),
+            "intent_min_prob": float(getattr(self.settings, "INTENT_MIN_PROB", 0.85)),
             "agree_text_margin": float(getattr(self.settings, "DECISION_AGREE_TEXT_MARGIN", 0.05)),
             "agree_image_top_k": int(getattr(self.settings, "DECISION_AGREE_IMAGE_TOP_K", 3)),
             "model_ids": {
@@ -439,6 +441,7 @@ class EvalJobManager:
             # The values above are already resolved for this run's model (profile or override)
             "TEXT_GUARD_PINNED": True,
             "DECISION_AGREE_MODE": job.effective_settings.get("agree_mode", getattr(self.settings, "DECISION_AGREE_MODE", "strict")),
+            "INTENT_ENABLED": job.effective_settings.get("intent_enabled", getattr(self.settings, "INTENT_ENABLED", False)),
         })
 
         valid_rows = [

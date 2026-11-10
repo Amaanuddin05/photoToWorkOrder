@@ -1,0 +1,1081 @@
+﻿id,lang,label,topic,split,text
+t0084,en,issue,move_furn,train,Shift the sofa in the kitchen to reception
+t0992,ar,other,chat1,train,مساء الخير للفريق شكرًا
+t0250,en,done,event_setup,train,Tents and tables at the main corridor arranged as requested please check
+t0529,en,other,chat6,train,"Attention, Rdio check one two"
+t0400,en,other,chat3,train,"Attention, Reminder: safety induction next Monday"
+t0450,en,other,chat8,train,Congratulations on the promotion thanks
+t0629,ar,issue,tap,dev,تقطر المياه من الحنفية في المقصف من فضلكم
+t0803,ar,done,ceiling,train,فريق، تم إصلاح السقف ودهانه في الطابق الثالث مفهوم؟
+t0989,ar,other,chat7,train,انتباه، هل أحد متفرغ للمساعدة في نقل الصناديق
+t0150,en,issue,toilet,train,"Hi, Toilet seat broken in the back gate pls"
+t1049,ar,other,chat4,train,يا شباب، شكرًا للفريق عمل رائع اليوم
+t0216,en,done,lock,train,"Hi, Fitted a new handl on the door of the pump room copy?"
+t1071,ar,other,chat8,train,عاجل: يرجى التوقيع على سجل الزوار عند الممر الرئيسي شكرًا
+t0105,en,issue,lift,train,Elevator not working at building A thanks
+t0161,en,issue,cctv,train,Urgent: Camera pointing the wrong way at the pump room
+t0005,en,issue,mixed,train,Urgent: Painters left but the drain is blocked now
+t0351,en,done,ext_clean,train,"Hi, Swept the walkway near the gym pls"
+t0943,ar,other,chat6,train,عاجل: بطاقات المواقف متوفرة عند المبنى أ
+t0394,en,other,chat6,train,FYI Radio check one two copy?
+t1043,ar,other,chat7,train,الزحام شديد على الطريق السريع اليوم
+t0520,en,other,chat6,train,Our team won the game
+t0152,en,issue,bins,train,Urgent: Cockroaches in the main corridor thanks
+t0391,en,other,chat3,train,Please welcome our new colleague Sara asap
+t0928,ar,other,chat_dev,dev,فريق، قطة تجلس على السيارة يرجى المعاينة
+t0678,ar,issue,fire_alarm,dev,مرحبًا، لوحة إنذار الحريق تظهر عطل في البوابة الخلفية (الصورة مرفقة)
+t0670,ar,issue,gen_clean,dev,دورات المياه في غرفة الاجتماعات متسخة يرجى تنظيفها يرجى المعاينة
+t0933,ar,other,chat_dev,dev,يا شباب، سيتم صرف الرواتب يوم 25
+t0911,ar,other,chat1,train,مرحبًا، تبديل الوردية الساعة السادسة هل يستطيع أحد أن يغطي مكاني مفهوم؟
+t0890,ar,done,move_furn,train,يا شباب، تم نقل الأريكة من غرفة الموظفين وانتهى من فضلكم
+t0493,en,other,chat6,train,Parking passes are available at the pump room
+t0253,en,done,socket,train,"Hi, Power restored in the car park breaker ixed pls"
+t0625,ar,issue,ext_clean,train,فريق، أوراق الشجر متساقطة على الممشى قرب الاستقبال
+t0061,en,issue,lights,train,Lights are flickering in the workshop (photo attached)
+t0279,en,done,exit_light,train,Exit sign in the gym fixed and lit please check
+t0080,en,issue,drain,train,"Urgent: Drain in the pump room is blocked, water not going down please check"
+t0452,en,other,chat1,train,FYI Good evening team
+t0086,en,issue,key_copy,train,urgent: new staff member needs a duplicate key for room 204
+t0882,ar,done,gate,train,يا شباب، تم إصلاح الحاجز عند المدخل الأمامي ويتحرك
+t0465,en,other,chat_dev,dev,"Hi, Where is the supervisor"
+t0126,en,issue,ceiling,train,"Attention, Ceiling in the main corridor has a big stain and sagging over"
+t0582,ar,issue,ext_clean,train,عاجل: أوراق الشجر متساقطة على الممشى قرب الممر الرئيسي
+t0460,en,other,chat_dev,dev,Check out my new phone (photo attached)
+t0258,en,done,waste,train,Urgent: Skip bin at building A cleared today
+t0820,ar,done,ac,train,تم تنظيف فلاتر المكيف في المخزن (الصورة مرفقة)
+t0776,ar,done,exit_light,train,تم تبديل إضاءة مخرج الطوارئ في الطابق الثالث
+t0872,ar,done,bins,train,تمت مكافحة الآفات في الورشة بسرعة
+t0959,ar,other,chat4,train,شكرًا للفريق عمل رائع اليوم حول
+t0236,en,done,exit_light,train,"Hi, Exit sign in room 204 fixed and lit over"
+t0325,en,done,locker,train,"Team, Opened the locker in classroom 5 for the student pls"
+t0568,ar,issue,roof_clean,train,عاجل: الماء يتجمع على سطح البوابة الخلفية مع الأوساخ مفهوم؟
+t0028,en,issue,roof_clean,train,"team, dead leaves and debris on the roof above the staff room thanks"
+t0100,en,issue,ac,train,"Attention, AC unit dripping water in the pump room"
+t0986,ar,other,chat4,train,انتباه، هل يمكنك إعادة إرسال الجدول من فضلكم
+t0751,ar,done,secure_area,train,يا شباب، تم جعل المنطقة عند المقصف آمنة وإخلاء الناس
+t0106,en,issue,office_clean,train,Vacuum the carpet in the workshop
+t0367,en,other,mixed,train,"Guys, Fire drill at 11 everyone assemble at the car park (photo attached)"
+t1021,ar,other,chat3,train,انتباه، نرحب بزميلتنا الجديدة سارة
+t1030,ar,other,chat3,train,تذكير: ورشة السلامة يوم الاثنين القادم يرجى المعاينة
+t0506,en,other,chat1,train,FYI Shift change at 6 can anyone cover for me (photo attached)
+t1042,ar,other,chat6,train,يا شباب، أرسل لي ورقة الحضور من فضلك
+t0840,ar,done,sink,train,فريق، تم فتح انسداد المغسلة في المبنى ب
+t0019,en,issue,lift,train,Lift near the meeting room is stuck pls
+t1037,ar,other,chat1,train,عاجل: مساء الخير للفريق يرجى المعاينة
+t0967,ar,other,chat3,train,انتباه، سيتم توزيع الزي الجديد الأسبوع القادم (الصورة مرفقة)
+t0332,en,done,bins,train,Bins near the back gate emptied and cleaned pls
+t0949,ar,other,chat3,train,مرحبًا، اجتماع الساعة الثالثة في الطابق الثالث
+t0977,ar,other,chat4,train,هل أحد ذاهب إلى المدينة بعد الدوام
+t0671,ar,issue,deep_clean,dev,انتباه، بلاط دورة المياه في المخزن متسخ وله رائحة ويحتاج إلى فرك مفهوم؟
+t0215,en,done,waste,train,Urgent: Skip bin at the front entrance cleared today
+t0342,en,done,gate,train,FYI Gate motor at room 204 repaired please check
+t0211,en,done,secure_area,train,"attention, tree removed from the path near classroom 5"
+t0688,ar,issue,lift,train,للعلم المصعد قرب المكتبة عالق
+t0859,ar,done,tiles,train,للعلم تم إصلاح الأرضية في الممر الرئيسي وتسويتها من فضلكم
+t0550,ar,issue,mixed,train,انتهينا من الطابق الثاني لكن مكيف الطابق الثالث لا يبرد
+t0183,en,done,mixed,train,"Urgent: Work finished, please close the ticket"
+t0580,ar,issue,ceiling,train,الجبس يتساقط من السقف في الطابق الثالث (الصورة مرفقة)
+t0958,ar,other,chat3,train,مرحبًا، تذكير بتسليم كشوف الدوام قبل يوم الجمعة شكرًا
+t0386,en,other,chat7,train,please keep the radio channel clear
+t0357,en,done,window,dev,urgent: new window glass fitted in the canteen copy?
+t0200,en,done,office_clean,train,"Team, Cleaned the desks and monitors in the back gate done over"
+t0765,ar,done,deep_clean,dev,مرحبًا، تم التنظيف العميق لدورة المياه في المخزن مفهوم؟
+t0957,ar,other,chat2,train,الزوار سيصلون الساعة العاشرة يرجى تجهيز المواقف عند المقصف
+t0459,en,other,chat8,train,Urgent: The match last night was amazing
+t0512,en,other,chat7,train,"Hi, Delivery truck has arrived thanks"
+t0827,ar,done,toilet,train,انتباه، تم تبديل السيفون في المقصف ويعمل الآن من فضلكم
+t0578,ar,issue,spill,train,مرحبًا، انسكاب كبير على أرضية غرفة الاجتماعات يرجى التنظيف الآن من فضلكم
+t0905,ar,other,mixed,train,عاجل: شكرًا على إصلاحه سابقًا وكل عام وأنتم بخير بسرعة
+t0047,en,issue,it_equip,dev,Projector in the front entrance won't turn on thanks
+t0540,en,other,chat8,train,Congratulations on the promotion
+t0125,en,issue,cooler,train,Urgent: Water cooler in the main corridor is not working copy?
+t0456,en,other,chat_dev,dev,happy birthday to ahmed copy?
+t0523,en,other,chat_dev,dev,Cat sitting on the car copy?
+t0979,ar,other,chat6,train,اختبار الراديو واحد اثنان بسرعة
+t0392,en,other,chat4,train,anyone going to town after work over
+t1015,ar,other,chat6,train,عاجل: فريقنا فاز في المباراة حول
+t0954,ar,other,chat8,train,فريق، المباراة البارحة كانت رائعة شكرًا
+t0682,ar,issue,exit_light,train,للعلم إضاءة مخرج الطوارئ لا تعمل في المبنى ب (الصورة مرفقة)
+t0101,en,issue,window_clean,train,clean the glass windows in classroom 5 inside and outside
+t0476,en,other,chat7,train,"Attention, Please keep the radio channel clear"
+t1060,ar,other,chat6,train,للعلم فريقنا فاز في المباراة حول
+t0744,ar,done,pipe,train,تم عزل وإصلاح الأنبوب المسرب في النادي الرياضي
+t1012,ar,other,chat3,train,للعلم سيتم توزيع الزي الجديد الأسبوع القادم يرجى المعاينة
+t0368,en,other,mixed,train,"Attention, The light switch ceremony starts at 5"
+t0689,ar,issue,office_clean,train,للعلم نظفوا السجاد بالمكنسة الكهربائية في المبنى أ
+t0697,ar,issue,roof_clean,train,مرحبًا، الماء يتجمع على سطح غرفة المضخات مع الأوساخ
+t0118,en,issue,cctv,train,"Guys, Camera in the workshop showing black screen"
+t0037,en,issue,drain,train,"FYI Drain in the staff room is blocked, water not going down"
+t0887,ar,done,spill,train,تم تنظيف وتعقيم القيء في غرفة الاجتماعات شكرًا
+t0231,en,done,generator,dev,Generator serviced and running normally
+t0711,ar,issue,ext_clean,train,أوراق الشجر متساقطة على الممشى قرب الممر الرئيسي مفهوم؟
+t0015,en,issue,window_clean,train,"Hi, Windows in reception are dirty and streaky (photo attached)"
+t0049,en,issue,handrail,dev,fyi handrail on the stairs near the pump room is loose over
+t0271,en,done,window,dev,"Hi, New window glass fitted in the gym asap"
+t1076,ar,other,chat4,train,مرحبًا، هل يمكنك إعادة إرسال الجدول
+t0263,en,done,ceiling,train,"Guys, Ceiling tile put back in the pump room"
+t0547,ar,issue,mixed,train,عاجل: الإصلاح لم ينجح المرحاض يسرب مرة أخرى (الصورة مرفقة)
+t0964,ar,other,chat_dev,dev,انتباه، انظروا إلى هذا الغروب الجميل
+t0132,en,issue,tap,dev,Tap in the meeting room keeps leaking thanks
+t0202,en,done,heater,train,Replaced the heating element in the gym thanks
+t0917,ar,other,chat7,train,انتباه، وصلت شاحنة التوصيل
+t0712,ar,issue,key_copy,train,يرجى عمل مفتاح احتياطي للخزانة في المقصف حول
+t0299,en,done,gate,train,Sliding gate at the canteen unjammed and lubricated
+t0521,en,other,chat7,train,Urgent: Please keep the radio channel clear
+t0655,ar,issue,roof,train,يا شباب، السقف يتسرب عند المطر في دورة المياه في الطابق الثاني (الصورة مرفقة)
+t0300,en,done,sink,train,"Guys, Sink in room 204 unblocked"
+t0274,en,done,generator,dev,"Guys, Backup power restored in the workshop please check"
+t0740,ar,done,office_clean,train,تم تنظيف المكاتب في المطبخ وإزالة الغبار
+t1035,ar,other,chat8,train,للعلم مبروك الترقية شكرًا
+t0749,ar,done,roof,train,تم ترقيع تسرب السقف فوق المخزن (الصورة مرفقة)
+t0508,en,other,chat3,train,"Guys, Reminder to submit timesheets by Friday copy?"
+t0495,en,other,chat8,train,Congratulations on the promotion over
+t1013,ar,other,chat4,train,مرحبًا، الدورة التدريبية تبدأ غدًا الساعة التاسعة
+t0626,ar,issue,key_copy,train,فريق، الموظف الجديد يحتاج إلى نسخة مفتاح لـ المدخل الأمامي
+t0212,en,done,cctv,train,FYI Camera in the kitchen replaced and working copy?
+t0925,ar,other,chat6,train,فريق، فريقنا فاز في المباراة
+t0733,ar,done,exit_light,train,عاجل: تم إصلاح لوحة المخرج في المكتبة وتضيء حول
+t0287,en,done,toilet,train,"guys, toilet blockage cleared in the canteen"
+t0586,ar,issue,tap,dev,انتباه، خلاط المياه في المطبخ مكسور ويسرب بسرعة
+t0906,ar,other,mixed_dev,dev,للعلم زجاجات المياه في المخزن خذوا ما تحتاجون مفهوم؟
+t0374,en,other,chat4,train,FYI Thanks team great work today
+t0124,en,issue,spill,train,someone threw up in the pump room needs urgent cleaning asap
+t0885,ar,done,lock,train,للعلم تم إصلاح قفل الباب في الغرفة 204
+t1001,ar,other,chat1,train,تبديل الوردية الساعة السادسة هل يستطيع أحد أن يغطي مكاني
+t0462,en,other,chat2,train,"Hi, Visitors arriving at 10 please arrange parking at the gym"
+t1007,ar,other,chat7,train,وصلت شاحنة التوصيل
+t0783,ar,done,office_clean,train,تم تنظيف المكاتب في المبنى أ وإزالة الغبار (الصورة مرفقة)
+t0209,en,done,roof,train,Waterproofing done on the roof of the canteen
+t0107,en,issue,toilet,train,"Attention, Toilet in reception is blocked and overflowing (photo attached)"
+t0026,en,issue,patrol,train,FYI Patrol skipped the back gate last night asap
+t0665,ar,issue,cooler,train,فريق، موزع المياه في الغرفة 204 لا يبرد يرجى المعاينة
+t0960,ar,other,chat_dev,dev,للعلم أين المشرف
+t1005,ar,other,chat_dev,dev,أين المشرف (الصورة مرفقة)
+t0364,en,other,mixed,train,Please do not park near the gate during the event thanks
+t0613,ar,issue,socket,train,مرحبًا، لا توجد كهرباء في المقابس في المقصف
+t0722,ar,done,mixed,train,تم التنفيذ كما هو مطلوب من فضلكم
+t0604,ar,issue,toilet,train,مرحبًا، المرحاض في الورشة مسدود ويفيض يرجى المعاينة
+t0594,ar,issue,volleyball,train,فريق، ملعب الكرة الطائرة عند غرفة الموظفين يحتاج إلى الخطوط والشبكة
+t0016,en,issue,locker,train,"Hi, Locker in the back gate will not open, key turns but nothing happens over"
+t0241,en,done,lights,train,Urgent: ighting in the staff room fixed asap
+t1058,ar,other,chat4,train,انتباه، الدورة التدريبية تبدأ غدًا الساعة التاسعة حول
+t0851,ar,done,deep_clean,dev,فريق، تم التنظيف العميق لدورة المياه في الاستقبال
+t0285,en,done,lift,train,"Guys, Lift at the canteen is back in service asap"
+t0343,en,done,sink,train,"Guys, Sink in block B unblocked"
+t0042,en,issue,ext_clean,train,"Attention, Fallen leaves all over the walkway near room 204 please check"
+t0907,ar,other,mixed,train,تمرين إخلاء الساعة 11 الجميع يتجمع في مواقف السيارات
+t0344,en,done,waste,train,Garbage behind room 204 collected asap
+t0191,en,done,volleyball,train,court at the 2nd floor washroom marked and net fitted
+t0479,en,other,chat1,train,FYI Is the cafeteria open on Saturday please check
+t1054,ar,other,chat_dev,dev,مرحبًا، انظروا إلى هذا الغروب الجميل
+t0922,ar,other,chat3,train,فريق، سيتم توزيع الزي الجديد الأسبوع القادم (الصورة مرفقة)
+t0490,en,other,chat3,train,Reminder: safety induction next Monday thanks
+t0497,en,other,chat1,train,Good evening team please check
+t0399,en,other,chat2,train,"Guys, Coffee machine order has arrived over"
+t0359,en,done,facade,dev,"attention, pressure washed the outside wall of the staff room done please check"
+t0269,en,done,tap,dev,"Hi, Tapin reception repaired asap"
+t0551,ar,issue,volleyball,train,يا شباب، الشبكة متهدلة في الطابق الثالث وتحتاج إلى شد قبل المباراة حول
+t0453,en,other,chat2,train,FYI Lunch is ready in the kitchen copy?
+t0614,ar,issue,secure_area,train,لوحة كهرباء تطلق شرارًا في الغرفة 204 أبعدوا الناس
+t0121,en,issue,waste,train,garbage overflowing behind the car park
+t0154,en,issue,handyman,train,Hinge on the cabinet door in block B is broken asap
+t0119,en,issue,gate,train,"Team, Barrier gate stuck open at the main corridor over"
+t0570,ar,issue,socket,train,المقبس الكهربائي في دورة المياه في الطابق الثاني يطلق شرارة مفهوم؟
+t0487,en,other,chat_dev,dev,boss is on his way to the front entrance
+t0244,en,done,toilet,train,"Team, Flush mechanism replaced in the front entrance working now"
+t0023,en,issue,bins,train,garbage bins overflowing near level 3
+t1003,ar,other,chat3,train,تذكير بتسليم كشوف الدوام قبل يوم الجمعة بسرعة
+t0893,ar,done,gen_clean,dev,تم كنس وتنظيف الممر قرب الممر الرئيسي
+t0796,ar,done,gate,train,تم إصلاح الحاجز عند البوابة الخلفية ويتحرك من فضلكم
+t0877,ar,done,roof_clean,train,تم تنظيف السطح فوق غرفة المضخات من الحطام بسرعة
+t1028,ar,other,chat1,train,موعد الصلاة بعد عشر دقائق بسرعة
+t0230,en,done,facade,dev,facade near the front entrance washed and cleaned (photo attached)
+t0567,ar,issue,event_setup,train,عاجل: جهزوا المسرح والكراسي في الغرفة 204 لليوم السنوي
+t0289,en,done,bins,train,Urgent: Bins near the 2nd floor washroom emptied and cleaned (photo attached)
+t0164,en,issue,waste,train,Skip bin at the staff room has not been collected for days thanks
+t0091,en,issue,window,dev,FYI Window glass cracked in reception asap
+t0034,en,issue,sink,train,"Guys, Basi in the gym not draining"
+t0401,en,other,chat4,train,"Guys, Can you resend the schedule asap"
+t0891,ar,done,ext_clean,train,عاجل: تم جمع النفايات في الساحة عند الغرفة 204 وانتهى من فضلكم
+t0816,ar,done,tiles,train,عاجل: تم تثبيت البلاط المفكوك في الممر الرئيسي مفهوم؟
+t0389,en,other,chat1,train,"Attention, Is the cafeteria open on Saturday"
+t0753,ar,done,gate,train,انتباه، تم فك البوابة المنزلقة عند غرفة الاجتماعات وتشحيمها
+t0505,en,other,chat_dev,dev,"Guys,Check out my new phone copy?"
+t0806,ar,done,key_copy,train,فريق، نسخة المفتاح لـ المكتبة جاهزة وتم تسليمها حول
+t0499,en,other,chat3,train,Meeting at 3 pm in reception
+t0610,ar,issue,event_setup,train,يا شباب، جهزوا المسرح والكراسي في المقصف لليوم السنوي مفهوم؟
+t0837,ar,done,secure_area,train,انتباه، تم جعل المنطقة عند المكتبة آمنة وإخلاء الناس بسرعة
+t0463,en,other,chat3,train,"Hi, Reminder to submit timesheets by Friday thanks"
+t0870,ar,done,toilet,train,مرحبًا، تم إصلاح المرحاض في المبنى أ يرجى المعاينة
+t0179,en,issue,facade,dev,"Hi, The outer wall of the kitchen is covered in black streaks and dirt"
+t0441,en,other,chat8,train,Urgent: Please sign the visitor log at block B (photo attached)
+t0686,ar,issue,gas,train,للعلم تسرب غاز قرب الموقد في الفصل 5
+t0416,en,other,chat1,train,"Team, Shift change at 6 can anyone cover for me over"
+t0165,en,issue,lock,train,Door handle fell off in the workshop
+t0382,en,other,chat3,train,"Team, New uniforms will be distributed next week"
+t0317,en,done,generator,dev,"Hi, Generator fuel filled and started fine copy?"
+t0302,en,done,lock,train,Fitted a new handle on the door of building A asap
+t0616,ar,issue,gate,train,البوابة المنزلقة عند النادي الرياضي عالقة
+t0436,en,other,chat3,train,Please welcome our new collague Sara thanks
+t0892,ar,done,key_copy,train,مرحبًا، نسخة المفتاح لـ المخزن جاهزة وتم تسليمها
+t1004,ar,other,chat4,train,للعلم شكرًا للفريق عمل رائع اليوم حول
+t0297,en,done,secure_area,train,Tree removed from the path near the kitchen over
+t0772,ar,done,fire_alarm,dev,يا شباب، تمت إعادة ضبط لوحة الإنذار في الغرفة 204 وزال العطل (الصورة مرفقة)
+t0275,en,done,fire_alarm,dev,Smoke detector batterychanged in the store room thanks
+t0129,en,issue,key_copy,train,"Guys, Please make a spare key for the cabinet in the workshop please check"
+t0409,en,other,chat3,train,"Guys, Meeting at 3 pm in the car park pls"
+t0841,ar,done,waste,train,تم إفراغ حاوية النفايات عند المخزن اليوم من فضلكم
+t0603,ar,issue,office_clean,train,مكاتب الإدارة في الاستقبال تحتاج إلى تنظيف وإزالة الغبار من فضلكم
+t1080,ar,other,chat8,train,للعلم مبروك الترقية
+t1006,ar,other,chat6,train,للعلم هل يعرف أحد كلمة سر الواي فاي بسرعة
+t0067,en,issue,pipe,train,"Team, Pipe burst near the 2nd floor washroom water everywhere please check"
+t0277,en,done,volleyball,train,Court at room 204 marked and net fitted please check
+t0017,en,issue,gas,train,"Attention, Gas leak near the cooker in the front entrance (photo attached)"
+t0858,ar,done,fire_alarm,dev,تم تغيير بطارية كاشف الدخان في غرفة الموظفين بسرعة
+t0532,en,other,chat_dev,dev,"Team, Boss is on his way to the meeting room asap"
+t0555,ar,issue,window_clean,train,عاجل: الزجاج الخارجي عند النادي الرياضي يحتاج إلى تنظيف يرجى المعاينة
+t0646,ar,issue,office_clean,train,يا شباب، مكاتب الإدارة في الفصل 5 تحتاج إلى تنظيف وإزالة الغبار
+t0797,ar,done,sink,train,انتباه، تم تسليك مصرف الحوض في المبنى ب
+t1059,ar,other,chat_dev,dev,طرد لقسم المالية عند المبنى أ بسرعة
+t0445,en,other,chat3,train,"Guys, Reminder: safety induction next Monday (photo attached)"
+t0569,ar,issue,roof,train,الماء ينزل من السقف فوق غرفة المضخات يرجى المعاينة
+t0483,en,other,chat_dev,dev,Urgent: Payroll will be processed on the 25th
+t0115,en,issue,roof,train,Water coing through the roof above the store room over
+t0726,ar,done,mixed_dev,dev,مرحبًا، اكتمل العمل وتم تنظيف الموقع
+t0363,en,other,mixed,train,Meeting about the generator tender tomorrow copy?
+t0706,ar,issue,drain,train,انتباه، المصرف في دورة المياه في الطابق الثاني مسدود والماء لا ينزل يرجى المعاينة
+t0208,en,done,roof_clean,train,"attention, roof above the store room cleared of debris copy?"
+t0731,ar,done,volleyball,train,تم شد الشبكة في الممر الرئيسي وهي جاهزة للمباراة (الصورة مرفقة)
+t0913,ar,other,chat3,train,عاجل: تذكير بتسليم كشوف الدوام قبل يوم الجمعة
+t0114,en,issue,roof_clean,train,Urgent: Water collecting on the terrace of the front entrance with dirt asap
+t0112,en,issue,patrol,train,"Hi, Gate at the workshop found unlocked after hours no guard please check"
+t0862,ar,done,exit_light,train,تم اختبار إضاءة الطوارئ في البوابة الخلفية وكلها سليمة بسرعة
+t0990,ar,other,chat8,train,عاجل: مبروك الترقية
+t0491,en,other,chat4,train,"attention, can you resend the schedule please check"
+t0737,ar,done,gas,train,فريق، تم إصلاح صمام الأسطوانة في المبنى أ
+t0848,ar,done,ext_clean,train,عاجل: تم جمع النفايات في الساحة عند الغرفة 204 وانتهى مفهوم؟
+t1079,ar,other,chat7,train,مرحبًا، هل أحد متفرغ للمساعدة في نقل الصناديق شكرًا
+t0821,ar,done,window_clean,train,انتباه، تم غسل الزجاج عند النادي الرياضي وأصبح نظيفًا شكرًا
+t0873,ar,done,pipe,train,مرحبًا، تم عزل وإصلاح الأنبوب المسرب في الممر الرئيسي بسرعة
+t0045,en,issue,deep_clean,dev,"Team, Toilets in the main corridor need a deep clean"
+t0278,en,done,water_bottle,train,new jug fitted at the dispenser in the kitchen copy?
+t0584,ar,issue,gen_clean,dev,فريق، الممر قرب النادي الرياضي متسخ ويحتاج إلى كنس مفهوم؟
+t0988,ar,other,chat6,train,بطاقات المواقف متوفرة عند غرفة الاجتماعات
+t1040,ar,other,chat4,train,من لديه مفاتيح الحافلة (الصورة مرفقة)
+t0405,en,other,chat8,train,"Attention, Congratulations on the promotion"
+t0270,en,done,it_equip,dev,FYI Projector in the staff room fixed and working over
+t0691,ar,issue,heater,train,مرحبًا، لا يوجد ماء ساخن في المدخل الأمامي مفهوم؟
+t0666,ar,issue,ceiling,train,انتباه، سقطت قطعة من السقف في المبنى أ
+t0664,ar,issue,spill,train,يا شباب، انسكاب كبير على أرضية غرفة المضخات يرجى التنظيف الآن (الصورة مرفقة)
+t0915,ar,other,chat_dev,dev,عاجل: أين المشرف يرجى المعاينة
+t0043,en,issue,key_copy,train,"Attention, New staff member needs a duplicate key for level 3 over"
+t0422,en,other,chat7,train,"Guys, Delivery truck has arrived thanks"
+t0966,ar,other,chat2,train,للعلم هل يستطيع أحد إحضار الشاي إلى المقصف مفهوم؟
+t0082,en,issue,cooler,train,Urgent: Drinking water dispenser in the car park has no cold water
+t0307,en,done,move_furn,train,Urgent: Moved the desks from the workshop as requested asap
+t0854,ar,done,window,dev,فريق، تم استبدال الزجاج المكسور في المطبخ وتنظيفه من فضلكم
+t0163,en,issue,sink,train,urgent: sink in the car park is blocked
+t0346,en,done,drain,train,FYI Drain in the canteen cleaned and the smell is gone over
+t0292,en,done,patrol,train,"Guys, Guard back at the post near the car park asap"
+t0657,ar,issue,secure_area,train,مرحبًا، شجرة ساقطة تسد الطريق قرب الورشة يرجى تأمين المنطقة
+t0138,en,issue,fire_alarm,dev,Fire alarm panel showing fault in the 2nd floor washroom (photo attached)
+t0098,en,issue,water_bottle,train,"Attention, Drinking station nar the back gate has no water bottle left (photo attached)"
+t0755,ar,done,waste,train,للعلم تم تفريغ صناديق القمامة قرب الممر الرئيسي من فضلكم
+t0910,ar,other,mixed,train,عاجل: مقاعد النافذة محجوزة للضيوف يرجى المعاينة
+t0341,en,done,cctv,train,"Guys, Camera in the library replaced and working asap"
+t0425,en,other,chat1,train,Urgent: I will be late today over
+t0393,en,other,chat_dev,dev,"Attentio, Payroll will be processed on the 25th pls"
+t0761,ar,done,move_furn,train,فريق، تم نقل الخزائن في المدخل الأمامي إلى المكتب الجديد يرجى المعاينة
+t0195,en,done,window_clean,train,Cleaned the windows in reception inside and out thanks
+t0985,ar,other,chat3,train,تذكير: ورشة السلامة يوم الاثنين القادم
+t0593,ar,issue,tiles,train,بلاط الأرضية مكسور عند المكتبة وقد يتعثر الناس حول
+t0398,en,other,chat1,train,"Hi, Prayer time in 10 minutes"
+t0612,ar,issue,roof,train,يا شباب، السقف يتسرب عند المطر في غرفة الموظفين
+t0264,en,done,move_furn,train,"Team, Moved the desks from the meeting room as requested"
+t0502,en,other,chat6,train,"Hi, Please send me the attendance sheet"
+t0455,en,other,chat4,train,Who has the keys to the van over
+t0439,en,other,chat6,train,"Guys, Radio check one two"
+t0800,ar,done,drain,train,مرحبًا، تم فتح المصرف المسدود في المقصف تم من فضلكم
+t0538,en,other,chat6,train,FYI Parking passes are available at level 3 (photo attached)
+t0779,ar,done,locker,train,يا شباب، تم فتح دورة المياه في الطابق الثاني والتأكد أن المفتاح يعمل الآن (الصورة مرفقة)
+t0935,ar,other,chat7,train,يا شباب، من ترك أضواء الحافلة مضاءة من فضلكم
+t0961,ar,other,chat6,train,فريق، هل يعرف أحد كلمة سر الواي فاي
+t0288,en,done,heater,train,Geyser in level 3 fixed over
+t0839,ar,done,gate,train,يا شباب، تم إصلاح الحاجز عند النادي الرياضي ويتحرك من فضلكم
+t0380,en,other,chat1,train,I will be late today thanks
+t0563,ar,issue,bins,train,للعلم صراصير في النادي الرياضي شكرًا
+t0895,ar,done,tap,dev,تم إصلاح الصنبور المسرب في الغرفة 204 بسرعة
+t0173,en,issue,gen_clean,dev,"Hi,Dirty corridor near the staff room needs sweeping (photo attached)"
+t0844,ar,done,spill,train,يا شباب، تم تنظيف وتعقيم القيء في الطابق الثالث
+t0745,ar,done,handyman,train,فريق، تم تبديل مفصلة الخزانة في المبنى ب بسرعة
+t0786,ar,done,bins,train,عاجل: تم تفريغ الحاويات قرب الاستقبال وتنظيفها مفهوم؟
+t0008,en,issue,mixed,train,Job was marked done but the socket is still dead asap
+t0819,ar,done,exit_light,train,تم إصلاح لوحة المخرج في المدخل الأمامي وتضيء (الصورة مرفقة)
+t0781,ar,done,lights,train,تم تبديل اللمبات في غرفة الاجتماعات وتعمل جميعها من فضلكم
+t0424,en,other,chat_dev,dev,"Team, Look at this beautiful sunset (photo attached)"
+t0600,ar,issue,gas,train,أسطوانة الغاز تصفر في الغرفة 204 (الصورة مرفقة)
+t0272,en,done,handrail,dev,FYI Cracked step at the main corridor repaired thanks
+t0662,ar,issue,lock,train,قفل الباب في الغرفة 204 مكسور شكرًا
+t0525,en,other,chat2,train,FYI Security patrol completed no incidents
+t1075,ar,other,chat3,train,فريق، تذكير: ورشة السلامة يوم الاثنين القادم
+t0663,ar,issue,drain,train,عاجل: المصرف في غرفة المضخات مسدود والماء لا ينزل مفهوم؟
+t0339,en,done,socket,train,changed the faulty switch in the meeting room all fine
+t0085,en,issue,ext_clean,train,"Team, Litter spread across the yard at the store room after the weekend"
+t0849,ar,done,key_copy,train,عاجل: تم قص المفتاح الاحتياطي لـ الفصل 5 وتسليمه مفهوم؟
+t0649,ar,issue,bins,train,انتباه، صراصير في الاستقبال من فضلكم
+t0248,en,done,handyman,train,Urgent: Replaced the hinge on the cabinet in building A
+t0500,en,other,chat4,train,Who has the keys to the van asap
+t0229,en,done,handrail,dev,Handrail near block B tightened and secured
+t1026,ar,other,chat8,train,يا شباب، يرجى التوقيع على سجل الزوار عند دورة المياه في الطابق الثاني
+t0937,ar,other,chat_dev,dev,للعلم المدير في طريقه إلى الممر الرئيسي مفهوم؟
+t0511,en,other,chat6,train,Does anyone know the wifi password
+t0414,en,other,chat8,train,"hi, the match last night was amazing"
+t0695,ar,issue,patrol,train,بوابة الورشة وجدت مفتوحة بعد الدوام ولا يوجد حارس شكرًا
+t0062,en,issue,lift,train,Elevator not working at classroom 5 over
+t0185,en,done,mixed,train,"Team, Issue resolved no further action needed pls"
+t0338,en,done,roof,train,Roof leak above the front entrance patched
+t0184,en,done,mixed,train,"done and tested, all working thanks"
+t0415,en,other,chat_dev,dev,"Attention, Check out my new phone over"
+t0507,en,other,chat2,train,"Hi, Visitors arriving at 10 please arrange parking at the main corridor copy?"
+t0093,en,issue,facade,dev,"Guys, Building facade at the main corridor needs washing, very dirty pls"
+t0596,ar,issue,exit_light,train,فريق، إضاءة مخرج الطوارئ لا تعمل في المقصف
+t1072,ar,other,chat_dev,dev,مرحبًا، المدير في طريقه إلى النادي الرياضي بسرعة
+t0559,ar,issue,lift,train,أبواب المصعد لا تغلق عند المبنى ب من فضلكم
+t0782,ar,done,lift,train,تم ضبط باب المصعد عند مواقف السيارات ويعمل بسرعة
+t0549,ar,issue,mixed,train,انتباه، كل شيء تمام ما عدا محرك البوابة توقف يرجى المعاينة
+t1052,ar,other,chat7,train,مرحبًا، وصلت شاحنة التوصيل من فضلكم
+t0974,ar,other,chat1,train,يا شباب، هل الكافتيريا مفتوحة يوم السبت
+t0387,en,other,chat8,train,"Attention, Ok copy that over"
+t0748,ar,done,roof_clean,train,فريق، تم تنظيف السطح فوق دورة المياه في الطابق الثاني من الحطام مفهوم؟
+t0930,ar,other,chat2,train,عاجل: انتهت جولة الأمن ولا حوادث
+t0618,ar,issue,waste,train,يا شباب، القمامة تفيض خلف الفصل 5
+t0768,ar,done,window,dev,فريق، تم تركيب زجاج جديد للنافذة في المطبخ
+t0044,en,issue,gen_clean,dev,FYI Toilets in the gym are dirty please clean copy?
+t0020,en,issue,office_clean,train,"Guys, Admin offices in the gym need dusting and cleaning"
+t0934,ar,other,chat6,train,عاجل: اختبار الراديو واحد اثنان
+t0842,ar,done,lock,train,تم تغيير القفل في المقصف (الصورة مرفقة)
+t0306,en,done,ceiling,train,Ceiling tile put back in the library please check
+t0908,ar,other,mixed,train,للعلم حفل افتتاح المبنى يبدأ الساعة الخامسة مفهوم؟
+t0468,en,other,chat8,train,"guys, tomorrow is a public holiday"
+t0048,en,issue,window,dev,"Team, Window in the ibrary will not close"
+t0946,ar,other,chat_dev,dev,انتباه، صباح الخير جميعًا بسرعة
+t0522,en,other,chat8,train,Urgent: Ok copy that asap
+t0255,en,done,cctv,train,"Team, Camera in reception replaced and working pls"
+t0021,en,issue,toilet,train,FYI Toilet seat broken in the 2nd floor washroom over
+t0385,en,other,chat6,train,our team won the game please check
+t0223,en,done,key_copy,train,"Hi, Spare key for the staff room cut and handed over thanks"
+t0881,ar,done,cctv,train,كاميرا المراقبة عند المخزن عادت للعمل حول
+t0046,en,issue,tap,dev,Water dripping from the faucet inthe canteen
+t0643,ar,issue,gas,train,تسرب غاز قرب الموقد في المبنى أ بسرعة
+t0724,ar,done,mixed,train,فريق، تم وتم اختباره ويعمل بشكل سليم يرجى المعاينة
+t0996,ar,other,chat_dev,dev,عيد ميلاد سعيد لأحمد يرجى المعاينة
+t0595,ar,issue,water_bottle,train,يا شباب، جالون الماء فارغ عند المحطة في المطبخ
+t0369,en,other,mixed,train,"Team, Pipe band will play at the opening"
+t0063,en,issue,office_clean,train,admin offices in level 3 need dusting and cleaning pls
+t0136,en,issue,facade,dev,"Urgent: Building facade at the canteen needs washing, very dirty asap"
+t0572,ar,issue,cctv,train,الكاميرا في الممر الرئيسي تعرض شاشة سوداء يرجى المعاينة
+t0030,en,issue,socket,train,"Guys, No electricity at the sockets in the canteen please check"
+t0442,en,other,chat_dev,dev,"Attention, Boss is on his way to the store room (photo attached)"
+t0117,en,issue,secure_area,train,"Hi, Fallen tree blocking the path near room 204 secure the area (photo attached)"
+t0160,en,issue,secure_area,train,"Guys, Danger: broken glass everywhere in the staff room cordon it off"
+t0076,en,issue,gate,train,"Attention, Barrier gae stuck open at the pump room copy?"
+t0809,ar,done,tap,dev,للعلم تم إصلاح الحنفية في الطابق الثالث من فضلكم
+t0378,en,other,chat8,train,FYI omorrow is a public holiday (photo attached)
+t0896,ar,done,it_equip,dev,فريق، تم إصلاح جهاز العرض في غرفة الموظفين ويعمل
+t0852,ar,done,tap,dev,مرحبًا، تم تغيير جلدة الحنفية في دورة المياه في الطابق الثاني وكل شيء تمام من فضلكم
+t0099,en,issue,exit_light,train,"Team, Emergency exit light is not working in the main corridor pls"
+t0856,ar,done,facade,dev,تم غسل واجهة المبنى قرب النادي الرياضي وتنظيفها شكرًا
+t0980,ar,other,chat7,train,للعلم من ترك أضواء الحافلة مضاءة شكرًا
+t0194,en,done,ac,train,AC in the staff room fixed and cooling well now asap
+t0486,en,other,chat8,train,FYI Please sign the visitor log at level 3 asap
+t0083,en,issue,ceiling,train,"Hi, Ceiling tile fell in the kitchen thanks"
+t0423,en,other,chat8,train,Tomorrow is a public holiday
+t0969,ar,other,chat_dev,dev,طرد لقسم المالية عند الغرفة 204 يرجى المعاينة
+t0430,en,other,chat6,train,"Team, Our team won the game"
+t0995,ar,other,chat4,train,يا شباب، من لديه مفاتيح الحافلة
+t0007,en,issue,mixed,train,The repair did not work the toilet is leaking again over
+t0276,en,done,tiles,train,"Guys, Tiles at block B replaced"
+t0322,en,done,exit_light,train,"attention, emergency exit light in reception replaced copy?"
+t0186,en,done,mixed_dev,dev,"Urgent: Job complete, site cleaned (photo attached)"
+t0035,en,issue,waste,train,FYI Garbage overflowing behind the staff room copy?
+t0408,en,other,chat2,train,Lunch is ready in the kitchen (photo attached)
+t0785,ar,done,heater,train,تم إصلاح السخان في المكتبة من فضلكم
+t1055,ar,other,chat1,train,انتباه، سأتأخر اليوم
+t0134,en,issue,window,dev,Urgent: Window glass cracked in the meeting room pls
+t0780,ar,done,gas,train,تم إغلاق تسرب الغاز في النادي الرياضي والمنطقة آمنة بسرعة
+t0290,en,done,pipe,train,"Guys, Isolated and fixed the leaking pipe in the gym asap"
+t0312,en,done,tap,dev,Replaced the washer on the tap in the meeting room all good
+t0313,en,done,it_equip,dev,"Hi, Printer in the canteen unjammed and printing again asap"
+t0774,ar,done,volleyball,train,تم تركيب شبكة الكرة الطائرة في غرفة المضخات
+t0131,en,issue,deep_clean,dev,Toilets in the store room needa deep clean pls
+t0171,en,issue,ext_clean,train,"Hi, The area around the car park is dirty and needs sweeping"
+t0432,en,other,chat8,train,Ok copy that
+t1053,ar,other,chat8,train,عاجل: غدًا إجازة رسمية
+t0884,ar,done,waste,train,تم تفريغ صناديق القمامة قرب دورة المياه في الطابق الثاني شكرًا
+t0167,en,issue,spill,train,Urgent: Big spill on the floor of the 2nd floor washroom please clean now
+t0696,ar,issue,event_setup,train,انتباه، جهزوا المنصة والميكروفون في الورشة للطابور حول
+t0914,ar,other,chat4,train,للعلم شكرًا للفريق عمل رائع اليوم
+t0438,en,other,chat_dev,dev,Urgent: Payrol will be processed on the 25th please check
+t1062,ar,other,chat8,train,عاجل: حسنًا مفهوم (الصورة مرفقة)
+t1078,ar,other,chat6,train,فريق، بطاقات المواقف متوفرة عند المبنى أ شكرًا
+t0267,en,done,gen_clean,dev,Mopped the floor of room 204 done (photo attached)
+t0187,en,done,mixed,train,"Tea, Task finished at 4 pm asap"
+t0141,en,issue,water_bottle,train,fyi empty water jug at the station in level 3
+t0834,ar,done,roof_clean,train,فريق، تم تفريغ المزاريب على سطح غرفة الاجتماعات (الصورة مرفقة)
+t0226,en,done,tap,dev,Replaced the washer on the tap in the kitchen all good copy?
+t0709,ar,issue,ceiling,train,عاجل: الجبس يتساقط من السقف في البوابة الخلفية يرجى المعاينة
+t0413,en,other,chat7,train,"Guys, Traffic is very bad on the highway today copy?"
+t0904,ar,other,mixed,train,يرجى عدم الوقوف قرب البوابة أثناء الفعالية (الصورة مرفقة)
+t0316,en,done,facade,dev,"Attention, Facade near the kitchen washed and cleaned copy?"
+t0972,ar,other,chat8,train,حسنًا مفهوم
+t0410,en,other,chat4,train,"hi, who has the keys to the van thanks"
+t0833,ar,done,event_setup,train,تم تركيب المنصة والميكروفون في دورة المياه في الطابق الثاني من فضلكم
+t0623,ar,issue,ceiling,train,سقطت قطعة من السقف في المكتبة بسرعة
+t0605,ar,issue,heater,train,عاجل: لا يوجد ماء ساخن في النادي الرياضي شكرًا
+t0792,ar,done,roof,train,تم عزل سقف المطبخ ضد الماء
+t0714,ar,issue,deep_clean,dev,عاجل: دورات المياه في مواقف السيارات تحتاج إلى تنظيف عميق حول
+t0494,en,other,chat7,train,"Guys, Is anyone free to hlp move boxes (photo attached)"
+t0576,ar,issue,lock,train,سقط مقبض الباب في الطابق الثالث
+t0282,en,done,locker,train,"Team, Unlocked the library and checked the key works now"
+t0867,ar,done,lights,train,انتباه، تم تغيير الإضاءة في غرفة المضخات وانتهى (الصورة مرفقة)
+t0411,en,other,chat_dev,dev,"Hi, Happy birthday to Ahmed asap"
+t0175,en,issue,tap,dev,water dripping from the faucet in the canteen
+t0644,ar,issue,lights,train,فريق، لمبتان محروقتان في غرفة الاجتماعات شكرًا
+t1008,ar,other,chat8,train,غدًا إجازة رسمية من فضلكم
+t0293,en,done,event_setup,train,"Guys, Podium and mic in the pump room installed please check"
+t1002,ar,other,chat2,train,يا شباب، الزوار سيصلون الساعة العاشرة يرجى تجهيز المواقف عند الفصل 5 يرجى المعاينة
+t0810,ar,done,it_equip,dev,انتباه، عاد الواي فاي في النادي الرياضي (الصورة مرفقة)
+t0406,en,other,chat_dev,dev,"team, good morning everyone copy?"
+t0205,en,done,handyman,train,"Hi, Replaced the hinge on the cabinet in the kitchen (photo attached)"
+t0801,ar,done,spill,train,يا شباب، تم تنظيف وتعقيم القيء في الممر الرئيسي
+t0942,ar,other,chat_dev,dev,مرحبًا، الطقس جميل للرحلة مفهوم؟
+t0991,ar,other,chat_dev,dev,انتباه، صباح الخير جميعًا
+t0760,ar,done,ceiling,train,تم إصلاح السقف المستعار في غرفة الموظفين يرجى المعاينة
+t0773,ar,done,tiles,train,تم تثبيت البلاط المفكوك في دورة المياه في الطابق الثاني يرجى المعاينة
+t0352,en,done,key_copy,train,"Attention, Made two copies of the key for classroom 5 (photo attached)"
+t0003,en,issue,mixed,train,"Guys, Cleaned the area but the ceiling is still leaking please recheck asap"
+t0377,en,other,chat7,train,"Team, Delivery trck has arrived copy?"
+t0383,en,other,chat4,train,Urgent: Training session starts at 9 tomorrow (photo attached)
+t0970,ar,other,chat6,train,فريقنا فاز في المباراة
+t0684,ar,issue,window_clean,train,عاجل: الزجاج الخارجي عند الاستقبال يحتاج إلى تنظيف (الصورة مرفقة)
+t0284,en,done,lights,train,Urgent: Replaced the tube lights in the meting room done asap
+t0081,en,issue,spill,train,Big spill on the floor of block B please clean now (photo attached)
+t0763,ar,done,key_copy,train,عاجل: تم قص المفتاح الاحتياطي لـ المبنى أ وتسليمه يرجى المعاينة
+t0611,ar,issue,roof_clean,train,عاجل: المزاريب على سطح البوابة الخلفية ممتلئة بالأوراق مفهوم؟
+t1024,ar,other,chat6,train,اختبار الراديو واحد اثنان شكرًا
+t0206,en,done,patrol,train,Urgent: Patrol of the meeting room completed and secured copy?
+t0756,ar,done,lock,train,تم تركيب مقبض جديد لباب المدخل الأمامي شكرًا
+t0365,en,other,mixed,train,"Guys, Thank you for fixing it earlier by the way happy Eid over"
+t1036,ar,other,chat_dev,dev,للعلم صباح الخير جميعًا يرجى المعاينة
+t0609,ar,issue,patrol,train,حارس الأمن لم يكن في موقعه قرب الطابق الثالث أثناء الجولة الليلية بسرعة
+t0590,ar,issue,facade,dev,للعلم الجدار الخارجي عند المدخل الأمامي مغطى بالأوساخ والخطوط السوداء
+t0245,en,done,heater,train,Water heater in the back gate repaired hot water is back over
+t0373,en,other,chat3,train,Reminder to submit timesheets by Friday copy?
+t0402,en,other,chat_dev,dev,"Guys, Weather looks good for the outing"
+t0564,ar,issue,pipe,train,تسرب كبير للماء في سقف المخزن بسرعة
+t0022,en,issue,heater,train,"Hi, No ho water in the meeting room"
+t0004,en,issue,mixed,train,"Attention, Reported yesterday and still not repaired, the light is out in the corridor please check"
+t0281,en,done,window_clean,train,urgent: cleaned the windows in the meeting room inside and out over
+t0294,en,done,roof_clean,train,"guys, cleaned the terrace of the staff room and drains are flowing pls"
+t0516,en,other,chat2,train,Can someone bring tea to building A over
+t0636,ar,issue,tiles,train,مرحبًا، بلاط مفكوك في المدخل الأمامي (الصورة مرفقة)
+t0239,en,done,locker,train,"guys, opened the locker in room 204 for the student asap"
+t0078,en,issue,waste,train,"guys, garbage overflowing behind the front entrance please check"
+t0331,en,done,heater,train,Urgent: Geyser in the meeting room fixed pls
+t0201,en,done,toilet,train,"Team, Toilet blockage cleared in the workshop (photo attached)"
+t0585,ar,issue,deep_clean,dev,يا شباب، دورات المياه في الممر الرئيسي تحتاج إلى تنظيف عميق يرجى المعاينة
+t0661,ar,issue,waste,train,القمامة تفيض خلف غرفة الاجتماعات حول
+t0659,ar,issue,gate,train,حاجز البوابة عالق مفتوح عند البوابة الخلفية من فضلكم
+t0607,ar,issue,pipe,train,انفجر أنبوب قرب المبنى أ والماء في كل مكان بسرعة
+t1031,ar,other,chat4,train,يا شباب، هل يمكنك إعادة إرسال الجدول مفهوم؟
+t0218,en,done,spill,train,Cleaned u the mess in the back gate floor is dry asap
+t0621,ar,issue,spill,train,مرحبًا، أحدهم تقيأ في المبنى أ ويلزم تنظيف عاجل
+t1045,ar,other,chat_dev,dev,للعلم شاهدوا هاتفي الجديد حول
+t0052,en,issue,fire_alarm,dev,"Attention, Fire alarm panel showing fault in the pump room over"
+t0557,ar,issue,gas,train,مرحبًا، رائحة غاز في البوابة الخلفية بسرعة
+t0640,ar,issue,ac,train,المكيف في المكتبة لا يبرد مفهوم؟
+t0940,ar,other,chat3,train,تذكير: ورشة السلامة يوم الاثنين القادم مفهوم؟
+t0360,en,done,generator,dev,Backup power restored in the store room over
+t0181,en,done,mixed_dev,dev,"All sorted now,thanks copy?"
+t0038,en,issue,spill,train,FYI Someone threw up in classroom 5 needs urgent cleaning (photo attached)
+t0793,ar,done,socket,train,مرحبًا، عادت الكهرباء في المخزن بعد إصلاح القاطع مفهوم؟
+t0087,en,issue,gen_clean,dev,"Hi, Dirty corridor near the library needs sweeping asap"
+t0257,en,done,sink,train,"Hi, Replaced the sink in building A please check"
+t0075,en,issue,cctv,train,"Attentio, CCTV camera at block B is offline (photo attached)"
+t0746,ar,done,patrol,train,تمت جولة التفتيش في المدخل الأمامي وتأمينه
+t0592,ar,issue,fire_alarm,dev,كاشف الدخان يصفر في المبنى ب مفهوم؟
+t0509,en,other,chat4,train,"Guys, Thanks team great work today asap"
+t0102,en,issue,locker,train,"Attention, Teacher locked out of classroom 5, key stuck in the lock"
+t0577,ar,issue,drain,train,المصرف في دورة المياه في الطابق الثاني مسدود والماء لا ينزل مفهوم؟
+t0242,en,done,lift,train,Lift door at the front entrance adjusted and working thanks
+t0973,ar,other,chat_dev,dev,فريق، قطة تجلس على السيارة
+t0976,ar,other,chat3,train,فريق، نرحب بزميلتنا الجديدة سارة من فضلكم
+t0818,ar,done,water_bottle,train,انتباه، تم استبدال قارورة الماء عند المبنى أ يرجى المعاينة
+t0498,en,other,chat2,train,"Attention, Lunch is ready in the canteen copy?"
+t0451,en,other,chat_dev,dev,Urgent: Good morning everyone pls
+t0492,en,other,chat_dev,dev,"Hi, Weather looks good for the outing"
+t0428,en,other,chat4,train,Training session starts at 9 tomorrow pls
+t0762,ar,done,ext_clean,train,تم كنس الممشى قرب الغرفة 204
+t0304,en,done,spill,train,Cleaned up the mess in building A floor is dry asap
+t0716,ar,issue,it_equip,dev,جهاز العرض في البوابة الخلفية لا يشتغل يرجى المعاينة
+t0642,ar,issue,locker,train,فريق، المعلم عالق خارج البوابة الخلفية والمفتاح عالق في القفل شكرًا
+t0983,ar,other,chat1,train,يا شباب، موعد الصلاة بعد عشر دقائق شكرًا
+t0971,ar,other,chat7,train,يرجى إبقاء قناة الراديو خالية (الصورة مرفقة)
+t0815,ar,done,fire_alarm,dev,تم تغيير بطارية كاشف الدخان في غرفة الاجتماعات
+t0828,ar,done,heater,train,يا شباب، تم تغيير عنصر التسخين في غرفة الموظفين بسرعة
+t0651,ar,issue,handyman,train,عاجل: مفصلة باب الخزانة في المبنى أ مكسورة
+t0224,en,done,gen_clean,dev,FYI Cleaned the toilets in the front entrance completed asap
+t0829,ar,done,bins,train,انتباه، تمت مكافحة الآفات في المكتبة شكرًا
+t0667,ar,issue,move_furn,train,انتباه، نحتاج إلى نقل الخزائن في المقصف إلى المكتب الجديد حول
+t0311,en,done,deep_clean,dev,Deep cleaned the washroom in the meeting room thanks
+t0447,en,other,chat_dev,dev,urgent: weather looks good for the outing (photo attached)
+t0627,ar,issue,gen_clean,dev,للعلم دورات المياه في النادي الرياضي متسخة يرجى تنظيفها
+t0420,en,other,chat_dev,dev,"Hi, Where is the supervisor asap"
+t0166,en,issue,drain,train,"Drain in the staff room is blocked, water not going down thanks"
+t0741,ar,done,toilet,train,تم تبديل السيفون في غرفة الموظفين ويعمل الآن من فضلكم
+t0836,ar,done,socket,train,فريق، تم تغيير المفتاح التالف في الفصل 5 وكل شيء سليم من فضلكم
+t0898,ar,done,handrail,dev,تم لحام وإصلاح الدرابزين عند غرفة الموظفين يرجى المعاينة
+t0419,en,other,chat4,train,"Team, Thanks tem great work today copy?"
+t0707,ar,issue,spill,train,عاجل: انسكاب كبير على أرضية مواقف السيارات يرجى التنظيف الآن يرجى المعاينة
+t0554,ar,issue,ac,train,يا شباب، تتساقط المياه من المكيف في الطابق الثالث بسرعة
+t0720,ar,issue,generator,dev,انتباه، المولد لا يشتغل يرجى المعاينة
+t0472,en,other,chat3,train,Urgent: New uniforms will be distributed next week pls
+t0702,ar,issue,gate,train,البوابة المنزلقة عند المبنى أ عالقة شكرًا
+t0146,en,issue,gas,train,smell of gas in classroom 5 asap
+t0426,en,other,chat2,train,Can someone bring tea to the 2nd floor washroom thanks
+t0878,ar,done,roof,train,انتباه، تم ترقيع تسرب السقف فوق غرفة الموظفين يرجى المعاينة
+t0089,en,issue,tap,dev,"Team, Tap in the pump room keeps leaking"
+t0454,en,other,chat3,train,"team, meeting at 3 pm in classroom 5 please check"
+t0002,en,issue,mixed,train,"Thanks for the tap repair, the other tap in the same washroom is also laking copy?"
+t0501,en,other,chat_dev,dev,Happy birthday to Ahmed
+t0879,ar,done,socket,train,تم تغيير المفتاح التالف في مواقف السيارات وكل شيء سليم مفهوم؟
+t0658,ar,issue,cctv,train,فريق، الكاميرا في النادي الرياضي تعرض شاشة سوداء حول
+t0975,ar,other,chat2,train,فريق، انتهت جولة الأمن ولا حوادث
+t0280,en,done,ac,train,AC in the kitchen fixed and cooling well now over
+t0573,ar,issue,gate,train,حاجز البوابة عالق مفتوح عند المدخل الأمامي شكرًا
+t0587,ar,issue,it_equip,dev,فريق، جهاز العرض في مواقف السيارات لا يشتغل بسرعة
+t0864,ar,done,window_clean,train,عاجل: تم تنظيف النوافذ الخارجية عند المبنى أ يرجى المعاينة
+t0919,ar,other,chat_dev,dev,انظروا إلى هذا الغروب الجميل
+t0608,ar,issue,handyman,train,انتباه، مفصلة باب الخزانة في الممر الرئيسي مكسورة من فضلكم
+t0562,ar,issue,heater,train,السخان في المبنى ب يسرب من فضلكم
+t0901,ar,other,mixed_dev,dev,للعلم جدول المصاعد للزوار على لوحة الإعلانات بسرعة
+t1034,ar,other,chat7,train,للعلم هل أحد متفرغ للمساعدة في نقل الصناديق يرجى المعاينة
+t0750,ar,done,socket,train,تم تغيير المفتاح التالف في النادي الرياضي وكل شيء سليم شكرًا
+t0775,ar,done,water_bottle,train,عاجل: تم تركيب جالون جديد في الموزع في الممر الرئيسي يرجى المعاينة
+t0552,ar,issue,water_bottle,train,يا شباب، محطة الشرب قرب الاستقبال لا يوجد بها قارورة حول
+t0903,ar,other,mixed,train,اجتماع بخصوص مناقصة المولد غدًا بسرعة
+t0170,en,issue,move_furn,train,Please move 20 desks from the front entrance to the other block
+t0690,ar,issue,toilet,train,يا شباب، مقعد المرحاض مكسور في غرفة الموظفين بسرعة
+t0006,en,issue,mixed_dev,dev,"Guys, Replaced the bulb but it flickers again asap"
+t0632,ar,issue,handrail,dev,درابزين الدرج مكسور عند الورشة شكرًا
+t0056,en,issue,exit_light,train,"Hi, Emergency exit light is not working in th library asap"
+t0984,ar,other,chat2,train,وصل طلب ماكينة القهوة يرجى المعاينة
+t0766,ar,done,tap,dev,انتباه، تم إصلاح الحنفية في المكتبة مفهوم؟
+t0222,en,done,ext_clean,train,Urgent: Swept the walkway near the workshop please check
+t0431,en,other,chat7,train,Please keep the radio channel clear
+t1077,ar,other,chat_dev,dev,للعلم الطقس جميل للرحلة شكرًا
+t0283,en,done,gas,train,fyi gas leak in the meeting room sealed area checked and safe over
+t0791,ar,done,roof_clean,train,تم تنظيف سطح مواقف السيارات والمصارف تعمل من فضلكم
+t0140,en,issue,volleyball,train,Volleyball court at the back gate needs the lines and net set pls
+t0435,en,other,chat2,train,Security patrol completed no incidents pls
+t0953,ar,other,chat7,train,الزحام شديد على الطريق السريع اليوم شكرًا
+t0449,en,other,chat7,train,"Team, Is anyone free to help move boxes"
+t0157,en,issue,roof_clean,train,"Team, Gutters on the roof of reception are full of leaves"
+t0148,en,issue,lift,train,"Attention, Lift doors will not close at the 2nd floor washroom thanks"
+t0219,en,done,cooler,train,Replaced the water cooler filter in the 2nd floor washroom thanks
+t1011,ar,other,chat2,train,هل يستطيع أحد إحضار الشاي إلى دورة المياه في الطابق الثاني حول
+t0159,en,issue,socket,train,No electricity at thesockets in reception please check
+t0673,ar,issue,it_equip,dev,انتباه، الواي فاي لا يعمل في دورة المياه في الطابق الثاني (الصورة مرفقة)
+t1070,ar,other,chat7,train,مرحبًا، من ترك أضواء الحافلة مضاءة (الصورة مرفقة)
+t0968,ar,other,chat4,train,يا شباب، الدورة التدريبية تبدأ غدًا الساعة التاسعة من فضلكم
+t0515,en,other,chat1,train,FYI I will be late today please check
+t0024,en,issue,pipe,train,Pipe burst near the gym water everywhere
+t0518,en,other,chat4,train,training session starts at 9 tomorrow over
+t0647,ar,issue,toilet,train,انتباه، السيفون لا يعمل في غرفة المضخات مفهوم؟
+t0705,ar,issue,lock,train,مرحبًا، سقط مقبض الباب في المبنى ب مفهوم؟
+t0055,en,issue,water_bottle,train,Water dispenser in the gym is empty needs a new bottle pls
+t0371,en,other,chat1,train,Shift change at 6 can anyone cover for me
+t0637,ar,issue,volleyball,train,مرحبًا، ركّبوا شبكة الكرة الطائرة في الفصل 5 (الصورة مرفقة)
+t0116,en,issue,socket,train,"Guys, Switch in block B is hot and burning smell please check"
+t0565,ar,issue,handyman,train,انتباه، مفصلة باب الخزانة في المقصف مكسورة من فضلكم
+t1000,ar,other,chat_dev,dev,للعلم شاهدوا هاتفي الجديد من فضلكم
+t1027,ar,other,chat_dev,dev,المدير في طريقه إلى الاستقبال مفهوم؟
+t1046,ar,other,chat1,train,مرحبًا، تبديل الوردية الساعة السادسة هل يستطيع أحد أن يغطي مكاني
+t0575,ar,issue,waste,train,للعلم حاوية النفايات عند الغرفة 204 لم تُجمع منذ أيام (الصورة مرفقة)
+t0668,ar,issue,ext_clean,train,انتباه، المنطقة حول الطابق الثالث متسخة وتحتاج إلى كنس يرجى المعاينة
+t0147,en,issue,lights,train,Tube light not working in the staff room copy?
+t0012,en,issue,water_bottle,train,Drinking station near block B has no water bottle left pls
+t0513,en,other,chat8,train,"Attention, Tomorow is a public holiday"
+t0560,ar,issue,office_clean,train,انتباه، مكاتب الإدارة في مواقف السيارات تحتاج إلى تنظيف وإزالة الغبار مفهوم؟
+t1016,ar,other,chat7,train,فريق، يرجى إبقاء قناة الراديو خالية شكرًا
+t0192,en,done,water_bottle,train,Refilled the drinking stations near the pump room
+t0628,ar,issue,deep_clean,dev,عاجل: ترسبات كلسية وبقع في غرفة الموظفين لا يزيلها التنظيف العادي
+t1019,ar,other,chat1,train,انتباه، هل الكافتيريا مفتوحة يوم السبت شكرًا
+t0310,en,done,gen_clean,dev,Mopped the floor of the kitchen done (photo attached)
+t0336,en,done,event_setup,train,"Hi, Tents and tables at the pump room arranged as requested"
+t0778,ar,done,window_clean,train,تم غسل الزجاج عند المبنى ب وأصبح نظيفًا يرجى المعاينة
+t0965,ar,other,chat1,train,مرحبًا، سأتأخر اليوم
+t0079,en,issue,lock,train,Door lock in the gym is broken
+t0764,ar,done,gen_clean,dev,تم مسح أرضية المقصف وانتهى من فضلكم
+t0931,ar,other,chat3,train,مرحبًا، نرحب بزميلتنا الجديدة سارة
+t0444,en,other,chat2,train,"Hi, Coffee machine order has arrived over"
+t0376,en,other,chat6,train,"attention, does anyone know the wifi password"
+t0225,en,done,deep_clean,dev,Urgent: Deep cleaned the washroom in the store room copy?
+t1061,ar,other,chat7,train,يا شباب، يرجى إبقاء قناة الراديو خالية حول
+t0802,ar,done,cooler,train,مرحبًا، تم إصلاح برادة المياه في النادي الرياضي من فضلكم
+t0868,ar,done,lift,train,انتباه، انتهى الفني من المصعد عند المبنى ب ويعمل جيدًا
+t0104,en,issue,lights,train,Lights are flickering in the staff room pls
+t0366,en,other,mixed_dev,dev,"Water bottles are in the store, take what you need"
+t0528,en,other,chat_dev,dev,FYI Payroll will be processed on the 25th
+t0947,ar,other,chat1,train,مساء الخير للفريق من فضلكم
+t0537,en,other,chat_dev,dev,Weather looks good for theouting please check
+t0938,ar,other,chat1,train,يا شباب، موعد الصلاة بعد عشر دقائق يرجى المعاينة
+t0095,en,issue,fire_alarm,dev,Urgent: Fire alarm going off for no reason in the library asap
+t0440,en,other,chat7,train,"Hi, Who left the van lights on copy?"
+t1067,ar,other,chat4,train,هل أحد ذاهب إلى المدينة بعد الدوام بسرعة
+t0950,ar,other,chat4,train,للعلم من لديه مفاتيح الحافلة
+t0443,en,other,chat1,train,Prayer time in 0 minutes
+t0641,ar,issue,window_clean,train,مرحبًا، النوافذ في دورة المياه في الطابق الثاني متسخة وعليها خطوط حول
+t0606,ar,issue,bins,train,انتباه، شوهدت فئران قرب الورشة نحتاج مكافحة آفات بسرعة
+t0692,ar,issue,bins,train,حاويات القمامة ممتلئة قرب المخزن
+t0838,ar,done,cctv,train,فريق، كاميرا المراقبة عند دورة المياه في الطابق الثاني عادت للعمل مفهوم؟
+t0583,ar,issue,key_copy,train,يا شباب، الموظف الجديد يحتاج إلى نسخة مفتاح لـ المبنى ب شكرًا
+t0128,en,issue,ext_clean,train,urgent: the area around the workshop is dirty and needs sweeping copy?
+t0900,ar,done,generator,dev,تمت صيانة المولد ويعمل بشكل طبيعي يرجى المعاينة
+t0699,ar,issue,socket,train,انتباه، لا توجد كهرباء في المقابس في المدخل الأمامي من فضلكم
+t0798,ar,done,waste,train,مرحبًا، تم إفراغ حاوية النفايات عند البوابة الخلفية اليوم حول
+t0214,en,done,sink,train,Sink in reception unblocked
+t0213,en,done,gate,train,gate motor at the canteen repaired
+t0681,ar,issue,water_bottle,train,مرحبًا، محطة الشرب قرب المخزن لا يوجد بها قارورة بسرعة
+t0728,ar,done,mixed,train,تم الإصلاح يمكنكم الاستخدام الآن من فضلكم
+t0427,en,other,chat3,train,"Hi, New uniforms will be distributed next week"
+t0457,en,other,chat6,train,Please send me the attendance sheet please check
+t0874,ar,done,handyman,train,للعلم تم تثبيت الرف في المطبخ بالجدار يرجى المعاينة
+t0982,ar,other,chat_dev,dev,عاجل: المدير في طريقه إلى الفصل 5
+t0531,en,other,chat8,train,fyi please sign the visitor log at the workshop
+t0602,ar,issue,lift,train,مرحبًا، أبواب المصعد لا تغلق عند الفصل 5 (الصورة مرفقة)
+t0615,ar,issue,cctv,train,انتباه، كاميرا المراقبة عند الممر الرئيسي متوقفة
+t0880,ar,done,secure_area,train,تم جعل المنطقة عند الغرفة 204 آمنة وإخلاء الناس شكرًا
+t0588,ar,issue,window,dev,يا شباب، نافذة مكسورة في الورشة والزجاج على الأرض حول
+t0361,en,other,mixed_dev,dev,fyi the lift schedule for visitors is on the notice board
+t0320,en,done,volleyball,train,"Attention, Court at the main corridor marked and net fitted over"
+t0704,ar,issue,waste,train,يا شباب، حاوية النفايات عند دورة المياه في الطابق الثاني لم تُجمع منذ أيام
+t0327,en,done,lights,train,"Guys, Changed the bulbs in the car park all working copy?"
+t0727,ar,done,mixed,train,يا شباب، انتهت المهمة الساعة الرابعة (الصورة مرفقة)
+t0591,ar,issue,generator,dev,الكهرباء الاحتياطية لم تعمل في النادي الرياضي يرجى المعاينة
+t0648,ar,issue,heater,train,السخان في الطابق الثالث يسرب حول
+t0654,ar,issue,roof_clean,train,أوراق ميتة وحطام على السطح فوق المقصف بسرعة
+t0918,ar,other,chat8,train,للعلم غدًا إجازة رسمية
+t0732,ar,done,water_bottle,train,تم تركيب جالون جديد في الموزع في الفصل 5
+t0865,ar,done,locker,train,انتباه، تم فتح غرفة الموظفين والتأكد أن المفتاح يعمل الآن مفهوم؟
+t0883,ar,done,sink,train,يا شباب، تم استبدال المغسلة في الطابق الثالث من فضلكم
+t0412,en,other,chat6,train,"Hi, Please send me the attendance sheet copy?"
+t0945,ar,other,chat8,train,مرحبًا، مبروك الترقية
+t0474,en,other,chat_dev,dev,"Team, Package for finance is at the back gate"
+t0204,en,done,pipe,train,"Guys, Isolated and fixed the leaking pipe in building A"
+t0939,ar,other,chat2,train,وصل طلب ماكينة القهوة
+t1056,ar,other,chat2,train,هل يستطيع أحد إحضار الشاي إلى مواقف السيارات
+t0070,en,issue,event_setup,train,"attention, set up the podium and microphone in room 204 for assembly"
+t0941,ar,other,chat4,train,فريق، هل يمكنك إعادة إرسال الجدول (الصورة مرفقة)
+t0812,ar,done,handrail,dev,تم لحام وإصلاح الدرابزين عند الغرفة 204
+t0379,en,other,chat_dev,dev,"Hi, Look at this beautiful sunset copy?"
+t0729,ar,done,mixed,train,عاجل: عاد كل شيء إلى وضعه الطبيعي حول
+t1033,ar,other,chat6,train,بطاقات المواقف متوفرة عند الغرفة 204
+t0027,en,issue,event_setup,train,"Attention, Need tables and tents arranged at level 3 for the event asap"
+t0951,ar,other,chat_dev,dev,يا شباب، عيد ميلاد سعيد لأحمد من فضلكم
+t0122,en,issue,lock,train,"fyi cannot lock the door of building a, key stuck"
+t0103,en,issue,gas,train,Smell of gas in level 3 thanks
+t0066,en,issue,bins,train,"Team, Garbage bins overflowing near level 3 (photo attached)"
+t0256,en,done,gate,train,Sliding gate at classroom 5 unjammed and lubricated please check
+t0370,en,other,mixed,train,Window seats are reserved for guests please check
+t0831,ar,done,handyman,train,عاجل: تم تبديل مفصلة الخزانة في المكتبة مفهوم؟
+t0220,en,done,ceiling,train,"Attention, Ceiling repaired and painted in the 2nd floor washroom over"
+t0897,ar,done,window,dev,فريق، تم إصلاح مزلاج النافذة في الطابق الثالث بسرعة
+t0482,en,other,chat4,train,Anyone going to town after work
+t0926,ar,other,chat7,train,فريق، يرجى إبقاء قناة الراديو خالية مفهوم؟
+t0850,ar,done,gen_clean,dev,تم تنظيف دورات المياه في الورشة وانتهى
+t0561,ar,issue,toilet,train,مقعد المرحاض مكسور في الطابق الثالث يرجى المعاينة
+t1048,ar,other,chat3,train,انتباه، تذكير بتسليم كشوف الدوام قبل يوم الجمعة (الصورة مرفقة)
+t0669,ar,issue,key_copy,train,يرجى عمل مفتاح احتياطي للخزانة في البوابة الخلفية حول
+t0556,ar,issue,locker,train,المعلم عالق خارج الممر الرئيسي والمفتاح عالق في القفل يرجى المعاينة
+t0694,ar,issue,handyman,train,فريق، مقبض الباب انفصل في المقصف من فضلكم
+t0143,en,issue,ac,train,"attention, the air conditioner in the gym is blowing warm air (photo attached)"
+t0328,en,done,lift,train,Urgent: Lift door at the main corridor adjusted and working
+t0832,ar,done,patrol,train,مرحبًا، عاد الحارس إلى موقعه قرب غرفة المضخات
+t0354,en,done,deep_clean,dev,FYI Deep cleaning of the main corridor finished
+t0912,ar,other,chat2,train,الزوار سيصلون الساعة العاشرة يرجى تجهيز المواقف عند الاستقبال يرجى المعاينة
+t0997,ar,other,chat6,train,انتباه، أرسل لي ورقة الحضور من فضلك (الصورة مرفقة)
+t0345,en,done,lock,train,changed the lock in the meeting room done thanks
+t0553,ar,issue,exit_light,train,يا شباب، إضاءة الطوارئ في الفصل 5 تومض
+t0805,ar,done,ext_clean,train,انتباه، تم كنس الممشى قرب البوابة الخلفية شكرًا
+t0846,ar,done,ceiling,train,تم إصلاح السقف ودهانه في مواقف السيارات يرجى المعاينة
+t0718,ar,issue,handrail,dev,للعلم درجة الدرج متشققة عند الورشة (الصورة مرفقة)
+t0830,ar,done,pipe,train,مرحبًا، تم إصلاح أنبوب المياه في الطابق الثالث ولا يوجد تسرب بسرعة
+t0390,en,other,chat2,train,Security patrol completed no incidents copy?
+t0334,en,done,handyman,train,FYI Shelf in the back gate fixed to the wall
+t0672,ar,issue,tap,dev,للعلم تقطر المياه من الحنفية في دورة المياه في الطابق الثاني (الصورة مرفقة)
+t0517,en,other,chat3,train,new uniforms will be distributed next week asap
+t0260,en,done,drain,train,"Attention, Sewer line near the canteen flushed all clear (photo attached)"
+t0315,en,done,handrail,dev,"Guys, Cracked step at the kitchen repaired copy?"
+t0902,ar,other,mixed,train,للعلم من سينظف قاعة تدريب المكيفات اليوم
+t1057,ar,other,chat3,train,سيتم توزيع الزي الجديد الأسبوع القادم حول
+t0054,en,issue,volleyball,train,"Hi, Volleyball court a reception needs the lines and net set"
+t0660,ar,issue,sink,train,للعلم الحوض في مواقف السيارات لا يصرف الماء
+t0251,en,done,roof_clean,train,Urgent: Cleaned the terrace of the canteen and drains are flowing thanks
+t0581,ar,issue,move_furn,train,نحتاج إلى نقل الخزائن في الطابق الثالث إلى المكتب الجديد
+t0652,ar,issue,patrol,train,يا شباب، حارس الأمن لم يكن في موقعه قرب غرفة المضخات أثناء الجولة الليلية حول
+t0421,en,other,chat6,train,"Guys, Does anyone know the wifi password over"
+t0693,ar,issue,pipe,train,عاجل: أنبوب المياه يسرب في الطابق الثالث حول
+t0013,en,issue,exit_light,train,"hi, exit sign in the car park is dark thanks"
+t0233,en,done,tiles,train,"Guys, Tiles at the car park replaced thanks"
+t1032,ar,other,chat_dev,dev,الطقس جميل للرحلة (الصورة مرفقة)
+t0291,en,done,handyman,train,"Hi, Door handle in the car park fixed back on thanks"
+t0388,en,other,chat_dev,dev,"Attention, Cat sitting on the car"
+t0826,ar,done,office_clean,train,انتباه، تم تنظيف السجاد بالمكنسة في المبنى أ (الصورة مرفقة)
+t0362,en,other,mixed,train,FYI Who is cleaning the AC training room today
+t0633,ar,issue,facade,dev,للعلم واجهة المبنى عند دورة المياه في الطابق الثاني تحتاج إلى غسيل وهي متسخة جدًا حول
+t0384,en,other,chat_dev,dev,"team, package for finance is at the library"
+t0309,en,done,key_copy,train,"Attention, Spare key for the back gate cut and handed over"
+t0375,en,other,chat_dev,dev,where is the supervisor pls
+t0273,en,done,facade,dev,"Attention, Pressure washed the outside wall of classroom 5 done (photo attached)"
+t0866,ar,done,gas,train,عاجل: تم إصلاح صمام الأسطوانة في الغرفة 204
+t1047,ar,other,chat2,train,عاجل: الزوار سيصلون الساعة العاشرة يرجى تجهيز المواقف عند الورشة حول
+t1069,ar,other,chat6,train,اختبار الراديو واحد اثنان يرجى المعاينة
+t0978,ar,other,chat_dev,dev,انتباه، سيتم صرف الرواتب يوم 25 (الصورة مرفقة)
+t0041,en,issue,move_furn,train,"Team, Please move 20 desks from the library to the other block"
+t0622,ar,issue,cooler,train,برادة المياه في الغرفة 204 تسرب شكرًا
+t0261,en,done,spill,train,Vomit in the pump room cleaned and disinfected thanks
+t0011,en,issue,volleyball,train,Volleyball court at the back gate needs the lines and net set
+t0353,en,done,gen_clean,dev,Cleaned the toilets in the car park completed
+t0589,ar,issue,handrail,dev,درجة الدرج متشققة عند الورشة من فضلكم
+t0238,en,done,window_clean,train,"Hi, Glass at the canteen washed and streak free"
+t0001,en,issue,mixed_dev,dev,"Guys, Fixed the AC in room 204 but now the lift is stuck"
+t0058,en,issue,window_clean,train,"Guys, Clean the glass windows in block B inside and outside"
+t0863,ar,done,ac,train,يا شباب، تم إصلاح المكيف في مواقف السيارات ويبرد بشكل جيد شكرًا
+t0676,ar,issue,facade,dev,يا شباب، الجدار الخارجي عند المبنى أ مغطى بالأوساخ والخطوط السوداء
+t1014,ar,other,chat_dev,dev,مرحبًا، طرد لقسم المالية عند دورة المياه في الطابق الثاني حول
+t0700,ar,issue,secure_area,train,شجرة ساقطة تسد الطريق قرب الممر الرئيسي يرجى تأمين المنطقة يرجى المعاينة
+t1018,ar,other,chat_dev,dev,قطة تجلس على السيارة
+t1020,ar,other,chat2,train,انتهت جولة الأمن ولا حوادث بسرعة
+t0177,en,issue,window,dev,Broken window in the canteen glass on the floor
+t0321,en,done,water_bottle,train,New jug fitted at the dispenser in the front entrance over
+t0894,ar,done,deep_clean,dev,فريق، تم التنظيف العميق لدورة المياه في غرفة الموظفين (الصورة مرفقة)
+t0631,ar,issue,window,dev,مرحبًا، نافذة مكسورة في دورة المياه في الطابق الثاني والزجاج على الأرض حول
+t0153,en,issue,pipe,train,"Team, Big water leak in the ceiling of block B please check"
+t0713,ar,issue,gen_clean,dev,للعلم دورات المياه في المقصف متسخة يرجى تنظيفها يرجى المعاينة
+t0481,en,other,chat3,train,Urgent: Please welcome our new colleague Sara thanks
+t0771,ar,done,generator,dev,للعلم تمت تعبئة وقود المولد وبدأ يعمل مفهوم؟
+t0262,en,done,cooler,train,Dispenser in the library serviced cold water back pls
+t0029,en,issue,roof,train,"Attention, Roof leaking when it rains in the pump room"
+t0254,en,done,secure_area,train,"hi, tree removed from the path near the staff room asap"
+t0857,ar,done,generator,dev,تمت صيانة المولد ويعمل بشكل طبيعي
+t0869,ar,done,office_clean,train,مرحبًا، تم تنظيف المكاتب في المكتبة وإزالة الغبار (الصورة مرفقة)
+t0920,ar,other,chat1,train,سأتأخر اليوم حول
+t0503,en,other,chat7,train,"hi, traffic is very bad on the highway today thanks"
+t0199,en,done,lift,train,"Attention, Technician finished the lift at the canteen running fine"
+t0767,ar,done,it_equip,dev,عاجل: تم إصلاح جهاز العرض في المبنى ب ويعمل يرجى المعاينة
+t0843,ar,done,drain,train,مرحبًا، تم فتح المصرف المسدود في الطابق الثالث تم (الصورة مرفقة)
+t0752,ar,done,cctv,train,يا شباب، تم تعديل اتجاه الكاميرا عند المبنى ب
+t0207,en,done,event_setup,train,"guys, stage and chairs in building a set up and ready pls"
+t0871,ar,done,heater,train,يا شباب، تم إصلاح السخان في دورة المياه في الطابق الثاني حول
+t1073,ar,other,chat1,train,موعد الصلاة بعد عشر دقائق يرجى المعاينة
+t0477,en,other,chat8,train,Team Ok copy that pls
+t0777,ar,done,ac,train,للعلم تمت تعبئة غاز المكيف في دورة المياه في الطابق الثاني وانتهى العمل حول
+t0296,en,done,socket,train,"attention, socket in classroom 5 replaced and tested"
+t0808,ar,done,deep_clean,dev,انتهى التنظيف العميق في المخزن حول
+t0190,en,done,mixed,train,"hi, finished the job, photo attached thanks"
+t0929,ar,other,chat1,train,هل الكافتيريا مفتوحة يوم السبت حول
+t1050,ar,other,chat_dev,dev,عاجل: أين المشرف (الصورة مرفقة)
+t0396,en,other,chat8,train,"Attention, Please sign the visitor log at the front entrance copy?"
+t0738,ar,done,lights,train,للعلم تم تغيير الإضاءة في الممر الرئيسي وانتهى من فضلكم
+t0759,ar,done,cooler,train,انتباه، تمت صيانة الموزع في غرفة الموظفين وعاد الماء البارد (الصورة مرفقة)
+t0266,en,done,key_copy,train,"Guys, Duplicate key for the library ready and delivered"
+t1066,ar,other,chat3,train,للعلم نرحب بزميلتنا الجديدة سارة يرجى المعاينة
+t0120,en,issue,sink,train,"Attention, Sink in block B is blocked please check"
+t0566,ar,issue,patrol,train,بوابة الغرفة 204 وجدت مفتوحة بعد الدوام ولا يوجد حارس من فضلكم
+t0470,en,other,chat1,train,I will be late today
+t0249,en,done,patrol,train,"Team, Gate at reception locked and checked please check"
+t0127,en,issue,move_furn,train,Please move 20 desks from the library to the other block pls
+t0888,ar,done,cooler,train,تمت صيانة الموزع في غرفة الاجتماعات وعاد الماء البارد
+t0347,en,done,spill,train,"Hi, pill in the workshop cleaned and mopped (photo attached)"
+t0987,ar,other,chat_dev,dev,الطقس جميل للرحلة
+t0437,en,other,chat4,train,"Hi, Anyone going to town after work copy?"
+t0784,ar,done,toilet,train,انتباه، تم تبديل السيفون في غرفة المضخات ويعمل الآن مفهوم؟
+t0876,ar,done,event_setup,train,انتباه، تم تركيب المنصة والميكروفون في المقصف يرجى المعاينة
+t0178,en,issue,handrail,dev,Handrail on the stairs near the car park is loose
+t0246,en,done,bins,train,"Guys, Sprayed for cockroaches in the 2nd floor washroom done copy?"
+t0174,en,issue,deep_clean,dev,Washroom tiles in the store room are stained and smell bad needs scrubbing
+t0417,en,other,chat2,train,"Guys, Visitors arriving at 10 please arrange parking at the back gate"
+t0619,ar,issue,lock,train,عاجل: سقط مقبض الباب في الاستقبال
+t0545,ar,issue,mixed,train,غادر الدهانون لكن المصرف مسدود الآن
+t0168,en,issue,cooler,train,"Attention, Drinking water dispenser in the canteen ha no cold water"
+t0909,ar,other,mixed,train,مرحبًا، ستعزف الفرقة الموسيقية في الافتتاح
+t0073,en,issue,socket,train,Urgent: Switch in the car park is hot and burning smell please check
+t0717,ar,issue,window,dev,مرحبًا، زجاج النافذة متشقق في دورة المياه في الطابق الثاني يرجى المعاينة
+t0110,en,issue,pipe,train,"attention, big water leak in the ceiling of the main corridor asap"
+t1051,ar,other,chat6,train,هل يعرف أحد كلمة سر الواي فاي مفهوم؟
+t0139,en,issue,tiles,train,Loose tiles in the library
+t1041,ar,other,chat_dev,dev,يا شباب، عيد ميلاد سعيد لأحمد (الصورة مرفقة)
+t0787,ar,done,pipe,train,عاجل: تم إصلاح أنبوب المياه في المدخل الأمامي ولا يوجد تسرب بسرعة
+t0295,en,done,roof,train,"Hi, Roof leak above the 2nd floor washroom patched over"
+t0033,en,issue,gate,train,FYI Gate motor not working at the worksho pls
+t0853,ar,done,it_equip,dev,انتباه، تم إصلاح جهاز العرض في الفصل 5 ويعمل
+t0754,ar,done,sink,train,تم تسليك مصرف الحوض في المكتبة يرجى المعاينة
+t0886,ar,done,drain,train,تم فتح المصرف المسدود في المكتبة تم شكرًا
+t0993,ar,other,chat2,train,فريق، الغداء جاهز في النادي الرياضي
+t1039,ar,other,chat3,train,انتباه، اجتماع الساعة الثالثة في البوابة الخلفية يرجى المعاينة
+t0404,en,other,chat7,train,"attention, is anyone free to help move boxes over"
+t0149,en,issue,office_clean,train,Admin offices in the kitchen need dusting and cleaning
+t0088,en,issue,deep_clean,dev,Urgent: Toilets in the front entrance need a deep clean asap
+t0533,en,other,chat1,train,Prayer time in 10 minutes
+t0875,ar,done,patrol,train,عاجل: عاد الحارس إلى موقعه قرب المطبخ
+t0349,en,done,ceiling,train,ceiling repaired and painted in the library over
+t0927,ar,other,chat8,train,للعلم حسنًا مفهوم (الصورة مرفقة)
+t0677,ar,issue,generator,dev,يا شباب، الكهرباء الاحتياطية لم تعمل في غرفة الموظفين
+t0962,ar,other,chat7,train,عاجل: وصلت شاحنة التوصيل (الصورة مرفقة)
+t0071,en,issue,roof_clean,train,"Team, Gutters on the roof of th staff room are full of leaves asap"
+t0674,ar,issue,window,dev,انتباه، النافذة في المطبخ لا تغلق شكرًا
+t0308,en,done,ext_clean,train,Swept the walkway near the gym
+t0036,en,issue,lock,train,"Guys, Door lock in the meeting room is broken"
+t0635,ar,issue,fire_alarm,dev,مرحبًا، إنذار الحريق يعمل بدون سبب في الورشة (الصورة مرفقة)
+t0701,ar,issue,cctv,train,للعلم الكاميرا عند النادي الرياضي متجهة بالاتجاه الخطأ بسرعة
+t0478,en,other,chat_dev,dev,"Hi, Cat sittng on the car"
+t0065,en,issue,heater,train,Urgent: No hot water in the kitchen
+t1068,ar,other,chat_dev,dev,يا شباب، سيتم صرف الرواتب يوم 25 يرجى المعاينة
+t0571,ar,issue,secure_area,train,شجرة ساقطة تسد الطريق قرب المبنى ب يرجى تأمين المنطقة مفهوم؟
+t0039,en,issue,cooler,train,Water cooler in the canteen is nt working
+t0137,en,issue,generator,dev,"Hi, Backup power did not switch on in themain corridor"
+t0286,en,done,office_clean,train,"Guys, Cleaned the desks and monitors in the back gate done (photo attached)"
+t0653,ar,issue,event_setup,train,جهزوا المسرح والكراسي في غرفة المضخات لليوم السنوي شكرًا
+t0090,en,issue,it_equip,dev,"Attention, Printer in the meeting room is jammed and not printing"
+t0467,en,other,chat7,train,Urgent: Delivery truck has arrived copy?
+t0788,ar,done,handyman,train,مرحبًا، تم تثبيت الرف في دورة المياه في الطابق الثاني بالجدار (الصورة مرفقة)
+t1025,ar,other,chat7,train,مرحبًا، من ترك أضواء الحافلة مضاءة شكرًا
+t1009,ar,other,chat_dev,dev,للعلم انظروا إلى هذا الغروب الجميل بسرعة
+t0634,ar,issue,generator,dev,يا شباب، المولد يصدر صوتًا غريبًا ويدخن (الصورة مرفقة)
+t0323,en,done,ac,train,"Attention, Cleaned the AC filters in the staff room completed copy?"
+t0743,ar,done,bins,train,عاجل: تمت مكافحة الآفات في غرفة الاجتماعات شكرًا
+t0799,ar,done,lock,train,عاجل: تم تغيير القفل في المكتبة
+t0458,en,other,chat7,train,Traffic is very bad on the highway today over
+t0548,ar,issue,mixed,train,تم تسجيل العمل كمنتهٍ لكن المقبس ما زال لا يعمل شكرًا
+t0381,en,other,chat2,train,"Hi, Can someone bring tea to level 3 copy?"
+t0723,ar,done,mixed,train,انتباه، انتهى العمل يرجى إغلاق البلاغ شكرًا
+t0789,ar,done,patrol,train,مرحبًا، تم قفل بوابة الطابق الثالث والتأكد منها (الصورة مرفقة)
+t0429,en,other,chat_dev,dev,Package for finance is at room 204 plese check
+t0730,ar,done,mixed,train,أنهيت العمل الصورة مرفقة يرجى المعاينة
+t0489,en,other,chat2,train,FYI Coffee machine order has arrived (photo attached)
+t0326,en,done,gas,train,Urgent: as pipe in the pump room replaced and tested please check
+t0461,en,other,chat1,train,Shift change at 6 can anyoe cover for me pls
+t0228,en,done,window,dev,new window glass fitted in room 204
+t0948,ar,other,chat2,train,يا شباب، الغداء جاهز في مواقف السيارات
+t0685,ar,issue,locker,train,انتباه، أنا مقفل خارج دورة المياه في الطابق الثاني أحتاج شخصًا معه مفتاح حول
+t0823,ar,done,gas,train,تم إصلاح صمام الأسطوانة في النادي الرياضي يرجى المعاينة
+t0259,en,done,lock,train,Door lock in the workshop reaired (photo attached)
+t0069,en,issue,patrol,train,"Attention, Gate at the staff room found unlocked after hours no guard asap"
+t0496,en,other,chat_dev,dev,urgent: good morning everyone
+t0448,en,other,chat6,train,Parking passes are available at level 3 please check
+t0397,en,other,chat_dev,dev,Urgent: Boss is on his way to room 04 thanks
+t0639,ar,issue,exit_light,train,مرحبًا، إضاءة الطوارئ في الورشة تومض يرجى المعاينة
+t0072,en,issue,roof,train,FYI Damp patch on the wall in the store room over
+t0675,ar,issue,handrail,dev,الدرابزين على الدرج قرب الفصل 5 مرتخٍ مفهوم؟
+t0109,en,issue,bins,train,Cockroaches in the staff room
+t0077,en,issue,sink,train,"attention, sink in the canteen is blocked asap"
+t0795,ar,done,cctv,train,تم تعديل اتجاه الكاميرا عند غرفة الموظفين شكرًا
+t0936,ar,other,chat8,train,انتباه، يرجى التوقيع على سجل الزوار عند مواقف السيارات من فضلكم
+t0542,ar,issue,mixed,train,شكرًا على إصلاح الصنبور لكن الصنبور الآخر في نفس الحمام يسرب حول
+t0488,en,other,chat1,train,Prayer time in 10 minutes thanks
+t0923,ar,other,chat4,train,الدورة التدريبية تبدأ غدًا الساعة التاسعة
+t0703,ar,issue,sink,train,للعلم الحوض في غرفة الموظفين لا يصرف الماء حول
+t0372,en,other,chat2,train,Visitors arriving at 10 please arrange parking at room 204
+t0534,en,other,chat2,train,"Hi, Coffee machine order has arrived asap"
+t0944,ar,other,chat7,train,هل أحد متفرغ للمساعدة في نقل الصناديق
+t0519,en,other,chat_dev,dev,"Team, Package for finance is at classroom 5"
+t0804,ar,done,move_furn,train,مرحبًا، تم نقل الطاولات من المقصف كما طلبتم حول
+t0123,en,issue,drain,train,FYI Sewage smell near the back gate please check
+t0329,en,done,office_clean,train,FYI Vacuumed the carpe in the gym
+t0203,en,done,bins,train,Bins near the canteen emptied and cleaned pls
+t1064,ar,other,chat1,train,هل الكافتيريا مفتوحة يوم السبت من فضلكم
+t0473,en,other,chat4,train,FYI Training session starts at 9 tomorrow thanks
+t0252,en,done,roof,train,Damp wall inthe library treated and painted
+t0899,ar,done,facade,dev,مرحبًا، تم غسل واجهة المبنى قرب النادي الرياضي وتنظيفها
+t0645,ar,issue,lift,train,مرحبًا، أبواب المصعد لا تغلق عند المدخل الأمامي يرجى المعاينة
+t0180,en,issue,generator,dev,"Hi, Generator is not starting copy?"
+t0155,en,issue,patrol,train,Patrol skipped the library last night pls
+t0243,en,done,office_clean,train,"Hi, Cleaned the desks and monitors in block B done"
+t0527,en,other,chat4,train,"Attention, Anyone going to townafter work thanks"
+t1029,ar,other,chat2,train,وصل طلب ماكينة القهوة من فضلكم
+t0051,en,issue,generator,dev,FYI Generator is not starting over
+t0301,en,done,waste,train,garbage behind the car park collected (photo attached)
+t0092,en,issue,handrail,dev,Step is cracked on the stairs at the car park copy?
+t0916,ar,other,chat6,train,فريق، هل يعرف أحد كلمة سر الواي فاي مفهوم؟
+t0624,ar,issue,move_furn,train,مرحبًا، يرجى نقل 20 طاولة من غرفة المضخات إلى المبنى الآخر
+t0794,ar,done,secure_area,train,تمت إزالة الشجرة عن الطريق قرب البوابة الخلفية شكرًا
+t0057,en,issue,ac,train,"Team, AC in the store room is not cooling (photo attached)"
+t0314,en,done,window,dev,"Guys, Window latch fixed in building A pls"
+t0739,ar,done,lift,train,انتباه، المصعد عند المبنى أ عاد للخدمة
+t0536,en,other,chat4,train,"Guys, Can you resend the schedule thanks"
+t0324,en,done,window_clean,train,Glass at the front entrance washed and streak free over
+t1044,ar,other,chat8,train,انتباه، المباراة البارحة كانت رائعة مفهوم؟
+t0318,en,done,fire_alarm,dev,Smoke detector battery changed in the car park thanks
+t1010,ar,other,chat1,train,يا شباب، سأتأخر اليوم حول
+t0814,ar,done,generator,dev,للعلم عادت الكهرباء الاحتياطية في الممر الرئيسي
+t0719,ar,issue,facade,dev,الجدار الخارجي عند دورة المياه في الطابق الثاني مغطى بالأوساخ والخطوط السوداء
+t0698,ar,issue,roof,train,عاجل: الماء ينزل من السقف فوق مواقف السيارات (الصورة مرفقة)
+t0734,ar,done,ac,train,انتباه، تم تنظيف فلاتر المكيف في المبنى ب بسرعة
+t0721,ar,done,mixed_dev,dev,يا شباب، تم الانتهاء شكرًا حول
+t0847,ar,done,move_furn,train,مرحبًا، تم نقل الأريكة من المبنى ب وانتهى
+t0348,en,done,cooler,train,Dispenser in level 3 serviced cold water back pls
+t0790,ar,done,event_setup,train,يا شباب، تم تجهيز المسرح والكراسي في الاستقبال وهو جاهز مفهوم؟
+t0475,en,other,chat6,train,Our team won the game asap
+t0232,en,done,fire_alarm,dev,smoke detector battery changed in the meeting room
+t0064,en,issue,toilet,train,"Attention, The flush is not working in block B"
+t0162,en,issue,gate,train,FYI Gate motor not working at room 204 please check
+t1023,ar,other,chat_dev,dev,عاجل: سيتم صرف الرواتب يوم 25 بسرعة
+t0268,en,done,deep_clean,dev,"Attention, Deep cleaning of he gym finished"
+t0921,ar,other,chat2,train,فريق، هل يستطيع أحد إحضار الشاي إلى المقصف شكرًا
+t0679,ar,issue,tiles,train,للعلم الأرضية في المخزن متشققة وغير مستوية
+t0998,ar,other,chat7,train,عاجل: الزحام شديد على الطريق السريع اليوم يرجى المعاينة
+t0210,en,done,socket,train,Socket in the back gate replaced and tested
+t0189,en,done,mixed,train,fyi everything is back to normal (photo attached)
+t0924,ar,other,chat_dev,dev,طرد لقسم المالية عند المدخل الأمامي حول
+t0197,en,done,gas,train,"Attention, Gas pipe in the staff room replaced and tested copy?"
+t0630,ar,issue,it_equip,dev,الواي فاي لا يعمل في المبنى ب يرجى المعاينة
+t0466,en,other,chat6,train,Does anyone know the wifi password (photo attached)
+t0708,ar,issue,cooler,train,للعلم برادة المياه في المطبخ تسرب (الصورة مرفقة)
+t0736,ar,done,locker,train,انتباه، تم فتح الخزانة في غرفة الاجتماعات للطالب من فضلكم
+t1038,ar,other,chat2,train,عاجل: الغداء جاهز في غرفة الاجتماعات من فضلكم
+t0217,en,done,drain,train,fyi sewer line near the 2nd floor washroom flushed all clear over
+t0298,en,done,cctv,train,camera at the main corridor re-aimed please check
+t0526,en,other,chat3,train,"Team, Please welcome our new colleague Sara thanks"
+t0227,en,done,it_equip,dev,Projector in the library fixed and working copy?
+t0025,en,issue,handyman,train,"Guys, Door handle came off in the workshop copy?"
+t0955,ar,other,chat_dev,dev,شاهدوا هاتفي الجديد يرجى المعاينة
+t0999,ar,other,chat8,train,مرحبًا، المباراة البارحة كانت رائعة شكرًا
+t0032,en,issue,cctv,train,"Team, CCTV camera at the staff room is offline asap"
+t0059,en,issue,locker,train,"Hi, I am locked out of room 204, need someone with a key thanks"
+t0742,ar,done,heater,train,يا شباب، تم إصلاح السخان في المقصف وعاد الماء الساخن شكرًا
+t0340,en,done,secure_area,train,FYI Area near the car park secured and cordoned
+t0546,ar,issue,mixed_dev,dev,فريق، تم تغيير اللمبة لكنها تومض مرة أخرى
+t0535,en,other,chat3,train,"Hi, Reminder: safety induction next Monday please check"
+t0434,en,other,chat1,train,"Guys, Is the cafeteria open on Saturday"
+t1017,ar,other,chat8,train,انتباه، حسنًا مفهوم بسرعة
+t0265,en,done,ext_clean,train,"Hi, Collected the litter in the yard at level  done asap"
+t0769,ar,done,handrail,dev,يا شباب، تم شد الدرابزين قرب المبنى ب وتثبيته
+t0247,en,done,pipe,train,"Guys, Water pipe in the front entrance fixed no more leak"
+t0469,en,other,chat_dev,dev,Look at this beautiful sunset copy?
+t0650,ar,issue,pipe,train,فريق، أنبوب المياه يسرب في النادي الرياضي مفهوم؟
+t0861,ar,done,water_bottle,train,تمت تعبئة محطات الشرب قرب المطبخ
+t0111,en,issue,handyman,train,FYI Door handle came off in the canteen (photo attached)
+t0221,en,done,move_furn,train,"attention, cupboards in the workshop relocated to the new office please check"
+t0597,ar,issue,ac,train,للعلم المكيف في الاستقبال يخرج هواء ساخن بسرعة
+t0956,ar,other,chat1,train,تبديل الوردية الساعة السادسة هل يستطيع أحد أن يغطي مكاني حول
+t0198,en,done,lights,train,Replaced the tube lihts in the staff room done (photo attached)
+t0014,en,issue,ac,train,ac in the kitchen is not cooling asap
+t0142,en,issue,exit_light,train,"Hi, Emergency exit light is not working in the gym"
+t0446,en,other,chat4,train,"Guys, Can you rsend the schedule over"
+t0579,ar,issue,cooler,train,موزع المياه في الغرفة 204 لا يبرد شكرًا
+t0994,ar,other,chat3,train,يا شباب، اجتماع الساعة الثالثة في الممر الرئيسي من فضلكم
+t0680,ar,issue,volleyball,train,للعلم ركّبوا شبكة الكرة الطائرة في المبنى أ بسرعة
+t1063,ar,other,chat_dev,dev,انتباه، قطة تجلس على السيارة مفهوم؟
+t0096,en,issue,tiles,train,FYI Loose tiles in the back gate
+t0638,ar,issue,water_bottle,train,عاجل: موزع المياه في الغرفة 204 فارغ ويحتاج إلى قارورة جديدة مفهوم؟
+t0237,en,done,ac,train,"Team, Cleaned he AC filters in the 2nd floor washroom completed copy?"
+t0835,ar,done,roof,train,مرحبًا، تم ترقيع تسرب السقف فوق الورشة شكرًا
+t1022,ar,other,chat4,train,للعلم هل أحد ذاهب إلى المدينة بعد الدوام
+t0480,en,other,chat2,train,Security patrol completed no incidents thanks
+t0824,ar,done,lights,train,تم تبديل اللمبات في دورة المياه في الطابق الثاني وتعمل جميعها من فضلكم
+t0464,en,other,chat4,train,Thanks team great work today pls
+t0725,ar,done,mixed,train,تم حل المشكلة ولا حاجة لأي إجراء يرجى المعاينة
+t0813,ar,done,facade,dev,للعلم تم غسل الجدار الخارجي عند الفصل 5 بالضغط وانتهى من فضلكم
+t0196,en,done,locker,train,"attention, got the teacher back into the kitchen lock freed asap"
+t0156,en,issue,event_setup,train,FYI Set up the podium and microphone in the meeting roomfor assembly
+t0601,ar,issue,lights,train,لمبتان محروقتان في النادي الرياضي يرجى المعاينة
+t0068,en,issue,handyman,train,Hinge on the cabinet door in the 2nd floor washroom is broken please check
+t0097,en,issue,volleyball,train,FYI Net is sagging in block B needs tightening before the match
+t0484,en,other,chat6,train,urgent: radio check one two
+t0822,ar,done,locker,train,للعلم تم فتح الخزانة في المبنى أ للطالب
+t0074,en,issue,secure_area,train,"Hi, Danger: broken glass everywhere in the main corridor cordon it off thanks"
+t0817,ar,done,volleyball,train,تم تخطيط الملعب عند غرفة المضخات وتركيب الشبكة (الصورة مرفقة)
+t0319,en,done,tiles,train,"Attention, Floor in the 2nd floor washroom repaired and levelled"
+t0235,en,done,water_bottle,train,FYI Refilled the drinking stations near the pump room pls
+t0018,en,issue,lights,train,Tube lightnot working in reception
+t0735,ar,done,window_clean,train,للعلم تم غسل الزجاج عند الغرفة 204 وأصبح نظيفًا
+t0303,en,done,drain,train,"hi, drain in the store room cleaned and the smell is gone asap"
+t0395,en,other,chat7,train,Urgent: Who left the van lights on over
+t0433,en,other,chat_dev,dev,"Hi, Cat sitting on the car"
+t0710,ar,issue,move_furn,train,مرحبًا، يرجى نقل 20 طاولة من المقصف إلى المبنى الآخر
+t0860,ar,done,volleyball,train,للعلم تم تخطيط الملعب عند دورة المياه في الطابق الثاني وتركيب الشبكة مفهوم؟
+t0158,en,issue,roof,train,"Attention, Water coming through the roof above building A thanks"
+t0770,ar,done,facade,dev,تم غسل واجهة المبنى قرب غرفة الموظفين وتنظيفها من فضلكم
+t0053,en,issue,tiles,train,"Hi, Loose tiles in the main corridor"
+t0825,ar,done,lift,train,تم ضبط باب المصعد عند غرفة المضخات ويعمل من فضلكم
+t0574,ar,issue,sink,train,يا شباب، المغسلة في غرفة الموظفين مسدودة شكرًا
+t0952,ar,other,chat6,train,أرسل لي ورقة الحضور من فضلك (الصورة مرفقة)
+t0620,ar,issue,drain,train,فريق، رائحة كريهة من المجاري في الممر الرئيسي مفهوم؟
+t0193,en,done,exit_light,train,Emergency lights in the main corridor tested all OK
+t0145,en,issue,locker,train,"Hi, Teacher locked out of room 204, key stuck in the lock please check"
+t0504,en,other,chat8,train,The match last night was amazing (photo attached)
+t0514,en,other,chat_dev,dev,Urgent: Look at this beautiful sunset pls
+t0350,en,done,move_furn,train,"Team, Cupboards in the staff room relocated to the new office asap"
+t0337,en,done,roof_clean,train,Roof above reception cleared of debris
+t0747,ar,done,event_setup,train,للعلم تم ترتيب الخيام والطاولات عند الفصل 5 كما طُلب
+t0889,ar,done,ceiling,train,انتباه، تم إصلاح السقف المستعار في المبنى أ حول
+t0811,ar,done,window,dev,للعلم تم استبدال الزجاج المكسور في دورة المياه في الطابق الثاني وتنظيفه بسرعة
+t0135,en,issue,handrail,dev,"attention, stair railing broken at reception pls"
+t0539,en,other,chat7,train,FYI Is anyone freeto help move boxes thanks
+t0108,en,issue,heater,train,Water heater in the store room is not heating (photo attached)
+t0130,en,issue,gen_clean,dev,"hi, room 204 floor is dusty and needs mopping pls"
+t0188,en,done,mixed,train,"FYI Repaired, you can use it nowasap"
+t0544,ar,issue,mixed,train,فريق، تم الإبلاغ أمس ولم يتم الإصلاح بعد الإضاءة معطلة في الممر مفهوم؟
+t0333,en,done,pipe,train,burst pipe near classroom 5 repaired
+t0541,ar,issue,mixed_dev,dev,مرحبًا، تم إصلاح المكيف في الغرفة 204 لكن المصعد عالق الآن من فضلكم
+t0172,en,issue,key_copy,train,"Hi, Please make a spare key for the cabinet in the store room"
+t0113,en,issue,event_setup,train,set up the podium and microphone in the library for assembly
+t0683,ar,issue,ac,train,فريق، المكيف في الممر الرئيسي يخرج هواء ساخن
+t0530,en,other,chat7,train,Who left the van lights on copy?
+t0981,ar,other,chat8,train,عاجل: يرجى التوقيع على سجل الزوار عند الطابق الثالث
+t0855,ar,done,handrail,dev,عاجل: تم إصلاح الدرجة المتشققة عند غرفة الموظفين من فضلكم
+t0598,ar,issue,window_clean,train,مرحبًا، النوافذ في النادي الرياضي متسخة وعليها خطوط بسرعة
+t0656,ar,issue,socket,train,لا توجد كهرباء في المقابس في المخزن (الصورة مرفقة)
+t0715,ar,issue,tap,dev,عاجل: الصنبور في الممر الرئيسي يسرب الماء باستمرار حول
+t0151,en,issue,heater,train,No hot water in the meeting room
+t0687,ar,issue,lights,train,الإضاءة تومض في الاستقبال مفهوم؟
+t0963,ar,other,chat8,train,غدًا إجازة رسمية يرجى المعاينة
+t0305,en,done,cooler,train,Urgent: Water cooler in the meeting room fixed
+t1065,ar,other,chat2,train,مرحبًا، انتهت جولة الأمن ولا حوادث شكرًا
+t0182,en,done,mixed,train,Completed as requested (photo attached)
+t0169,en,issue,ceiling,train,"Hi, Ceiling in block B has a big stain and sagging"
+t0234,en,done,volleyball,train,Net in the car park tightened and ready for the match thanks
+t0050,en,issue,facade,dev,"Guys, The outer wall of the back gate is covered in black streaks and dirt copy?"
+t0040,en,issue,ceiling,train,FYI Ceiling tile fell in the kitchen tanks
+t0485,en,other,chat7,train,Who left the van lights on pls
+t0543,ar,issue,mixed,train,انتباه، تم التنظيف لكن السقف ما زال يتسرب يرجى إعادة الفحص شكرًا
+t0358,en,done,handrail,dev,"Attention, Cracked step at the meeting roo repaired"
+t0471,en,other,chat2,train,Can someone bring tea to the gym (photo attached)
+t0356,en,done,it_equip,dev,Wi-Fi restored in building A
+t0009,en,issue,mixed,train,Everything fine except the gate motor which stopped over
+t1074,ar,other,chat2,train,انتباه، وصل طلب ماكينة القهوة
+t0176,en,issue,it_equip,dev,"Guys, Wi-Fi is not workin in block B over"
+t0355,en,done,tap,dev,"guys, replaced the washer on the tap in the canteen all good (photo attached)"
+t0010,en,issue,mixed,train,"Guys, Done with level 2, but level 3 AC is not cooling thanks"
+t0144,en,issue,window_clean,train,"Team, Windows in the gym ae dirty and streaky asap"
+t0060,en,issue,gas,train,urgent: smell of gas in the library
+t0558,ar,issue,lights,train,انتباه، مصباح لا يعمل في المبنى أ
+t0845,ar,done,cooler,train,فريق، تم تغيير فلتر البرادة في الممر الرئيسي حول
+t0031,en,issue,secure_area,train,Urgent: Sparking panel in reception keep people away please check
+t0407,en,other,chat1,train,Good evening team (photo attached)
+t0094,en,issue,generator,dev,Backup power did not switch on in building A
+t0932,ar,other,chat4,train,هل أحد ذاهب إلى المدينة بعد الدوام حول
+t0133,en,issue,it_equip,dev,Wi-Fi is not working in the staff room pls
+t0335,en,done,patrol,train,"Attention, Patrol of block B completed and secured thanks"
+t0524,en,other,chat1,train,"Attention, Is the cafeteria open onSaturday"
+t0617,ar,issue,sink,train,الحوض في الفصل 5 لا يصرف الماء (الصورة مرفقة)
+t0757,ar,done,drain,train,تم فتح المصرف المسدود في الاستقبال تم مفهوم؟
+t0403,en,other,chat6,train,"Hi, Parking passes are available at the main corridor thanks"
+t0510,en,other,chat_dev,dev,"Team, Where is the supervisor"
+t0418,en,other,chat3,train,Reminder to submit timesheetsby Friday over
+t0599,ar,issue,locker,train,الخزانة في الطابق الثالث لا تفتح والمفتاح يدور دون فائدة
+t0240,en,done,gas,train,"Guys, Gas leak in the meeting room sealed area checked and safe over"
+t0758,ar,done,spill,train,فريق، تم تنظيف الفوضى في دورة المياه في الطابق الثاني والأرض جافة من فضلكم
+t0807,ar,done,gen_clean,dev,تم تنظيف دورات المياه في الفصل 5 وانتهى من فضلكم
+t0330,en,done,toilet,train,flush mechanism replaced in the pump room working now

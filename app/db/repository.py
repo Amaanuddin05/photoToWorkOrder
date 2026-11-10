@@ -163,6 +163,8 @@ async def insert_decision_log(
                 models_val["text_guard"] = data["text_guard"]
             if data.get("agree_mode"):
                 models_val["agree_mode"] = data["agree_mode"]
+            if data.get("intent"):
+                models_val["intent"] = {k: data["intent"][k] for k in ("label", "prob", "acted")}
 
             cur = await conn.execute(
                 """

@@ -61,6 +61,7 @@ class StartJobPayload(BaseModel):
     text_no_action_floor: float | None = None
     text_auto_min: float | None = None
     agree_mode: str | None = None   # strict | balanced | relaxed (this run only)
+    intent_enabled: bool | None = None   # message-intent gate on/off (this run only)
 
 
 class LoadLocalPayload(BaseModel):

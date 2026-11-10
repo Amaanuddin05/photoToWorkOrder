@@ -111,6 +111,12 @@ class Settings(BaseSettings):
     DECISION_AGREE_MODE: str = "strict"
     DECISION_AGREE_TEXT_MARGIN: float = 0.05
     DECISION_AGREE_IMAGE_TOP_K: int = 3
+    # ── Message-intent gate (issue / done / other) on bge-m3 embeddings ────────
+    # done/other with prob >= INTENT_MIN_PROB -> no_action (no new work order). Off by default.
+    # The classifier only runs when the live TEI model equals the one it was trained on.
+    INTENT_ENABLED: bool = False
+    INTENT_MODEL_PATH: str = "app/intent/intent_bge_m3.json"
+    INTENT_MIN_PROB: float = 0.85
 
     # ── Security & Auth ───────────────────────────────────────────────────────
     API_KEYS: str = ""          # comma-separated; empty = no auth required
@@ -198,6 +204,7 @@ class Settings(BaseSettings):
             self.DECISION_NO_ACTION_FLOOR,
             self.DECISION_REQUIRE_AGREE,
             self.DECISION_AGREE_MODE,
+            self.INTENT_ENABLED,
             self.MIN_DESCRIPTION_WORDS,
         ])
         return hashlib.sha256(payload.encode()).hexdigest()[:12]

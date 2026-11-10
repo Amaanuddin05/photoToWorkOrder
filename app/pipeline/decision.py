@@ -69,6 +69,7 @@ class ProcessedPost:
     service_scores: dict[str, dict[str, float | None]] = field(default_factory=dict)
     text_guard: dict[str, Any] | None = None
     agree_mode: str = "strict"   # agreement strictness level used for the auto gate
+    intent: dict[str, Any] | None = None   # message-intent gate result {label, prob, probs, acted}
 
 
 # ── Reranker wrapper (applies softmax to TEI raw logits) ─────────────────────
