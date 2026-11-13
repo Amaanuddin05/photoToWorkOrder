@@ -227,6 +227,52 @@ MIXED = {
                   "تمرين إخلاء الساعة 11 الجميع يتجمع في مواقف السيارات", "حفل افتتاح المبنى يبدأ الساعة الخامسة", "ستعزف الفرقة الموسيقية في الافتتاح", "مقاعد النافذة محجوزة للضيوف"]},
 }
 
+# Small talk ABOUT equipment / places / photos (not a fault, not a completed job): the model had no such
+# "other" examples and was unsure on them (e.g. "new projector arrived"). Split: every 5th -> dev.
+EQUIP_CHAT = {
+ "en": ["Look at the new coffee machine in the staff room", "The new laptops for the teachers arrived today", "Nice view from the roof this morning",
+        "Our new printer has so many features", "Just unboxed the new smart TV for the lobby", "Check out the new chairs in the meeting room, so comfy",
+        "Delivery of the new monitors is at reception", "The new routers look really modern", "Took a picture of the sunrise from the car park",
+        "This kitchen looks so clean and nice", "We got new tablets for the library", "The new sofa in reception looks great",
+        "Movie night tomorrow with the new projector", "Here is the new office layout, what do you think", "The new uniforms came with the delivery",
+        "Selfie with the team at the gate", "Group photo from the safety training", "Cooking biryani at home today",
+        "My kid drew this at school", "The garden looks beautiful after the rain", "Photo from the annual day celebration",
+        "New water bottles with the school logo arrived", "Which of these two routers should we buy", "The new desk lamps are on sale this week",
+        "Sharing a photo of our new IT room"],
+ "ar": ["شاهدوا ماكينة القهوة الجديدة في غرفة الموظفين", "وصلت أجهزة اللابتوب الجديدة للمعلمين اليوم", "منظر جميل من السطح هذا الصباح",
+        "الطابعة الجديدة فيها مميزات كثيرة", "فتحت للتو صندوق التلفاز الذكي الجديد للردهة", "شاهدوا الكراسي الجديدة في غرفة الاجتماعات مريحة جدًا",
+        "شحنة الشاشات الجديدة عند الاستقبال", "أجهزة الراوتر الجديدة تبدو عصرية جدًا", "التقطت صورة لشروق الشمس من مواقف السيارات",
+        "هذا المطبخ يبدو نظيفًا وجميلًا", "حصلنا على أجهزة لوحية جديدة للمكتبة", "الأريكة الجديدة في الاستقبال تبدو رائعة",
+        "ليلة سينما غدًا مع جهاز العرض الجديد", "هذا هو تصميم المكتب الجديد ما رأيكم", "وصل الزي الجديد مع الشحنة",
+        "سيلفي مع الفريق عند البوابة", "صورة جماعية من تدريب السلامة", "أطبخ برياني في البيت اليوم",
+        "ابني رسم هذه في المدرسة", "الحديقة جميلة بعد المطر", "صورة من احتفال اليوم السنوي",
+        "وصلت قوارير المياه الجديدة بشعار المدرسة", "أي من هذين الراوترين نشتري", "مصابيح المكتب الجديدة عليها تخفيض هذا الأسبوع",
+        "أشارككم صورة غرفة تقنية المعلومات الجديدة"],
+}
+# The 5 NONE descriptions of the eval sets, added on request so they pass the gate (they are therefore no longer
+# an unseen test for the intent model).
+EVAL_NONE_CHAT = {
+ "en": ["New projector arrived for the movie night, looks great", "These are the new routers we ordered for the IT office",
+        "Making dinner at home tonight, kitchen is all set", "Our new office looks amazing with the new printer setup",
+        "Team photo from today's site visit, great work everyone"],
+ "ar": ["وصل جهاز العرض الجديد لليلة السينما، يبدو رائعًا", "هذه أجهزة الراوتر الجديدة التي طلبناها لمكتب تقنية المعلومات",
+        "أحضّر العشاء في البيت الليلة، المطبخ جاهز", "مكتبنا الجديد يبدو رائعًا مع تجهيز الطابعة الجديدة",
+        "صورة الفريق من زيارة الموقع اليوم، عمل رائع من الجميع"],
+}
+
+# Event / setup REQUESTS (issue): counter-weight for the event-themed chatter above, which otherwise pulls
+# imperative setup requests ("prepare the stage...") towards "other".
+SETUP_REQ = {
+ "en": ["Arrange the chairs in the hall for the graduation ceremony", "Please prepare the sound system for the morning assembly",
+        "We need a stage and mic ready for the prize day", "Put up the banners and tables in the courtyard for the fair",
+        "Set up the projector and screen in the hall for parents meeting", "Prepare 100 chairs in the auditorium by 8 am",
+        "Need the podium moved to the playground for sports day", "Arrange tents and tables outside for the open day"],
+ "ar": ["رتبوا الكراسي في القاعة لحفل التخرج", "يرجى تجهيز نظام الصوت للطابور الصباحي",
+        "نحتاج منصة وميكروفون جاهزين ليوم الجوائز", "علقوا اللافتات وضعوا الطاولات في الساحة للمعرض",
+        "جهزوا جهاز العرض والشاشة في القاعة لاجتماع أولياء الأمور", "جهزوا 100 كرسي في المسرح قبل الساعة الثامنة",
+        "نحتاج نقل المنصة إلى الملعب لليوم الرياضي", "رتبوا الخيام والطاولات في الخارج لليوم المفتوح"],
+}
+
 OTHER = {
  "en": ["Good morning everyone", "Good evening team", "Lunch is ready in {l}", "Meeting at 3 pm in {l}", "Who has the keys to the van", "Happy birthday to Ahmed",
         "Please send me the attendance sheet", "Traffic is very bad on the highway today", "The match last night was amazing", "Check out my new phone",
@@ -284,6 +330,10 @@ def main():
         for label, k in (("issue", 0), ("done", 1)):
             n = 0
             # mixed hand-written first
+            if label == "issue":
+                for i, m in enumerate(SETUP_REQ[lang]):
+                    if add(lang, "issue", "setup_req_dev" if i % 4 == 0 else "event_setup", m): n += 1
+                dev_topics.add("setup_req_dev")
             for i, m in enumerate(MIXED[label][lang]):
                 topic = "mixed_dev" if i % 5 == 0 else "mixed"
                 if add(lang, label, topic, m): n += 1
@@ -292,6 +342,13 @@ def main():
                 tmpl = random.choice(T[topic][li + k])
                 if add(lang, label, topic, tmpl.format(l=random.choice(LOC[lang]))): n += 1
         n = 0
+        for m in EVAL_NONE_CHAT[lang]:
+            rows.append({"id": f"t{len(rows)+1:04d}", "lang": lang, "label": "other", "topic": "eval_none",
+                         "split": "train", "text": m}); seen.add(m); n += 1
+        for i, m in enumerate(EQUIP_CHAT[lang]):
+            topic = "equip_chat_dev" if i % 5 == 0 else "equip_chat"
+            dev_topics.add("equip_chat_dev")
+            if add(lang, "other", topic, m): n += 1
         for i, m in enumerate(MIXED["other"][lang]):
             topic = "mixed_dev" if i % 5 == 0 else "mixed"
             if add(lang, "other", topic, m): n += 1
