@@ -237,8 +237,9 @@ anything else stays a draft with Claude's suggestion. Errors never break the pip
 Mock radio channel (ENABLE_UI only): workers send text and/or a photo. Photo + text runs the full pipeline
 (intent gate -> ranking -> decision -> optional LLM) with source `radio`; the message shows a green check (work order
 auto-created) or an amber pencil (draft); no icon for chat, completion notes or no-action. Messages are stored in
-`"RadioMessage"` (created at startup, `sql/002_radio_message.sql`), photos in `app/data/radio/`. Work orders from all
-sources (console / radio / api) are listed in **Work Orders** on `/ui` (`GET /v1/decisions?actions=auto_create,draft`).
+`"RadioMessage"` (created at startup, `sql/002_radio_message.sql`), photos in `app/data/radio/`. Decisions from all
+sources (console / radio / api) appear in **Recent Decisions** on `/ui` with source, LLM cost and reason
+(`GET /v1/decisions?actions=auto_create,draft` filters to work orders).
 
 ## 5. Database Least-Privilege Role Setup
 

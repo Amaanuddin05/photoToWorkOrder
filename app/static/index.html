@@ -71,13 +71,10 @@
            border: 1px solid var(--border-color); margin-left: 6px; color: var(--text-secondary); }
     .section-gap { margin-top: 16px; }
     .test-options select.inline { width: auto; display: inline-block; margin-left: 8px; padding: 2px 6px; font-size: 0.8rem; }
-    .wo-icon { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px;
-               border-radius: 50%; font-size: 12px; font-weight: 700; color: #fff; }
-    .wo-auto { background: #1a7f37; } .wo-draft { background: #bf8700; }
     .llm-badge { display: inline-block; font-size: 0.7rem; padding: 1px 6px; border-radius: 10px;
                  background: rgba(130, 80, 223, 0.15); color: #8250df; border: 1px solid rgba(130, 80, 223, 0.4); white-space: nowrap; }
-    .wo-table td { font-size: 0.82rem; vertical-align: top; }
-    .wo-reason { color: var(--text-secondary); max-width: 320px; }
+    .llm-badge.err { background: rgba(207, 34, 46, 0.12); color: #cf222e; border-color: rgba(207, 34, 46, 0.4); }
+    .td-reason { color: var(--text-secondary); font-size: 0.78rem; max-width: 280px; }
   </style>
 </head>
 <body>
@@ -243,26 +240,6 @@
       <div class="alert-error" id="result-error" role="alert"></div>
     </section>
 
-    <!-- Work Orders: auto-created and draft decisions (console, radio, API) -->
-    <section id="screen-work-orders" class="card">
-      <div class="history-header">
-        <h2 class="history-title">Work Orders</h2>
-        <button type="button" class="btn btn-secondary" id="refresh-wo-btn" style="padding: 6px 14px; font-size: 0.8rem;">&#8635; Refresh</button>
-      </div>
-      <p class="form-help-text" style="margin: 0 0 8px;">
-        <span class="wo-icon wo-auto">&#10003;</span> auto-created &nbsp;
-        <span class="wo-icon wo-draft">&#9998;</span> draft (needs review) &nbsp;
-        <span class="llm-badge">LLM</span> decided with Claude (hover for tokens / cost)
-      </p>
-      <div class="table-responsive">
-        <table class="scores-table wo-table">
-          <thead><tr><th></th><th>#</th><th>Time</th><th>Source</th><th>Description</th><th>Service</th><th>LLM</th><th>Reason</th></tr></thead>
-          <tbody id="wo-tbody"></tbody>
-        </table>
-      </div>
-      <div class="empty-state" id="wo-empty" style="display: none;">No work orders yet</div>
-    </section>
-
     <!-- SCREEN 3: History (Below) -->
     <section id="screen-history" class="card">
       <div class="history-header">
@@ -276,11 +253,15 @@
         <table id="history-table">
           <thead>
             <tr>
+              <th>#</th>
               <th>Time</th>
+              <th>Source</th>
               <th>Description</th>
-              <th>Suggested</th>
+              <th>Service</th>
               <th>Confidence</th>
               <th>Action</th>
+              <th>LLM</th>
+              <th>Reason</th>
               <th>Latency</th>
             </tr>
           </thead>

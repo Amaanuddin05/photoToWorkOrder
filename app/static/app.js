@@ -437,7 +437,6 @@
       state.currentDecision = decision;
 
       renderResultScreen(decision);
-      fetchWorkOrders();
       fetchHistory();
     } catch (err) {
       showFormError(err.message || "Failed to analyze post. Please check connection.");
@@ -645,7 +644,7 @@
   // Screen 3: History Table (GET /v1/decisions?limit=20)
   async function fetchHistory() {
     try {
-      const resp = await fetch("/v1/decisions?limit=20", {
+      const resp = await fetch("/v1/decisions?limit=30", {
         headers: getHeaders(),
       });
       if (!resp.ok) return;
@@ -674,6 +673,9 @@
     decisions.forEach((row) => {
       const tr = document.createElement("tr");
 
+      // 0. Decision id
+      tr.appendChild(el("td", `#${row.id}`, "num"));
+
       // 1. Time
       const tdTime = document.createElement("td");
       const timeVal = row.created_at || row.createdAt;
@@ -689,6 +691,9 @@
         tdTime.textContent = "-";
       }
       tr.appendChild(tdTime);
+
+      // 1b. Source (console / radio / api)
+      tr.appendChild(el("td", row.source || "api"));
 
       // 2. Description (truncated, full text on hover)
       const tdDesc = document.createElement("td");
@@ -729,6 +734,26 @@
       }
       tdAction.appendChild(actionBadge);
       tr.appendChild(tdAction);
+
+      // 6b. LLM review: cost, or why the call failed
+      const tdLlm = document.createElement("td");
+      const l = row.llm;
+      if (l) {
+        const b = el("span", l.error ? "LLM failed" : `$${(l.cost_usd || 0).toFixed(4)}`, l.error ? "llm-badge err" : "llm-badge");
+        b.title = l.error
+          ? `LLM call failed: ${l.error}`
+          : `${l.served_model || l.model}\n${l.input_tokens} in / ${l.output_tokens} out tokens\n≈ $${(l.cost_usd || 0).toFixed(6)}\n${l.intent || ""} · ${l.service || ""} (${l.confidence || ""})${l.promoted ? " → promoted to auto" : ""}`;
+        tdLlm.appendChild(b);
+      } else {
+        tdLlm.textContent = "-";
+      }
+      tr.appendChild(tdLlm);
+
+      // 6c. Reason (full text on hover)
+      const reason = row.reason || "";
+      const tdReason = el("td", reason.length > 80 ? reason.slice(0, 80) + "…" : reason || "-", "td-reason");
+      tdReason.title = reason;
+      tr.appendChild(tdReason);
 
       // 7. Latency in seconds
       const tdLatency = document.createElement("td");
@@ -1250,64 +1275,8 @@
     });
   }
 
-  // ── Work orders (auto + draft decisions) ──────────────────────────────
-  async function fetchWorkOrders() {
-    try {
-      const resp = await fetch("/v1/decisions?limit=50&actions=auto_create,draft", { headers: getHeaders() });
-      if (!resp.ok) return;
-      renderWorkOrders(await resp.json());
-    } catch (err) {
-      console.warn("Failed to load work orders:", err);
-    }
-  }
-
-  function renderWorkOrders(rows) {
-    const tbody = document.getElementById("wo-tbody");
-    const empty = document.getElementById("wo-empty");
-    if (!tbody) return;
-    tbody.replaceChildren();
-    empty.style.display = rows && rows.length ? "none" : "block";
-    (rows || []).forEach((r) => {
-      const tr = document.createElement("tr");
-      const tdIcon = document.createElement("td");
-      const ic = el("span", r.action === "auto_create" ? "✓" : "✎", `wo-icon ${r.action === "auto_create" ? "wo-auto" : "wo-draft"}`);
-      ic.title = r.action === "auto_create" ? "Auto-created" : "Draft";
-      tdIcon.appendChild(ic);
-      tr.appendChild(tdIcon);
-      tr.appendChild(el("td", `#${r.id}`, "num"));
-      const d = r.created_at ? new Date(r.created_at) : null;
-      const tdT = el("td", d ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—");
-      if (d) tdT.title = d.toLocaleString();
-      tr.appendChild(tdT);
-      tr.appendChild(el("td", r.source || "api"));
-      const desc = (r.description || "").trim();
-      const tdD = el("td", desc.length > 60 ? desc.slice(0, 60) + "…" : desc || "(no description)");
-      tdD.title = desc;
-      tr.appendChild(tdD);
-      tr.appendChild(el("td", r.top_service_title || "—"));
-      const tdL = document.createElement("td");
-      if (r.llm) {
-        const b = el("span", r.llm.error ? "LLM err" : `LLM $${(r.llm.cost_usd || 0).toFixed(4)}`, "llm-badge");
-        b.title = r.llm.error
-          ? `${r.llm.model}: ${r.llm.error}`
-          : `${r.llm.served_model || r.llm.model}\n${r.llm.input_tokens} in / ${r.llm.output_tokens} out tokens\n≈ $${(r.llm.cost_usd || 0).toFixed(6)}\n${r.llm.service} (${r.llm.confidence})${r.llm.promoted ? " → promoted" : ""}`;
-        tdL.appendChild(b);
-      }
-      tr.appendChild(tdL);
-      const reason = r.reason || "";
-      const tdR = el("td", reason.length > 90 ? reason.slice(0, 90) + "…" : reason, "wo-reason");
-      tdR.title = reason;
-      tr.appendChild(tdR);
-      tbody.appendChild(tr);
-    });
-  }
-
   function init() {
     initAddServiceToggle();
-    const woBtn = document.getElementById("refresh-wo-btn");
-    if (woBtn) woBtn.addEventListener("click", fetchWorkOrders);
-    fetchWorkOrders();
-    setInterval(fetchWorkOrders, 15000);
     initAuth();
     initAddService();
     updateSubmitButtonState();
