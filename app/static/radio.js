@@ -9,6 +9,7 @@
   let stick = true;
   feed.addEventListener("scroll", () => { stick = feed.scrollHeight - feed.scrollTop - feed.clientHeight < 60; });
   const pending = new Set();
+  const open = new Set();   // message ids whose details panel is open
 
   function headers() {
     const k = sessionStorage.getItem("siglip_api_key") || "";
@@ -43,9 +44,71 @@
     }
     if (m.action !== "auto_create" && m.action !== "draft") return null;
     const auto = m.action === "auto_create";
-    const ic = el("span", auto ? "✓" : "✎", `wo-icon ${auto ? "wo-auto" : "wo-draft"}`);
-    ic.title = `${auto ? "Work order auto-created" : "Draft work order"}: ${m.service || "?"}\n${m.reason || ""}`;
+    const ic = el("button", auto ? "✓" : "✎", `wo-icon ${auto ? "wo-auto" : "wo-draft"}`);
+    ic.type = "button";
+    ic.title = `${auto ? "Work order auto-created" : "Draft work order"}: ${m.service || "?"} (click for details)`;
+    ic.setAttribute("aria-expanded", String(open.has(m.id)));
+    ic.addEventListener("click", () => {
+      if (open.has(m.id)) open.delete(m.id); else open.add(m.id);
+      lastIds = "";
+      render(cache);
+    });
     return ic;
+  }
+
+  const pct = (v) => (typeof v === "number" ? `${(v * 100).toFixed(1)}%` : "—");
+  const num = (v, d = 4) => (typeof v === "number" ? v.toFixed(d) : "—");
+
+  function detailsPanel(m) {
+    const d = m.details || {};
+    const box = el("div", null, "wo-details");
+    const t = document.createElement("table");
+    const add = (k, v, cls) => {
+      const tr = document.createElement("tr");
+      tr.appendChild(el("th", k));
+      tr.appendChild(el("td", v, cls));
+      t.appendChild(tr);
+    };
+    const auto = m.action === "auto_create";
+    add("Status", `${auto ? "Work order auto-created" : "Draft: needs review"}${m.decision_id ? ` (decision #${m.decision_id})` : ""}`, auto ? "ok" : "");
+    add("Service", m.service || "—");
+    if (typeof d.confidence === "number") add("Confidence", `${pct(d.confidence)} (auto needs ≥ 40%)`, d.confidence >= 0.4 ? "ok" : "bad");
+    if (typeof d.gap === "number") add("Gap to #2", `${pct(d.gap)} (auto needs ≥ 10%)`, d.gap >= 0.1 ? "ok" : "bad");
+    if (d.text_guard && typeof d.text_guard.score === "number") {
+      const tg = d.text_guard;
+      add("Text match", `${num(tg.score)} (auto ≥ ${tg.auto_min}, floor ${tg.no_action_floor})`, tg.score >= tg.auto_min ? "ok" : "bad");
+    }
+    if (d.text_top1 || d.image_top1) {
+      add("Text #1 / Photo #1", `${d.text_top1 || "—"} / ${d.image_top1 || "—"}`);
+      add("Agreement", `${d.agree === true ? "yes" : d.agree === false ? "no" : "—"} · strictness ${d.agree_mode || "strict"}`, d.agree === true ? "ok" : d.agree === false ? "bad" : "muted");
+    }
+    if (d.intent) {
+      const names = { issue: "issue report", done: "work completed", other: "not maintenance" };
+      add("Intent", `${names[d.intent.label] || d.intent.label} (${pct(d.intent.prob)})`);
+    }
+    if (Array.isArray(d.top) && d.top.length) {
+      const pick = m.llm && !m.llm.error ? m.llm.service : null;
+      const ranked = d.top.slice().sort((a, b) => (b.confidence || 0) - (a.confidence || 0));
+      add("Top candidates (pipeline score)", ranked.map((c, i) => `${i + 1}. ${c.title} ${pct(c.confidence)}${c.title === pick ? "  ← LLM pick" : ""}`).join("\n"));
+    }
+    const l = m.llm;
+    if (l && l.used) {
+      add("LLM", `${l.served_model || l.model}${l.trigger ? ` · trigger: ${l.trigger}` : ""}`);
+      if (l.error) {
+        add("LLM result", `failed: ${l.error}`, "bad");
+      } else {
+        add("LLM verdict", `intent ${l.intent} · ${l.service} (${l.confidence}) · photo ${l.photo_matches ? "matches" : "does not match"}${l.promoted ? " · promoted to auto" : ""}`);
+        if (l.reason) add("LLM reasoning", l.reason);
+      }
+      add("LLM usage", `${l.input_tokens || 0} in / ${l.output_tokens || 0} out tokens · ≈ $${(l.cost_usd || 0).toFixed(6)} · ${((l.latency_ms || 0) / 1000).toFixed(1)} s`);
+    } else if (d.llm_skip) {
+      add("LLM", `not used: ${d.llm_skip}`, "muted");
+    }
+    add("Reason", m.reason || "—", "muted");
+    if (typeof d.latency_ms === "number") add("Processing time", `${(d.latency_ms / 1000).toFixed(2)} s`);
+    t.querySelectorAll("td").forEach((td) => { td.style.whiteSpace = "pre-line"; });
+    box.appendChild(t);
+    return box;
   }
 
   function renderMessage(m) {
@@ -76,6 +139,7 @@
         line.appendChild(lb);
       }
       b.appendChild(line);
+      if (open.has(m.id)) b.appendChild(detailsPanel(m));
     }
     row.appendChild(b);
     const ic = woIcon(m);
@@ -84,7 +148,7 @@
   }
 
   function render(msgs) {
-    const key = msgs.map((m) => `${m.id}:${m.action || ""}:${pending.has(m.id) ? "p" : ""}`).join(",");
+    const key = msgs.map((m) => `${m.id}:${m.action || ""}:${pending.has(m.id) ? "p" : ""}:${open.has(m.id) ? "o" : ""}`).join(",");
     if (key === lastIds) return;
     lastIds = key;
     const first = !feed.dataset.loaded;

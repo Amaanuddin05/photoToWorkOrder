@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS "RadioMessage" (
     action         text,
     "serviceTitle" text,
     reason         text,
-    llm            jsonb
+    llm            jsonb,
+    details        jsonb       -- scores, intent, top candidates, stage (intent_gate | pipeline)
 );
 CREATE INDEX IF NOT EXISTS "RadioMessage_createdAt_idx" ON "RadioMessage" ("createdAt");

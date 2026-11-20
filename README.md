@@ -234,8 +234,10 @@ anything else stays a draft with Claude's suggestion. Errors never break the pip
 - CLI: `scripts\eval_model_compare.py run --llm --llm-model claude-sonnet-5-5 ...`
 
 ### Radio channel demo (`/ui/radio`)
-Mock radio channel (ENABLE_UI only): workers send text and/or a photo. Photo + text runs the full pipeline
-(intent gate -> ranking -> decision -> optional LLM) with source `radio`; the message shows a green check (work order
+Mock radio channel (ENABLE_UI only): workers send text and/or a photo. Photo + text first goes through the
+intent gate: a confident completion note / chatter stops there (no decision logged, no further processing).
+Issue reports run the full pipeline (ranking -> decision -> optional LLM) with source `radio`; clicking a
+message's icon shows status, scores, intent, top candidates, LLM verdict / reasoning / tokens / cost; the message shows a green check (work order
 auto-created) or an amber pencil (draft); no icon for chat, completion notes or no-action. Messages are stored in
 `"RadioMessage"` (created at startup, `sql/002_radio_message.sql`), photos in `app/data/radio/`. Decisions from all
 sources (console / radio / api) appear in **Recent Decisions** on `/ui` with source, LLM cost and reason

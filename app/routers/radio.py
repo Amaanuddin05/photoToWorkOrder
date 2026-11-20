@@ -7,6 +7,7 @@ from __future__ import annotations
 import io
 import json
 import logging
+import time
 import uuid
 from pathlib import Path
 from typing import Any
@@ -28,6 +29,7 @@ CREATE TABLE IF NOT EXISTS "RadioMessage" (
     text text, "photoPath" text, "decisionId" integer REFERENCES "DecisionLog"(id) ON DELETE SET NULL,
     action text, "serviceTitle" text, reason text, llm jsonb);
 CREATE INDEX IF NOT EXISTS "RadioMessage_createdAt_idx" ON "RadioMessage" ("createdAt");
+ALTER TABLE "RadioMessage" ADD COLUMN IF NOT EXISTS details jsonb;
 """
 
 
@@ -42,21 +44,25 @@ def _require_ui(request: Request):
         raise HTTPException(status_code=404, detail="Radio demo requires ENABLE_UI=true")
 
 
-def _row(r: tuple) -> dict[str, Any]:
-    llm = r[9]
-    if isinstance(llm, str):
+def _json(v: Any) -> Any:
+    if isinstance(v, str):
         try:
-            llm = json.loads(llm)
+            return json.loads(v)
         except Exception:
-            llm = None
+            return None
+    return v
+
+
+def _row(r: tuple) -> dict[str, Any]:
     return {
         "id": r[0], "created_at": r[1].isoformat() if r[1] else None, "sender": r[2], "text": r[3],
         "has_photo": bool(r[4]), "photo_url": f"/v1/radio/photos/{r[0]}" if r[4] else None,
-        "decision_id": r[5], "action": r[6], "service": r[7], "reason": r[8], "llm": llm,
+        "decision_id": r[5], "action": r[6], "service": r[7], "reason": r[8], "llm": _json(r[9]),
+        "details": _json(r[10]),
     }
 
 
-_COLS = 'id, "createdAt", sender, text, "photoPath", "decisionId", action, "serviceTitle", reason, llm'
+_COLS = 'id, "createdAt", sender, text, "photoPath", "decisionId", action, "serviceTitle", reason, llm, details'
 
 
 @router.get("/messages")
@@ -125,7 +131,30 @@ async def send_message(
         )
         msg_id = (await cur.fetchone())[0]
 
-    # Photo + description -> full pipeline (intent gate -> ranking -> decision -> optional LLM review)
+    # Photo + description -> intent gate first; only an issue report goes on to the full pipeline
+    # (ranking -> decision -> optional LLM review). A completion note / chatter stops here.
+    if text and image_bytes is not None and settings.INTENT_ENABLED:
+        try:
+            from app.intent_gate import classify
+            from app.text_embedding import resolve_query_model
+            t_gate = time.perf_counter()
+            tei_model, _dim = await resolve_query_model(state.tei_client)
+            vec = (await state.tei_client.embed([text]))[0]
+            intent = classify(settings, tei_model, vec)
+            if intent and intent.get("acted"):
+                reason = (f"intent={intent['label']} (p={intent['prob']:.2f}) - not a new issue report; "
+                          "stopped at the intent gate, not processed")
+                details = {"stage": "intent_gate", "intent": intent,
+                           "latency_ms": round((time.perf_counter() - t_gate) * 1000, 1)}
+                async with pool.connection() as conn:
+                    await conn.execute(
+                        'UPDATE "RadioMessage" SET action=%s, reason=%s, details=%s WHERE id=%s;',
+                        ("no_action", reason, json.dumps(details), msg_id),
+                    )
+                text = None  # skip the pipeline below
+        except Exception as exc:
+            logger.warning("Radio message %s: intent pre-check failed, running the pipeline: %s", msg_id, exc)
+
     if text and image_bytes is not None:
         run_settings = settings
         if llm_enabled in ("on", "off"):
@@ -141,11 +170,23 @@ async def send_message(
             )
             top = result.top_candidates[0].title if result.top_candidates else None
             llm = result.llm
+            details = {
+                "stage": "pipeline",
+                "confidence": result.confidence, "gap": result.gap, "agree": result.agree,
+                "agree_mode": getattr(result, "agree_mode", None),
+                "text_top1": result.text_top1, "image_top1": result.image_top1,
+                "text_guard": result.text_guard, "intent": result.intent,
+                "top": [{"title": c.title, "confidence": c.confidence,
+                         "text_rank": c.text_rank, "image_rank": c.image_rank}
+                        for c in (result.top_candidates or [])[:3]],
+                "llm_skip": getattr(result, "llm_skip", None),
+                "latency_ms": (result.timings or {}).get("total_ms"),
+            }
             async with pool.connection() as conn:
                 await conn.execute(
-                    'UPDATE "RadioMessage" SET "decisionId"=%s, action=%s, "serviceTitle"=%s, reason=%s, llm=%s WHERE id=%s;',
+                    'UPDATE "RadioMessage" SET "decisionId"=%s, action=%s, "serviceTitle"=%s, reason=%s, llm=%s, details=%s WHERE id=%s;',
                     (result.decision_id, result.action, top if result.action != "no_action" else None,
-                     result.reason, json.dumps(llm) if llm else None, msg_id),
+                     result.reason, json.dumps(llm) if llm else None, json.dumps(details, default=str), msg_id),
                 )
         except Exception as exc:
             logger.error("Radio message %s: pipeline failed: %s", msg_id, exc, exc_info=True)
