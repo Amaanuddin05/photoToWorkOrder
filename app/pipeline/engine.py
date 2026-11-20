@@ -44,6 +44,7 @@ async def process_post(
     idempotency_key: str | None = None,
     dry_run: bool = False,
     return_diagnostics: bool = False,
+    source: str = "api",
 ) -> ProcessedPost:
     """
     Full async pipeline. Calls TEI over HTTP for embed/rerank;
@@ -344,8 +345,44 @@ async def process_post(
             result.would_be_action = "no_action"
             result.action = "no_action"
             result.shadow = False
+
     timings["decision_ms"] = round((time.perf_counter() - t_decide) * 1000, 2)
     timings["decide_ms"] = timings["decision_ms"]
+
+    # ── LLM review of low-confidence drafts (optional, Claude) ─────────────
+    result.source = source
+    if getattr(settings, "LLM_ENABLED", False):
+        from app.pipeline.decision import llm_skip_reason
+        draft_skip = llm_skip_reason(result, has_image, has_desc)
+        # Intent gate unsure: it saw done/other but below its threshold (did not act), or a weak "issue".
+        intent_unsure = bool(
+            result.intent is not None and not result.intent.get("acted") and result.action != "no_action"
+            and (result.intent.get("label") != "issue"
+                 or (result.intent.get("probs") or {}).get("issue", 1.0) < getattr(settings, "INTENT_LLM_ISSUE_BELOW", 0.5))
+        )
+        if has_desc and (draft_skip is None or intent_unsure):
+            from app.llm_review import apply_intent_review, apply_review, review_post
+            model = settings.LLM_MODEL if settings.LLM_MODEL in settings.llm_allowed_models else settings.llm_allowed_models[0]
+            t_llm = time.perf_counter()
+            llm = await review_post(
+                settings=settings, model=model, description=description or "",
+                image_bytes=image_bytes if has_image else None,
+                candidate_titles=[c.title for c in (result.all_candidates or result.top_candidates)][:10],
+                pool=pool,
+            )
+            llm["trigger"] = "+".join(t for t, on in (("intent", intent_unsure), ("draft", draft_skip is None)) if on)
+            blocked = list(settings.always_draft_services_list) + list(settings.safety_services_list)
+            if intent_unsure and apply_intent_review(result, llm):
+                pass
+            elif draft_skip is None:
+                apply_review(result, llm, auto_create_enabled=settings.AUTO_CREATE_ENABLED, blocked_services=blocked)
+            else:
+                result.llm = llm
+                if not llm.get("error"):
+                    result.reason = f"{result.reason} | llm: intent={llm.get('intent')} confirmed"
+            timings["llm_ms"] = round((time.perf_counter() - t_llm) * 1000, 2)
+        else:
+            result.llm_skip = "intent gate confident" if draft_skip and draft_skip.startswith("action is") else draft_skip
     timings["total_ms"] = round((time.perf_counter() - t0) * 1000, 2)
 
     # Attach diagnostic and timing metadata to result object
@@ -453,6 +490,8 @@ async def process_post(
                 "text_guard": result.text_guard,
                 "agree_mode": agree_mode,
                 "intent": result.intent,
+                "llm": result.llm,
+                "source": source,
                 "text_model": text_model_used,
                 "image_model": settings.SIGLIP_MODEL_ID,
                 # Only recorded when the cross-encoder reranker was actually used.

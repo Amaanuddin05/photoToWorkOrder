@@ -179,6 +179,9 @@ def cmd_run(args: argparse.Namespace) -> None:
         overrides["text_auto_min"] = args.text_auto_min
     if args.agree_mode is not None:
         overrides["agree_mode"] = args.agree_mode
+    if args.llm:
+        overrides["llm_enabled"] = True
+        overrides["llm_model"] = args.llm_model
     run = run_pipeline_eval(args.base_url, Path(args.zip), args.timeout, overrides)
     run["rows"] = [r for r in run.get("rows", []) if not r.get("is_warmup")]
     csv_path = save_rows_csv(run, args.tag, ts)
@@ -204,6 +207,7 @@ def cmd_run(args: argparse.Namespace) -> None:
         "model_ids": (run.get("effective_settings") or {}).get("model_ids"),
         "tei_embed_info": floor.pop("tei_embed_info", None),
         "metrics": {k: v for k, v in m.items() if k != "rows"},
+        "llm": (run.get("summary") or {}).get("llm"),
         "floor": floor,
         "rows": rows_min,
     }
@@ -211,6 +215,12 @@ def cmd_run(args: argparse.Namespace) -> None:
     sum_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
 
     _print_single(summary)
+    llm = summary.get("llm") or {}
+    if llm.get("calls"):
+        print(f"LLM ({', '.join(llm.get('models') or [])}): {llm['calls']} calls, {llm['errors']} errors, "
+              f"{llm['input_tokens']} in / {llm['output_tokens']} out tokens, ~${llm['total_cost_usd']:.4f} "
+              f"(avg ${llm['avg_cost_usd']:.5f}); promoted {llm['promoted_to_auto']}, wrong autos {llm['wrong_auto_from_llm']}, "
+              f"blocked as not-issue {llm['intent_no_action']}")
     job_json = SERVER_RUNS_DIR / f"{run.get('job_id')}.json"
     tagged_job_json = RUNS_DIR / f"eval_job_{args.tag}_{run.get('job_id')}.json"
     if job_json.exists():
@@ -297,6 +307,9 @@ def main() -> None:
     r.add_argument("--timeout", type=float, default=900.0)
     r.add_argument("--text-floor", type=float, default=None, help="per-run override of the text no_action floor")
     r.add_argument("--text-auto-min", type=float, default=None, help="per-run override of the text auto_min")
+    r.add_argument("--llm", action="store_true", help="send drafts / unsure-intent rows to Claude (paid)")
+    r.add_argument("--llm-model", default="claude-sonnet-5-5",
+                   choices=["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"])
     r.add_argument("--agree-mode", choices=["strict", "balanced", "relaxed"], default=None,
                    help="per-run override of the text/photo agreement strictness")
     c = sub.add_parser("compare")

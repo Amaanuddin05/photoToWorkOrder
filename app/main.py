@@ -227,6 +227,14 @@ async def lifespan(app: FastAPI):
         else:
             logger.info("TEI embedder ready (reranker bypassed via ENABLE_RERANKER=false).")
 
+    # ── 4b. Radio demo table (RadioMessage) ─────────────────────────────────
+    if db_opened and getattr(settings, "ENABLE_UI", False):
+        try:
+            from app.routers.radio import ensure_table
+            await ensure_table(pool)
+        except Exception as exc:
+            logger.warning("Could not create RadioMessage table: %s", exc)
+
     # ── 5. Load service profiles ───────────────────────────────────────────
     if db_opened:
         try:
@@ -271,7 +279,7 @@ def create_app(
     siglip_service: Any = None,
     tei_client: Any = None,
 ) -> FastAPI:
-    from app.routers import health, metrics, posts, services, decisions, eval
+    from app.routers import health, metrics, posts, services, decisions, eval, radio
 
     app = FastAPI(
         title="Photo-to-Work-Order Service",
@@ -352,6 +360,7 @@ def create_app(
     app.include_router(services.router)
     app.include_router(decisions.router)
     app.include_router(eval.router)
+    app.include_router(radio.router)
 
     # ── Static UI (/ui & /ui/eval) ─────────────────────────────────────────
     from app.config import get_settings
@@ -379,6 +388,11 @@ def create_app(
                 @app.get("/ui", include_in_schema=False)
                 async def ui_redirect():
                     return RedirectResponse(url="/ui/")
+
+                @app.get("/ui/radio", include_in_schema=False)
+                @app.get("/ui/radio/", include_in_schema=False)
+                async def radio_page():
+                    return FileResponse(str(static_dir / "radio.html"), media_type="text/html")
 
             app.mount("/ui", StaticFiles(directory=str(static_dir), html=True), name="ui")
 

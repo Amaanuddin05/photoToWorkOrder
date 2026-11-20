@@ -69,11 +69,16 @@ async def record_feedback(
 async def list_decisions(
     request: Request,
     limit: int = 20,
+    actions: str | None = None,
     _auth: None = Depends(_require_auth),
 ) -> list[dict[str, Any]]:
-    """Returns newest decisions first, joined with service titles."""
+    """Returns newest decisions first, joined with service titles.
+
+    actions: optional comma-separated filter, e.g. "auto_create,draft" (the work-order list).
+    """
     from app.db import repository as repo
 
-    limit = max(1, min(limit, 100))
-    return await repo.get_recent_decisions(request.app.state.db_pool, limit)
+    limit = max(1, min(limit, 200))
+    acts = [a.strip() for a in actions.split(",") if a.strip()] if actions else None
+    return await repo.get_recent_decisions(request.app.state.db_pool, limit, acts)
 

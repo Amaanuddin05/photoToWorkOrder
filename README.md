@@ -215,6 +215,31 @@ Measured: process working set 2.1 GB loaded -> 0.49 GB unloaded. `/health/ready`
 reports `siglip_model.state` / `idle_s` / `load_count`. Set `SIGLIP_IDLE_UNLOAD_SECONDS=0` to keep it loaded.
 TEI (bge-m3, ~5.4 GB) is not affected.
 
+### LLM review of low-confidence posts (Claude)
+Optional. With `LLM_ENABLED=true` (or the "Use LLM" checkbox on the operator UI, eval page or radio page), one
+Claude call is made for a post when either:
+- the pipeline would make it a **draft** (photo + description; not shadow-mode, always-draft or safety near-tie), or
+- the **intent gate is unsure** (it saw done/other below `INTENT_MIN_PROB`, or P(issue) < `INTENT_LLM_ISSUE_BELOW`).
+
+Claude gets the photo (max side `LLM_IMAGE_MAX_SIDE`), the description and the candidate services, and returns
+`intent`, `service`, `confidence`, `photo_matches`, `reason` (strict JSON schema). Intent done/other -> `no_action`;
+a `high`-confidence pick whose photo matches (and is not a safety / always-draft service) -> `auto_create`;
+anything else stays a draft with Claude's suggestion. Errors never break the pipeline (`llm.error`).
+
+- Settings: `ANTHROPIC_API_KEY` (required, never logged), `LLM_MODEL=claude-sonnet-5-5` (UI can pick
+  `claude-opus-5-5` / `claude-haiku-5-5`), `LLM_PRICING` ($ per million tokens), `LLM_TIMEOUT_SECONDS=30`.
+- Sonnet 5.5 / Opus 5.5 calls use server-side refusal fallbacks (`fallbacks="default"`).
+- Usage and approximate cost (tokens x `LLM_PRICING`) are returned as `llm` in the API response, stored in
+  `DecisionLog.models.llm`, shown per request on `/ui`, per row + totals on `/ui/eval`, and in eval exports.
+- CLI: `scripts\eval_model_compare.py run --llm --llm-model claude-sonnet-5-5 ...`
+
+### Radio channel demo (`/ui/radio`)
+Mock radio channel (ENABLE_UI only): workers send text and/or a photo. Photo + text runs the full pipeline
+(intent gate -> ranking -> decision -> optional LLM) with source `radio`; the message shows a green check (work order
+auto-created) or an amber pencil (draft); no icon for chat, completion notes or no-action. Messages are stored in
+`"RadioMessage"` (created at startup, `sql/002_radio_message.sql`), photos in `app/data/radio/`. Work orders from all
+sources (console / radio / api) are listed in **Work Orders** on `/ui` (`GET /v1/decisions?actions=auto_create,draft`).
+
 ## 5. Database Least-Privilege Role Setup
 
 For production deployment, grant the service user minimal required privileges:

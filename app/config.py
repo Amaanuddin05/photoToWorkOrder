@@ -121,6 +121,25 @@ class Settings(BaseSettings):
     INTENT_ENABLED: bool = False
     INTENT_MODEL_PATH: str = "app/intent/intent_bge_m3.json"
     INTENT_MIN_PROB: float = 0.85
+    # ── LLM review of low-confidence drafts (Claude, Anthropic API) ─────────────
+    # Drafts with photo + description (not shadow / always-draft / safety) are sent to Claude, which picks a
+    # candidate service; a high-confidence pick whose photo matches is promoted to auto_create.
+    LLM_ENABLED: bool = False
+    LLM_MODEL: str = "claude-sonnet-5-5"
+    LLM_ALLOWED_MODELS: str = '["claude-sonnet-5-5", "claude-opus-5-5", "claude-haiku-5-5"]'
+    # USD per million tokens (cache_read / cache_write default to 0.1x / 1.25x input when omitted)
+    LLM_PRICING: str = ('{"claude-sonnet-5-5": {"input": 2.0, "output": 10.0, "cache_read": 0.10},'
+                        ' "claude-opus-5-5": {"input": 4.0, "output": 20.0, "cache_read": 0.20},'
+                        ' "claude-sonnet-5": {"input": 2.0, "output": 10.0},'
+                        ' "claude-opus-5": {"input": 5.0, "output": 25.0},'
+                        ' "claude-opus-4-8": {"input": 5.0, "output": 25.0},'
+                        ' "claude-haiku-5-5": {"input": 0.10, "output": 0.50}}')
+    LLM_TIMEOUT_SECONDS: float = 30.0
+    LLM_IMAGE_MAX_SIDE: int = 768
+    # Also ask the LLM about the intent when the intent gate is unsure: it predicted done/other below
+    # INTENT_MIN_PROB (so it did not act), or it predicted issue with P(issue) below this value.
+    INTENT_LLM_ISSUE_BELOW: float = 0.5
+    ANTHROPIC_API_KEY: str | None = None   # never logged; also read from the process environment
 
     # ── Security & Auth ───────────────────────────────────────────────────────
     API_KEYS: str = ""          # comma-separated; empty = no auth required
@@ -163,6 +182,20 @@ class Settings(BaseSettings):
             return json.loads(self.DECISION_SAFETY_SERVICES)
         except Exception:
             return []
+
+    @property
+    def llm_allowed_models(self) -> list[str]:
+        try:
+            return json.loads(self.LLM_ALLOWED_MODELS)
+        except Exception:
+            return [self.LLM_MODEL]
+
+    @property
+    def llm_pricing(self) -> dict[str, dict[str, float]]:
+        try:
+            return json.loads(self.LLM_PRICING)
+        except Exception:
+            return {}
 
     @property
     def always_draft_services_list(self) -> list[str]:
@@ -209,6 +242,8 @@ class Settings(BaseSettings):
             self.DECISION_REQUIRE_AGREE,
             self.DECISION_AGREE_MODE,
             self.INTENT_ENABLED,
+            self.LLM_ENABLED,
+            self.LLM_MODEL,
             self.MIN_DESCRIPTION_WORDS,
         ])
         return hashlib.sha256(payload.encode()).hexdigest()[:12]
@@ -222,6 +257,9 @@ class Settings(BaseSettings):
             "TEXT_EMBED_MODEL_ID": self.TEXT_EMBED_MODEL_ID,
             "RERANK_MODEL_ID": self.RERANK_MODEL_ID,
             "TEI_API_KEY": "***" if self.TEI_API_KEY else None,
+            "ANTHROPIC_API_KEY": "***" if self.ANTHROPIC_API_KEY else None,
+            "LLM_ENABLED": self.LLM_ENABLED,
+            "LLM_MODEL": self.LLM_MODEL,
             "API_KEYS": f"[{len(self.api_key_list)} keys]",
             "DATABASE_URL": "***@" + self.DATABASE_URL.split("@")[-1] if "@" in self.DATABASE_URL else "***",
             "AUTO_CREATE_ENABLED": self.AUTO_CREATE_ENABLED,

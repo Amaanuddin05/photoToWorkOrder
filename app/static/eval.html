@@ -223,6 +223,24 @@
             <span style="font-size: 12px; color: var(--text-muted);">Applies to this run only.</span>
           </div>
         </div>
+        <div class="setting-item" style="grid-column: 1 / -1; background: rgba(30, 41, 59, 0.35); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+          <div class="setting-label">
+            <span>LLM review (Claude) for low-confidence rows</span>
+            <span id="llmVal" class="setting-val-display" style="font-weight: 700;">OFF</span>
+          </div>
+          <div class="setting-input-row" style="display: flex; align-items: center; gap: 10px; margin-top: 6px; flex-wrap: wrap;">
+            <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+              <input type="checkbox" id="llmInput" style="width: auto; margin: 0;">
+              Send drafts and unsure-intent rows to the LLM
+            </label>
+            <select id="llmModelInput" style="padding: 6px 10px; border-radius: var(--radius-sm); background: var(--bg-tertiary, #1e293b); color: var(--text-primary, #e2e8f0); border: 1px solid var(--border-color);">
+              <option value="claude-sonnet-5-5" selected>Sonnet 5.5</option>
+              <option value="claude-opus-5-5">Opus 5.5</option>
+              <option value="claude-haiku-5-5">Haiku 5.5</option>
+            </select>
+            <span style="font-size: 12px; color: var(--accent-amber, #d29922);">Paid Anthropic API calls (one per qualifying row). Needs ANTHROPIC_API_KEY on the server.</span>
+          </div>
+        </div>
       </div>
 
       <div style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 12px;">
@@ -269,6 +287,9 @@
           <div class="banner-desc">The cross-encoder reranker was disabled for this evaluation run. Decisions were made using pure bi-encoder scores with multimodal agreement boost.</div>
         </div>
       </div>
+
+      <!-- LLM usage (rows that went through Claude) -->
+      <div id="llmUsagePanel" class="snapshot-panel" style="display: none; margin-bottom: 16px;"></div>
 
       <!-- Run Record Snapshot (Requirement 1) -->
       <div id="runRecordSnapshot" class="snapshot-panel" style="display: none;">

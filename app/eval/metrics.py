@@ -179,6 +179,8 @@ class EvalRowResult:
     top1_raw_score: float | None = None
     top1_image_similarity: float | None = None
     top1_text_similarity: float | None = None
+    # LLM review of this row (Claude): model, intent, service, tokens, cost_usd, promoted, error
+    llm: dict[str, Any] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -304,6 +306,35 @@ def compute_signal_quality(
     return {
         "signals": signals_report,
         "warnings": all_warnings,
+    }
+
+
+def compute_llm_summary(rows: list[EvalRowResult]) -> dict[str, Any]:
+    """Totals for rows that went through the LLM review (calls, tokens, cost, outcomes)."""
+    used = [r for r in rows if r.llm and r.llm.get("used")]
+    ok = [r for r in used if not r.llm.get("error")]
+    promoted = [r for r in ok if r.llm.get("promoted")]
+    intent_blocked = [r for r in ok if r.llm.get("intent") in ("done", "other") and r.action == "no_action"]
+    wrong_auto = [r for r in promoted if r.is_none or not r.correct]
+    tin = sum(int(r.llm.get("input_tokens") or 0) for r in used)
+    tout = sum(int(r.llm.get("output_tokens") or 0) for r in used)
+    cost = sum(float(r.llm.get("cost_usd") or 0.0) for r in used)
+    real = [r for r in ok if not r.is_none]
+    models = sorted({r.llm.get("served_model") or r.llm.get("model") for r in used if r.llm.get("model")})
+    return {
+        "calls": len(used),
+        "errors": len(used) - len(ok),
+        "promoted_to_auto": len(promoted),
+        "wrong_auto_from_llm": len(wrong_auto),
+        "intent_no_action": len(intent_blocked),
+        "input_tokens": tin,
+        "output_tokens": tout,
+        "total_tokens": tin + tout,
+        "total_cost_usd": round(cost, 6),
+        "avg_cost_usd": round(cost / len(used), 6) if used else 0.0,
+        "accuracy_on_llm_rows": round(100.0 * sum(1 for r in real if r.correct) / len(real), 1) if real else None,
+        "models": models,
+        "error_messages": sorted({r.llm.get("error") for r in used if r.llm.get("error")})[:5],
     }
 
 
@@ -883,6 +914,7 @@ def compute_metrics(
             "coverage_pct": round(coverage, 1),
         },
         "none_panel": none_panel,
+        "llm": compute_llm_summary(eval_rows),
         "signal_quality": signal_quality,
         "latency": {
             "mean_ms": round(mean_latency, 1),

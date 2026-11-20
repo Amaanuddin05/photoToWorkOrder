@@ -86,6 +86,14 @@
   const intentVal = document.getElementById("intentVal");
   function updateIntentDisplay() { if (intentInput && intentVal) intentVal.textContent = intentInput.checked ? "ON" : "OFF"; }
   if (intentInput) intentInput.addEventListener("change", updateIntentDisplay);
+  const llmInput = document.getElementById("llmInput");
+  const llmModelInput = document.getElementById("llmModelInput");
+  const llmVal = document.getElementById("llmVal");
+  function updateLlmDisplay() {
+    if (llmInput && llmVal) llmVal.textContent = llmInput.checked ? `ON · ${llmModelInput ? llmModelInput.selectedOptions[0].textContent : ""}` : "OFF";
+  }
+  if (llmInput) llmInput.addEventListener("change", updateLlmDisplay);
+  if (llmModelInput) llmModelInput.addEventListener("change", updateLlmDisplay);
   const startRunBtn = document.getElementById("startRunBtn");
   const stopRunBtn = document.getElementById("stopRunBtn");
 
@@ -735,6 +743,7 @@
       updateAgreeModeDisplay();
     }
     if (intentInput) { intentInput.checked = false; updateIntentDisplay(); }
+    if (llmInput) { llmInput.checked = false; if (llmModelInput) llmModelInput.value = "claude-sonnet-5-5"; updateLlmDisplay(); }
     if (enableRerankerInput) {
       enableRerankerInput.checked = false;
       updateRerankerToggleDisplay();
@@ -764,6 +773,8 @@
       enable_reranker: enableRerankerInput ? enableRerankerInput.checked : false,
       agree_mode: agreeModeInput ? agreeModeInput.value : "strict",
       intent_enabled: intentInput ? intentInput.checked : false,
+      llm_enabled: llmInput ? llmInput.checked : false,
+      llm_model: llmModelInput ? llmModelInput.value : "claude-sonnet-5-5",
     };
 
     try {
@@ -912,6 +923,11 @@
           enableRerankerInput.checked = Boolean(data.effective_settings.enable_reranker);
           updateRerankerToggleDisplay();
         }
+        if (llmInput && typeof data.effective_settings.llm_enabled === "boolean") {
+          llmInput.checked = data.effective_settings.llm_enabled;
+          if (llmModelInput && data.effective_settings.llm_model) llmModelInput.value = data.effective_settings.llm_model;
+          updateLlmDisplay();
+        }
         if (intentInput && typeof data.effective_settings.intent_enabled === "boolean") {
           intentInput.checked = data.effective_settings.intent_enabled;
           updateIntentDisplay();
@@ -1040,6 +1056,7 @@
 
     // 3. Dedicated NONE Panel (3 Levels: Requirement 4)
     renderNonePanel(s.none_panel, s);
+    renderLlmPanel(s.llm);
 
     // 4. Signal Quality Table (AUROC: Requirement 5)
     renderSignalQuality(s.signal_quality);
@@ -1839,7 +1856,7 @@
       <td style="max-width:240px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(r.description || '(empty description)')}">${escapeHtml(r.description || '<empty>')}</td>
       <td style="font-weight:600;">${escapeHtml(r.is_none ? "NONE" : r.expected_service)}</td>
       <td style="font-weight:600;color:${r.correct ? "var(--text-primary)" : "var(--accent-red)"};">${escapeHtml(r.predicted_service || "NONE")}</td>
-      <td><span class="badge ${actClass}">${actLabel}</span></td>
+      <td><span class="badge ${actClass}">${actLabel}</span>${llmBadgeHtml(r)}</td>
       <td><div>${confStr}</div><div style="font-size:11px;color:var(--text-muted);">${gapStr}</div></td>
       <td>${resBadge}</td>
       <td style="font-size:11px;">T: ${tRankStr}<br>I: ${iRankStr}<br>R: ${rRankStr}</td>
@@ -1856,6 +1873,52 @@
     }
   }
 
+  function renderLlmPanel(l) {
+    const box = document.getElementById("llmUsagePanel");
+    if (!box) return;
+    if (!l || !l.calls) { box.style.display = "none"; box.innerHTML = ""; return; }
+    const cell = (label, value, color) =>
+      `<div style="min-width:130px;"><div style="font-size:11px;color:var(--text-muted);">${label}</div><div style="font-size:18px;font-weight:700;${color ? "color:" + color + ";" : ""}">${value}</div></div>`;
+    box.style.display = "block";
+    box.innerHTML = `
+      <div style="font-weight:700;margin-bottom:8px;">LLM usage (Claude) <span style="font-weight:400;font-size:12px;color:var(--text-muted);">${escapeHtml((l.models || []).join(", "))}</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:18px;">
+        ${cell("Rows sent to LLM", l.calls)}
+        ${cell("Total cost (approx.)", "$" + (l.total_cost_usd || 0).toFixed(4), "var(--accent-green)")}
+        ${cell("Avg cost / call", "$" + (l.avg_cost_usd || 0).toFixed(5))}
+        ${cell("Tokens in / out", `${l.input_tokens} / ${l.output_tokens}`)}
+        ${cell("Promoted to auto", l.promoted_to_auto)}
+        ${cell("Wrong autos from LLM", l.wrong_auto_from_llm, l.wrong_auto_from_llm ? "var(--accent-red)" : "")}
+        ${cell("Blocked as not-issue", l.intent_no_action)}
+        ${cell("Top-1 on LLM rows", l.accuracy_on_llm_rows == null ? "-" : l.accuracy_on_llm_rows + "%")}
+        ${cell("Errors", l.errors, l.errors ? "var(--accent-red)" : "")}
+      </div>
+      ${l.error_messages && l.error_messages.length ? `<div style="margin-top:8px;font-size:12px;color:var(--accent-red);">${escapeHtml(l.error_messages.join(" · "))}</div>` : ""}`;
+  }
+
+  function llmBadgeHtml(r) {
+    if (!r.llm || !r.llm.used) return "";
+    const l = r.llm;
+    const tip = l.error
+      ? `${l.model}: ${l.error}`
+      : `${l.served_model || l.model} · ${l.trigger || ""}\nintent ${l.intent} · ${l.service} (${l.confidence})${l.promoted ? " → promoted" : ""}\n${l.input_tokens} in / ${l.output_tokens} out tokens\n≈ $${(l.cost_usd || 0).toFixed(6)}`;
+    const label = l.error ? "LLM err" : `LLM $${(l.cost_usd || 0).toFixed(4)}`;
+    return `<div><span title="${escapeHtml(tip)}" style="display:inline-block;margin-top:4px;font-size:10px;padding:1px 6px;border-radius:10px;background:rgba(130,80,223,0.18);color:#b392f0;border:1px solid rgba(130,80,223,0.5);white-space:nowrap;">${label}</span></div>`;
+  }
+
+  function llmDetailsHtml(r) {
+    if (!r.llm || !r.llm.used) return "";
+    const l = r.llm;
+    const rows = [
+      ["Model", `${l.served_model || l.model}${l.trigger ? " · trigger: " + l.trigger : ""}`],
+      l.error ? ["Error", l.error] : ["Verdict", `intent ${l.intent} · ${l.service} (${l.confidence}) · photo ${l.photo_matches ? "matches" : "does not match"}${l.promoted ? " · promoted to auto" : ""}`],
+      ["Reason", l.reason || "-"],
+      ["Tokens", `${l.input_tokens} in · ${l.output_tokens} out${(l.cache_read_input_tokens || l.cache_creation_input_tokens) ? ` · cache ${l.cache_read_input_tokens || 0}/${l.cache_creation_input_tokens || 0}` : ""}`],
+      ["Cost (approx.)", `$${(l.cost_usd || 0).toFixed(6)} · ${((l.latency_ms || 0) / 1000).toFixed(2)} s`],
+    ];
+    return `<div style="font-weight:600;margin-bottom:6px;">LLM review (Claude):</div><table class="cand-table" style="margin-bottom:12px;"><tbody>${rows.map(([k, v]) => `<tr><td style="width:140px;color:var(--text-muted);">${k}</td><td>${escapeHtml(String(v))}</td></tr>`).join("")}</tbody></table>`;
+  }
+
   function renderDetailsRow(r) {
     const existing = document.getElementById(`details-${r.row_id}`);
     if (existing) existing.remove();
@@ -1864,7 +1927,7 @@
     dTr.id = `details-${r.row_id}`;
     dTr.className = "details-row";
 
-    let candsHtml = '<div style="font-weight:600;margin-bottom:6px;">Candidate Pool & Rerank Scores:</div><table class="cand-table"><thead><tr><th>Rerank Rank</th><th>Service</th><th>Confidence</th><th>Raw Logit</th><th>Text Rank</th><th>Image Rank</th><th>Pool Rank</th></tr></thead><tbody>';
+    let candsHtml = llmDetailsHtml(r) + '<div style="font-weight:600;margin-bottom:6px;">Candidate Pool & Rerank Scores:</div><table class="cand-table"><thead><tr><th>Rerank Rank</th><th>Service</th><th>Confidence</th><th>Raw Logit</th><th>Text Rank</th><th>Image Rank</th><th>Pool Rank</th></tr></thead><tbody>';
 
     (r.candidates || []).forEach((c) => {
       const isExp = c.title === r.expected_service;

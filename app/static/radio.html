@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Radio Channel Demo</title>
+  <link rel="stylesheet" href="/ui/styles.css">
+  <style>
+    body { margin: 0; }
+    .radio-wrap { max-width: 860px; margin: 0 auto; padding: 16px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+    .radio-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding-bottom: 10px; border-bottom: 1px solid var(--border-color); }
+    .radio-head h1 { font-size: 1.15rem; margin: 0; }
+    .radio-head .sub { font-size: 0.78rem; color: var(--text-secondary); }
+    .head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 0.8rem; }
+    .head-actions a, .head-actions button { padding: 5px 10px; font-size: 0.78rem; border-radius: 6px; border: 1px solid var(--border-color);
+      background: var(--bg-surface); color: var(--text-primary); text-decoration: none; cursor: pointer; }
+    .head-actions select, .head-actions input[type=text] { width: auto; margin: 0; padding: 4px 6px; font-size: 0.78rem; border-radius: 6px; border: 1px solid var(--border-color);
+      background: var(--bg-surface); color: var(--text-primary); }
+    .head-actions label { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; margin: 0; }
+    .head-actions input[type=checkbox] { width: auto; margin: 0; }
+    .feed { flex: 1; overflow-y: auto; padding: 14px 4px; display: flex; flex-direction: column; gap: 10px; }
+    .msg { display: flex; align-items: flex-end; gap: 8px; max-width: 80%; }
+    .msg.me { align-self: flex-end; flex-direction: row-reverse; }
+    .bubble { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 12px; padding: 8px 10px; min-width: 120px; }
+    .msg.me .bubble { background: var(--bg-subtle); }
+    .meta { font-size: 0.7rem; color: var(--text-muted); margin-bottom: 4px; display: flex; gap: 8px; }
+    .meta b { color: var(--text-secondary); }
+    .bubble img { display: block; max-width: 260px; max-height: 200px; border-radius: 8px; margin-bottom: 6px; cursor: zoom-in; }
+    .bubble .txt { font-size: 0.9rem; white-space: pre-wrap; word-break: break-word; }
+    .bubble .wo-line { font-size: 0.72rem; color: var(--text-secondary); margin-top: 6px; }
+    .wo-icon { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%;
+      font-size: 12px; font-weight: 700; color: #fff; cursor: help; }
+    .wo-auto { background: #1a7f37; } .wo-draft { background: #bf8700; } .wo-pending { background: var(--text-muted); }
+    .llm-badge { font-size: 0.65rem; padding: 0 5px; border-radius: 8px; background: rgba(130, 80, 223, 0.15); color: #8250df; border: 1px solid rgba(130, 80, 223, 0.4); }
+    .composer { border-top: 1px solid var(--border-color); padding-top: 10px; display: flex; gap: 8px; align-items: flex-end; }
+    .composer textarea { flex: 1; resize: none; min-height: 40px; max-height: 120px; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--border-color);
+      background: var(--bg-surface); color: var(--text-primary); font: inherit; font-size: 0.9rem; }
+    .composer button { padding: 9px 14px; border-radius: 8px; border: 1px solid var(--border-color); cursor: pointer; font-size: 0.85rem; background: var(--bg-surface); color: var(--text-primary); }
+    .composer .send { background: var(--border-focus); color: #fff; border-color: var(--border-focus); }
+    .composer button:disabled { opacity: 0.5; cursor: default; }
+    .attach-preview { display: none; align-items: center; gap: 6px; font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 6px; }
+    .attach-preview img { height: 48px; border-radius: 6px; }
+    .legend { font-size: 0.72rem; color: var(--text-secondary); display: flex; gap: 12px; align-items: center; padding: 6px 0; flex-wrap: wrap; }
+    .err { color: #cf222e; font-size: 0.8rem; min-height: 1em; }
+    .empty { text-align: center; color: var(--text-muted); margin-top: 40px; font-size: 0.9rem; }
+    @media (max-width: 600px) { .msg { max-width: 95%; } .bubble img { max-width: 200px; } }
+  </style>
+</head>
+<body>
+  <div class="radio-wrap">
+    <div class="radio-head">
+      <div>
+        <h1>&#128251; Maintenance Radio &mdash; Demo Channel</h1>
+        <div class="sub">Send a photo with a description as a worker would. Photo + text runs the pipeline and creates a work order.</div>
+      </div>
+      <div class="head-actions">
+        <input type="text" id="sender" value="Worker" maxlength="60" title="Your name in the channel" style="width: 90px;">
+        <label title="Send low-confidence posts to Claude (paid API)"><input type="checkbox" id="llm"> LLM</label>
+        <select id="llm-model" title="LLM model">
+          <option value="claude-sonnet-5-5" selected>Sonnet 5.5</option>
+          <option value="claude-opus-5-5">Opus 5.5</option>
+          <option value="claude-haiku-5-5">Haiku 5.5</option>
+        </select>
+        <button type="button" id="clear" title="Delete all demo messages">Clear</button>
+        <a href="/ui/">Operator UI</a>
+        <a href="/ui/eval">Eval</a>
+      </div>
+    </div>
+    <div class="legend">
+      <span><span class="wo-icon wo-auto">&#10003;</span> work order auto-created</span>
+      <span><span class="wo-icon wo-draft">&#9998;</span> draft work order (needs review)</span>
+      <span>no icon = no work order (chat, completion note, or not maintenance)</span>
+    </div>
+    <div class="feed" id="feed"><div class="empty" id="empty">No messages yet. Attach a photo, write what is wrong, and send.</div></div>
+    <div>
+      <div class="attach-preview" id="attach-preview"><img id="attach-img" alt="Attached photo"><span id="attach-name"></span>
+        <button type="button" id="attach-remove" style="font-size: 0.72rem; padding: 2px 6px;">Remove</button></div>
+      <div class="err" id="err" role="alert"></div>
+      <form class="composer" id="composer">
+        <input type="file" id="file" accept="image/jpeg,image/png,image/webp" hidden>
+        <button type="button" id="attach" title="Attach a photo">&#128206; Photo</button>
+        <textarea id="text" placeholder="Describe the issue (English or Arabic)..." rows="1"></textarea>
+        <button type="submit" class="send" id="send">Send</button>
+      </form>
+    </div>
+  </div>
+  <script src="/ui/radio.js"></script>
+</body>
+</html>

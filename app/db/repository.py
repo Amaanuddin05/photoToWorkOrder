@@ -165,6 +165,12 @@ async def insert_decision_log(
                 models_val["agree_mode"] = data["agree_mode"]
             if data.get("intent"):
                 models_val["intent"] = {k: data["intent"][k] for k in ("label", "prob", "acted")}
+            if data.get("llm"):
+                models_val["llm"] = {k: data["llm"].get(k) for k in (
+                    "model", "served_model", "trigger", "intent", "service", "confidence", "photo_matches", "promoted",
+                    "input_tokens", "output_tokens", "cost_usd", "latency_ms", "error")}
+            if data.get("source"):
+                models_val["source"] = data["source"]
 
             cur = await conn.execute(
                 """
@@ -558,26 +564,33 @@ async def get_service_by_title(
 
 
 async def get_recent_decisions(
-    pool: AsyncConnectionPool, limit: int = 20
+    pool: AsyncConnectionPool, limit: int = 20, actions: list[str] | None = None
 ) -> list[dict[str, Any]]:
     async with pool.connection() as conn:
         cur = await conn.execute(
             """
             SELECT d.id, d."createdAt", d.description, d.action, d."wouldBeAction",
                    d."topServiceId", s_top.title, d.confidence,
-                   d."finalServiceId", s_final.title, d.timings
+                   d."finalServiceId", s_final.title, d.timings, d.models, d.reason, d.location
             FROM "DecisionLog" d
             LEFT JOIN "WoService" s_top ON d."topServiceId" = s_top.id
             LEFT JOIN "WoService" s_final ON d."finalServiceId" = s_final.id
+            WHERE (%s::text[] IS NULL OR d.action = ANY(%s::text[]))
             ORDER BY d.id DESC LIMIT %s;
             """,
-            (limit,),
+            (actions, actions, limit),
         )
         rows = await cur.fetchall()
 
     results = []
     for row in rows:
         timings_data = row[10]
+        models = row[11]
+        if isinstance(models, str):
+            try:
+                models = json.loads(models)
+            except Exception:
+                models = {}
         latency_ms = None
         if timings_data:
             if isinstance(timings_data, str):
@@ -596,6 +609,11 @@ async def get_recent_decisions(
             "final_service_id": row[8],
             "final_service_title": row[9],
             "latency_ms": latency_ms,
+            "source": (models or {}).get("source"),
+            "llm": (models or {}).get("llm"),
+            "intent": (models or {}).get("intent"),
+            "reason": row[12],
+            "location": row[13],
         })
     return results
 

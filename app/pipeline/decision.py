@@ -70,6 +70,31 @@ class ProcessedPost:
     text_guard: dict[str, Any] | None = None
     agree_mode: str = "strict"   # agreement strictness level used for the auto gate
     intent: dict[str, Any] | None = None   # message-intent gate result {label, prob, probs, acted}
+    llm: dict[str, Any] | None = None      # LLM review of a draft {model, service, tokens, cost_usd, ...}
+    llm_skip: str | None = None            # why the LLM was not used (when enabled)
+    source: str = "api"                    # api | console | radio | eval
+
+
+def llm_skip_reason(result: "ProcessedPost", has_image: bool, has_desc: bool) -> str | None:
+    """None when a decision may go to the LLM review, else why not.
+
+    Only real low-confidence drafts qualify: not shadow-mode drafts (already auto-worthy), not drafts the
+    rules force for safety (always-draft services, safety near-tie), and only posts with photo + description.
+    """
+    if result.action != "draft":
+        return f"action is {result.action}"
+    if result.shadow:
+        return "shadow-mode draft (already auto-worthy)"
+    if not (has_image and has_desc):
+        return "needs photo and description"
+    r = result.reason or ""
+    if "requires mandatory human draft review" in r:
+        return "always-draft service"
+    if r.startswith("safety_near_tie"):
+        return "safety near-tie: human review required"
+    if r.startswith("Description has"):
+        return "description too short"
+    return None
 
 
 # ── Reranker wrapper (applies softmax to TEI raw logits) ─────────────────────

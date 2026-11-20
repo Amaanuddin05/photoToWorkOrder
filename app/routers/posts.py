@@ -98,6 +98,9 @@ def _build_response(result: ProcessedPost, idempotent_replay: bool = False) -> d
         "text_guard": getattr(result, "text_guard", None),
         "agree_mode": getattr(result, "agree_mode", None),
         "intent": getattr(result, "intent", None),
+        "llm": getattr(result, "llm", None),
+        "llm_skip": getattr(result, "llm_skip", None),
+        "source": getattr(result, "source", None),
     }
 
 
@@ -110,6 +113,9 @@ async def process_post(
     location: str | None = Form(None),
     agree_mode: str | None = Form(None),
     intent_enabled: str | None = Form(None),
+    llm_enabled: str | None = Form(None),
+    llm_model: str | None = Form(None),
+    source: str | None = Form(None),
     idempotency_key_header: str | None = Header(None, alias="Idempotency-Key"),
     _auth: None = Depends(_require_auth),
 ) -> JSONResponse:
@@ -132,6 +138,12 @@ async def process_post(
     # Same for the message-intent gate ("on" / "off"): test-only, honoured only when ENABLE_UI=true.
     if intent_enabled in ("on", "off") and settings.ENABLE_UI:
         settings = settings.model_copy(update={"INTENT_ENABLED": intent_enabled == "on"})
+    # LLM review of drafts: test-only per-request override (ENABLE_UI only), same rules.
+    if llm_enabled in ("on", "off") and settings.ENABLE_UI:
+        settings = settings.model_copy(update={"LLM_ENABLED": llm_enabled == "on"})
+    if llm_model and settings.ENABLE_UI and llm_model in settings.llm_allowed_models:
+        settings = settings.model_copy(update={"LLM_MODEL": llm_model})
+    post_source = source if (settings.ENABLE_UI and source in ("console",)) else "api"
 
     # Idempotency key: header takes precedence over post_id form field
     idem_key = idempotency_key_header or post_id
@@ -227,6 +239,7 @@ async def process_post(
         service_profiles=state.service_profiles,
         semaphore=state.semaphore,
         idempotency_key=idem_key,
+        source=post_source,
     )
 
     # Prometheus metrics

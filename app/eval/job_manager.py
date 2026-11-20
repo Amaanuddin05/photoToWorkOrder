@@ -334,6 +334,9 @@ class EvalJobManager:
             "agree_mode": (ov.get("agree_mode") if ov.get("agree_mode") in ("strict", "balanced", "relaxed")
                            else getattr(self.settings, "DECISION_AGREE_MODE", "strict")),
             "intent_enabled": bool(ov.get("intent_enabled", getattr(self.settings, "INTENT_ENABLED", False))),
+            "llm_enabled": bool(ov.get("llm_enabled", getattr(self.settings, "LLM_ENABLED", False))),
+            "llm_model": (ov.get("llm_model") if ov.get("llm_model") in self.settings.llm_allowed_models
+                          else getattr(self.settings, "LLM_MODEL", "claude-sonnet-5-5")),
             "intent_min_prob": float(getattr(self.settings, "INTENT_MIN_PROB", 0.85)),
             "agree_text_margin": float(getattr(self.settings, "DECISION_AGREE_TEXT_MARGIN", 0.05)),
             "agree_image_top_k": int(getattr(self.settings, "DECISION_AGREE_IMAGE_TOP_K", 3)),
@@ -442,6 +445,8 @@ class EvalJobManager:
             "TEXT_GUARD_PINNED": True,
             "DECISION_AGREE_MODE": job.effective_settings.get("agree_mode", getattr(self.settings, "DECISION_AGREE_MODE", "strict")),
             "INTENT_ENABLED": job.effective_settings.get("intent_enabled", getattr(self.settings, "INTENT_ENABLED", False)),
+            "LLM_ENABLED": job.effective_settings.get("llm_enabled", False),
+            "LLM_MODEL": job.effective_settings.get("llm_model", getattr(self.settings, "LLM_MODEL", "claude-sonnet-5-5")),
         })
 
         valid_rows = [
@@ -465,7 +470,7 @@ class EvalJobManager:
                         image_bytes=w_bytes,
                         description=warmup_input.description,
                         location=None,
-                        settings=run_settings,
+                        settings=run_settings.model_copy(update={"LLM_ENABLED": False}),  # no paid call on warm-up
                         pool=app_state.db_pool,
                         siglip_service=app_state.siglip_service,
                         tei_client=app_state.tei_client,
@@ -630,6 +635,7 @@ class EvalJobManager:
                     top1_raw_score=top1_raw_score,
                     top1_image_similarity=top1_img_sim,
                     top1_text_similarity=top1_txt_sim,
+                    llm=result.llm,
                 )
                 job.row_results.append(row_res)
 
@@ -743,7 +749,9 @@ class EvalJobManager:
             "full_text_rank", "full_image_rank", "entered_pool",
             "text_top1", "image_top1", "total_ms",
             "image_decode_ms", "siglip_encode_ms", "text_embed_ms", "pgvector_search_ms",
-            "rerank_ms", "decision_ms"
+            "rerank_ms", "decision_ms",
+            "llm_used", "llm_trigger", "llm_model", "llm_intent", "llm_service", "llm_confidence",
+            "llm_promoted", "llm_input_tokens", "llm_output_tokens", "llm_cost_usd", "llm_error",
         ]
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
@@ -753,6 +761,12 @@ class EvalJobManager:
             none_cls = classify_none_action(r.action) if r.is_none else None
             none_lvl = none_cls["level"] if none_cls else ""
             writer.writerow({
+                **({"llm_used": True, "llm_trigger": r.llm.get("trigger"), "llm_model": r.llm.get("served_model") or r.llm.get("model"),
+                    "llm_intent": r.llm.get("intent"), "llm_service": r.llm.get("service"),
+                    "llm_confidence": r.llm.get("confidence"), "llm_promoted": r.llm.get("promoted"),
+                    "llm_input_tokens": r.llm.get("input_tokens"), "llm_output_tokens": r.llm.get("output_tokens"),
+                    "llm_cost_usd": r.llm.get("cost_usd"), "llm_error": r.llm.get("error")}
+                   if r.llm and r.llm.get("used") else {"llm_used": False}),
                 "row_id": r.row_id,
                 "image": r.image,
                 "description": r.description,
@@ -813,6 +827,12 @@ class EvalJobManager:
         md.append(f"- **Job ID**: `{job.job_id}`")
         md.append(f"- **Completed**: {job.completed_at or 'In Progress'}")
         md.append(f"- **Total Rows Evaluated**: {s.get('n', len(job.row_results))}")
+        _llm = s.get("llm") or {}
+        if _llm.get("calls"):
+            md.append(f"- **LLM review** ({', '.join(_llm.get('models') or [])}): {_llm['calls']} rows, "
+                      f"{_llm['input_tokens']} in / {_llm['output_tokens']} out tokens, ~${_llm['total_cost_usd']:.4f}; "
+                      f"promoted {_llm['promoted_to_auto']}, wrong autos from LLM {_llm['wrong_auto_from_llm']}, "
+                      f"blocked as not-issue {_llm['intent_no_action']}, errors {_llm['errors']}")
         md.append(f"- **Throughput**: {lat.get('throughput_fps', 0)} img/sec ({job.total_elapsed_sec:.1f}s total)")
         md.append("")
 

@@ -16,6 +16,9 @@
     currentDecision: null,
     catalogServices: [],
     demoServices: [],
+    llmCalls: 0,
+    llmCost: 0,
+    llmTokens: 0,
   };
 
   // Known emergency services requiring mandatory human review
@@ -401,6 +404,13 @@
     if (intentEl) {
       formData.append("intent_enabled", intentEl.checked ? "on" : "off");  // test-only per-request override
     }
+    const llmEl = document.getElementById("llm-input");
+    const llmModelEl = document.getElementById("llm-model-input");
+    if (llmEl) {
+      formData.append("llm_enabled", llmEl.checked ? "on" : "off");  // test-only per-request override
+      if (llmModelEl) formData.append("llm_model", llmModelEl.value);
+    }
+    formData.append("source", "console");
     formData.append("post_id", `post_${Date.now()}`);
 
     try {
@@ -427,6 +437,8 @@
       state.currentDecision = decision;
 
       renderResultScreen(decision);
+      fetchWorkOrders();
+      fetchHistory();
     } catch (err) {
       showFormError(err.message || "Failed to analyze post. Please check connection.");
     } finally {
@@ -543,6 +555,32 @@
     const t = decision.timings || {};
     addDetail("Latency", `${fmt((t.total_ms || 0) / 1000, 2)} s  (text ${fmt(t.text_ms, 0)} ms · photo ${fmt(t.image_ms, 0)} ms)`);
     if (decision.idempotent_replay) addDetail("Replay", "Same post seen before: stored result returned", "muted");
+
+    // LLM review (Claude) — usage and approximate cost
+    const llm = decision.llm;
+    if (llm) {
+      const triggers = { intent: "intent unsure", draft: "low-confidence draft", "intent+draft": "intent unsure + draft" };
+      addDetail("LLM model", `${llm.served_model || llm.model}${llm.trigger ? " · trigger: " + (triggers[llm.trigger] || llm.trigger) : ""}`);
+      if (llm.error) {
+        addDetail("LLM result", `error: ${llm.error}`, "bad");
+      } else {
+        addDetail("LLM verdict", `intent ${llm.intent || "—"} · ${llm.service || "—"} (${llm.confidence || "—"}) · photo ${llm.photo_matches ? "matches" : "does not match"}${llm.promoted ? " · promoted to auto-create" : ""}`,
+          llm.promoted ? "ok" : "");
+        if (llm.reason) addDetail("LLM reason", llm.reason);
+      }
+      const cache = (llm.cache_read_input_tokens || 0) + (llm.cache_creation_input_tokens || 0);
+      addDetail("LLM tokens", `${llm.input_tokens || 0} in · ${llm.output_tokens || 0} out${cache ? ` · ${cache} cache` : ""}`);
+      addDetail("LLM cost (approx.)", `$${(llm.cost_usd || 0).toFixed(6)} · ${fmt((llm.latency_ms || 0) / 1000, 2)} s`);
+      if (!decision.idempotent_replay && llm.cost_usd) {
+        state.llmCalls += 1;
+        state.llmCost += llm.cost_usd;
+        state.llmTokens += (llm.input_tokens || 0) + (llm.output_tokens || 0);
+      }
+      const tot = document.getElementById("llm-session-total");
+      if (tot) tot.textContent = `This session: ${state.llmCalls} call(s), ${state.llmTokens} tokens, ≈ $${state.llmCost.toFixed(4)}.`;
+    } else if (decision.llm_skip) {
+      addDetail("LLM", `not used: ${decision.llm_skip}`, "muted");
+    }
 
     // 6. Candidate scores table (whole pool, sorted by confidence)
     els.candidateTbody.replaceChildren();
@@ -1212,8 +1250,64 @@
     });
   }
 
+  // ── Work orders (auto + draft decisions) ──────────────────────────────
+  async function fetchWorkOrders() {
+    try {
+      const resp = await fetch("/v1/decisions?limit=50&actions=auto_create,draft", { headers: getHeaders() });
+      if (!resp.ok) return;
+      renderWorkOrders(await resp.json());
+    } catch (err) {
+      console.warn("Failed to load work orders:", err);
+    }
+  }
+
+  function renderWorkOrders(rows) {
+    const tbody = document.getElementById("wo-tbody");
+    const empty = document.getElementById("wo-empty");
+    if (!tbody) return;
+    tbody.replaceChildren();
+    empty.style.display = rows && rows.length ? "none" : "block";
+    (rows || []).forEach((r) => {
+      const tr = document.createElement("tr");
+      const tdIcon = document.createElement("td");
+      const ic = el("span", r.action === "auto_create" ? "✓" : "✎", `wo-icon ${r.action === "auto_create" ? "wo-auto" : "wo-draft"}`);
+      ic.title = r.action === "auto_create" ? "Auto-created" : "Draft";
+      tdIcon.appendChild(ic);
+      tr.appendChild(tdIcon);
+      tr.appendChild(el("td", `#${r.id}`, "num"));
+      const d = r.created_at ? new Date(r.created_at) : null;
+      const tdT = el("td", d ? d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—");
+      if (d) tdT.title = d.toLocaleString();
+      tr.appendChild(tdT);
+      tr.appendChild(el("td", r.source || "api"));
+      const desc = (r.description || "").trim();
+      const tdD = el("td", desc.length > 60 ? desc.slice(0, 60) + "…" : desc || "(no description)");
+      tdD.title = desc;
+      tr.appendChild(tdD);
+      tr.appendChild(el("td", r.top_service_title || "—"));
+      const tdL = document.createElement("td");
+      if (r.llm) {
+        const b = el("span", r.llm.error ? "LLM err" : `LLM $${(r.llm.cost_usd || 0).toFixed(4)}`, "llm-badge");
+        b.title = r.llm.error
+          ? `${r.llm.model}: ${r.llm.error}`
+          : `${r.llm.served_model || r.llm.model}\n${r.llm.input_tokens} in / ${r.llm.output_tokens} out tokens\n≈ $${(r.llm.cost_usd || 0).toFixed(6)}\n${r.llm.service} (${r.llm.confidence})${r.llm.promoted ? " → promoted" : ""}`;
+        tdL.appendChild(b);
+      }
+      tr.appendChild(tdL);
+      const reason = r.reason || "";
+      const tdR = el("td", reason.length > 90 ? reason.slice(0, 90) + "…" : reason, "wo-reason");
+      tdR.title = reason;
+      tr.appendChild(tdR);
+      tbody.appendChild(tr);
+    });
+  }
+
   function init() {
     initAddServiceToggle();
+    const woBtn = document.getElementById("refresh-wo-btn");
+    if (woBtn) woBtn.addEventListener("click", fetchWorkOrders);
+    fetchWorkOrders();
+    setInterval(fetchWorkOrders, 15000);
     initAuth();
     initAddService();
     updateSubmitButtonState();

@@ -62,6 +62,8 @@ class StartJobPayload(BaseModel):
     text_auto_min: float | None = None
     agree_mode: str | None = None   # strict | balanced | relaxed (this run only)
     intent_enabled: bool | None = None   # message-intent gate on/off (this run only)
+    llm_enabled: bool | None = None      # LLM review of drafts / unsure intent (this run only; paid API)
+    llm_model: str | None = None         # one of LLM_ALLOWED_MODELS
 
 
 class LoadLocalPayload(BaseModel):
